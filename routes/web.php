@@ -4,6 +4,7 @@ use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\ManajemenCabangController;
 use App\Http\Controllers\KaryawanController;
 
 
@@ -25,6 +26,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/karyawan', [KaryawanController::class, 'store'])->name('karyawan.store');
     Route::put('/karyawan/{user}', [KaryawanController::class, 'update'])->name('karyawan.update');
     Route::delete('/karyawan/{user}', [KaryawanController::class, 'destroy'])->name('karyawan.destroy');
+
+    Route::get('branch', [ManajemenCabangController::class, 'index'])->name('branch.index');
+    Route::post('branch', [ManajemenCabangController::class, 'store'])->name('branch.store');
+    Route::put('branch/{branch}', [ManajemenCabangController::class, 'update'])->name('branch.update');
+    Route::delete('branch/{branch}', [ManajemenCabangController::class, 'destroy'])->name('branch.destroy');
 });
 
 require __DIR__ . '/settings.php';

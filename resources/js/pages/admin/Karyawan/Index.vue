@@ -19,6 +19,9 @@ import {
 } from '@/components/ui/dialog';
 import { Plus, Pencil, Trash2, User, MapPin } from 'lucide-vue-next';
 import { ref } from 'vue';
+import { useToast } from '@/composables/useToast';
+
+const toast = useToast();
 
 interface BranchData {
     id: number;
@@ -92,6 +95,10 @@ const submitCreate = () => {
     createForm.post('/karyawan', {
         onSuccess: () => {
             closeCreateModal();
+            toast.success('Berhasil!', 'Karyawan baru berhasil ditambahkan.');
+        },
+        onError: () => {
+            toast.error('Gagal!', 'Terjadi kesalahan saat menambahkan karyawan.');
         },
     });
 };
@@ -121,6 +128,10 @@ const submitEdit = () => {
         editForm.put(`/karyawan/${userToEdit.value.id}`, {
             onSuccess: () => {
                 closeEditModal();
+                toast.success('Berhasil!', 'Data karyawan berhasil diperbarui.');
+            },
+            onError: () => {
+                toast.error('Gagal!', 'Terjadi kesalahan saat memperbarui data karyawan.');
             },
         });
     }
@@ -142,6 +153,11 @@ const deleteUser = () => {
         router.delete(`/karyawan/${userToDelete.value.id}`, {
             onSuccess: () => {
                 closeDeleteDialog();
+                toast.success('Berhasil!', 'Karyawan berhasil dihapus.');
+            },
+            onError: () => {
+                closeDeleteDialog();
+                toast.error('Gagal!', 'Terjadi kesalahan saat menghapus karyawan.');
             },
         });
     }
@@ -157,6 +173,7 @@ const formatDate = (dateString: string) => {
 </script>
 
 <template>
+
     <Head title="Karyawan" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
@@ -184,45 +201,65 @@ const formatDate = (dateString: string) => {
                             <table class="w-full">
                                 <thead>
                                     <tr class="border-b border-zinc-200 dark:border-zinc-800">
-                                        <th class="text-left py-3 px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">Nama</th>
-                                        <th class="text-left py-3 px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">Email</th>
-                                        <th class="text-left py-3 px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">Role</th>
-                                        <th class="text-left py-3 px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">Cabang</th>
-                                        <th class="text-left py-3 px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">Tanggal Dibuat</th>
-                                        <th class="text-right py-3 px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">Aksi</th>
+                                        <th
+                                            class="text-left py-3 px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                                            Nama</th>
+                                        <th
+                                            class="text-left py-3 px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                                            Email</th>
+                                        <th
+                                            class="text-left py-3 px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                                            Role</th>
+                                        <th
+                                            class="text-left py-3 px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                                            Cabang</th>
+                                        <th
+                                            class="text-left py-3 px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                                            Tanggal Dibuat</th>
+                                        <th
+                                            class="text-right py-3 px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                                            Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="user in users" :key="user.id" class="border-b border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
+                                    <tr v-for="user in users" :key="user.id"
+                                        class="border-b border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
                                         <td class="py-3 px-4">
                                             <div class="flex items-center gap-3">
-                                                <div class="h-9 w-9 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                                                <div
+                                                    class="h-9 w-9 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
                                                     <User class="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                                                 </div>
-                                                <span class="text-sm font-medium text-zinc-900 dark:text-white">{{ user.name }}</span>
+                                                <span class="text-sm font-medium text-zinc-900 dark:text-white">{{
+                                                    user.name }}</span>
                                             </div>
                                         </td>
-                                        <td class="py-3 px-4 text-sm text-zinc-600 dark:text-zinc-300">{{ user.email }}</td>
+                                        <td class="py-3 px-4 text-sm text-zinc-600 dark:text-zinc-300">{{ user.email }}
+                                        </td>
                                         <td class="py-3 px-4">
                                             <Badge :variant="user.role === 'admin' ? 'default' : 'secondary'">
                                                 {{ user.role === 'admin' ? 'Admin' : 'Cashier' }}
                                             </Badge>
                                         </td>
                                         <td class="py-3 px-4">
-                                            <div v-if="user.branch" class="flex items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-300">
+                                            <div v-if="user.branch"
+                                                class="flex items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-300">
                                                 <MapPin class="h-3.5 w-3.5 text-zinc-400" />
                                                 {{ user.branch.nama }}
                                             </div>
                                             <span v-else class="text-sm text-zinc-400 dark:text-zinc-500">-</span>
                                         </td>
-                                        <td class="py-3 px-4 text-sm text-zinc-600 dark:text-zinc-300">{{ formatDate(user.created_at) }}</td>
+                                        <td class="py-3 px-4 text-sm text-zinc-600 dark:text-zinc-300">{{
+                                            formatDate(user.created_at) }}</td>
                                         <td class="py-3 px-4">
                                             <div class="flex justify-end gap-2">
-                                                <Button variant="outline" size="sm" class="gap-1.5" @click="openEditModal(user)">
+                                                <Button variant="outline" size="sm" class="gap-1.5"
+                                                    @click="openEditModal(user)">
                                                     <Pencil class="h-3.5 w-3.5" />
                                                     Edit
                                                 </Button>
-                                                <Button variant="destructive" size="sm" class="gap-1.5" @click="openDeleteDialog(user)">
+                                                <Button variant="destructive" size="sm" class="gap-1.5"
+                                                    @click="openDeleteDialog(user)">
                                                     <Trash2 class="h-3.5 w-3.5" />
                                                     Hapus
                                                 </Button>
@@ -230,7 +267,8 @@ const formatDate = (dateString: string) => {
                                         </td>
                                     </tr>
                                     <tr v-if="users.length === 0">
-                                        <td colspan="6" class="py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
+                                        <td colspan="6"
+                                            class="py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
                                             Belum ada data karyawan
                                         </td>
                                     </tr>
@@ -253,60 +291,37 @@ const formatDate = (dateString: string) => {
                     <form @submit.prevent="submitCreate" class="space-y-4">
                         <div class="space-y-2">
                             <Label for="create-name">Nama Lengkap</Label>
-                            <Input
-                                id="create-name"
-                                v-model="createForm.name"
-                                type="text"
-                                placeholder="Masukkan nama lengkap"
-                                required
-                            />
+                            <Input id="create-name" v-model="createForm.name" type="text"
+                                placeholder="Masukkan nama lengkap" required />
                             <InputError :message="createForm.errors.name" />
                         </div>
 
                         <div class="space-y-2">
                             <Label for="create-email">Email</Label>
-                            <Input
-                                id="create-email"
-                                v-model="createForm.email"
-                                type="email"
-                                placeholder="email@example.com"
-                                required
-                            />
+                            <Input id="create-email" v-model="createForm.email" type="email"
+                                placeholder="email@example.com" required />
                             <InputError :message="createForm.errors.email" />
                         </div>
 
                         <div class="space-y-2">
                             <Label for="create-password">Password</Label>
-                            <Input
-                                id="create-password"
-                                v-model="createForm.password"
-                                type="password"
-                                placeholder="Minimal 8 karakter"
-                                required
-                            />
+                            <Input id="create-password" v-model="createForm.password" type="password"
+                                placeholder="Minimal 8 karakter" required />
                             <InputError :message="createForm.errors.password" />
                         </div>
 
                         <div class="space-y-2">
                             <Label for="create-password-confirmation">Konfirmasi Password</Label>
-                            <Input
-                                id="create-password-confirmation"
-                                v-model="createForm.password_confirmation"
-                                type="password"
-                                placeholder="Ulangi password"
-                                required
-                            />
+                            <Input id="create-password-confirmation" v-model="createForm.password_confirmation"
+                                type="password" placeholder="Ulangi password" required />
                             <InputError :message="createForm.errors.password_confirmation" />
                         </div>
 
                         <div class="space-y-2">
                             <Label for="create-role">Role</Label>
-                            <select
-                                id="create-role"
-                                v-model="createForm.role"
+                            <select id="create-role" v-model="createForm.role"
                                 class="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-600"
-                                required
-                            >
+                                required>
                                 <option value="admin">Admin</option>
                                 <option value="cashier">Cashier</option>
                             </select>
@@ -315,17 +330,15 @@ const formatDate = (dateString: string) => {
 
                         <div class="space-y-2">
                             <Label for="create-branch">Cabang</Label>
-                            <select
-                                id="create-branch"
-                                v-model="createForm.branch_id"
-                                class="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-600"
-                            >
+                            <select id="create-branch" v-model="createForm.branch_id"
+                                class="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-600">
                                 <option :value="null">-- Tidak ada cabang --</option>
                                 <option v-for="branch in branches" :key="branch.id" :value="branch.id">
                                     {{ branch.nama }}
                                 </option>
                             </select>
-                            <p class="text-xs text-zinc-500 dark:text-zinc-400">Pilih cabang untuk karyawan (opsional untuk admin)</p>
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400">Pilih cabang untuk karyawan (opsional
+                                untuk admin)</p>
                             <InputError :message="createForm.errors.branch_id" />
                         </div>
 
@@ -352,59 +365,39 @@ const formatDate = (dateString: string) => {
                     <form @submit.prevent="submitEdit" class="space-y-4">
                         <div class="space-y-2">
                             <Label for="edit-name">Nama Lengkap</Label>
-                            <Input
-                                id="edit-name"
-                                v-model="editForm.name"
-                                type="text"
-                                placeholder="Masukkan nama lengkap"
-                                required
-                            />
+                            <Input id="edit-name" v-model="editForm.name" type="text"
+                                placeholder="Masukkan nama lengkap" required />
                             <InputError :message="editForm.errors.name" />
                         </div>
 
                         <div class="space-y-2">
                             <Label for="edit-email">Email</Label>
-                            <Input
-                                id="edit-email"
-                                v-model="editForm.email"
-                                type="email"
-                                placeholder="email@example.com"
-                                required
-                            />
+                            <Input id="edit-email" v-model="editForm.email" type="email" placeholder="email@example.com"
+                                required />
                             <InputError :message="editForm.errors.email" />
                         </div>
 
                         <div class="space-y-2">
                             <Label for="edit-password">Password Baru</Label>
-                            <Input
-                                id="edit-password"
-                                v-model="editForm.password"
-                                type="password"
-                                placeholder="Kosongkan jika tidak ingin mengubah"
-                            />
-                            <p class="text-xs text-zinc-500 dark:text-zinc-400">Kosongkan jika tidak ingin mengubah password</p>
+                            <Input id="edit-password" v-model="editForm.password" type="password"
+                                placeholder="Kosongkan jika tidak ingin mengubah" />
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400">Kosongkan jika tidak ingin mengubah
+                                password</p>
                             <InputError :message="editForm.errors.password" />
                         </div>
 
                         <div class="space-y-2">
                             <Label for="edit-password-confirmation">Konfirmasi Password Baru</Label>
-                            <Input
-                                id="edit-password-confirmation"
-                                v-model="editForm.password_confirmation"
-                                type="password"
-                                placeholder="Ulangi password baru"
-                            />
+                            <Input id="edit-password-confirmation" v-model="editForm.password_confirmation"
+                                type="password" placeholder="Ulangi password baru" />
                             <InputError :message="editForm.errors.password_confirmation" />
                         </div>
 
                         <div class="space-y-2">
                             <Label for="edit-role">Role</Label>
-                            <select
-                                id="edit-role"
-                                v-model="editForm.role"
+                            <select id="edit-role" v-model="editForm.role"
                                 class="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-600"
-                                required
-                            >
+                                required>
                                 <option value="admin">Admin</option>
                                 <option value="cashier">Cashier</option>
                             </select>
@@ -413,17 +406,15 @@ const formatDate = (dateString: string) => {
 
                         <div class="space-y-2">
                             <Label for="edit-branch">Cabang</Label>
-                            <select
-                                id="edit-branch"
-                                v-model="editForm.branch_id"
-                                class="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-600"
-                            >
+                            <select id="edit-branch" v-model="editForm.branch_id"
+                                class="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-600">
                                 <option :value="null">-- Tidak ada cabang --</option>
                                 <option v-for="branch in branches" :key="branch.id" :value="branch.id">
                                     {{ branch.nama }}
                                 </option>
                             </select>
-                            <p class="text-xs text-zinc-500 dark:text-zinc-400">Pilih cabang untuk karyawan (opsional untuk admin)</p>
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400">Pilih cabang untuk karyawan (opsional
+                                untuk admin)</p>
                             <InputError :message="editForm.errors.branch_id" />
                         </div>
 
@@ -444,7 +435,7 @@ const formatDate = (dateString: string) => {
                     <DialogHeader>
                         <DialogTitle>Hapus Karyawan</DialogTitle>
                         <DialogDescription>
-                            Apakah Anda yakin ingin menghapus karyawan <strong>{{ userToDelete?.name }}</strong>? 
+                            Apakah Anda yakin ingin menghapus karyawan <strong>{{ userToDelete?.name }}</strong>?
                             Tindakan ini tidak dapat dibatalkan.
                         </DialogDescription>
                     </DialogHeader>

@@ -1,561 +1,1018 @@
-<html lang="id"><head>
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roti Bakar - Central POS Dashboard</title>
+    <title>Roti Bakar - Central POS</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        orange: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#7c2d12',
+                            950: '#431407',
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+    
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #09090b; /* Zinc 950 */
-        }
-        /* Custom scrollbar matching the dark theme */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #09090b;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #27272a;
-            border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #3f3f46;
-        }
+        body { font-family: 'Inter', sans-serif; }
         
-        /* Hide scrollbar util */
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #09090b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+        
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Smooth fade transition */
-        .fade-in {
-            animation: fadeIn 0.3s ease-in-out;
-        }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(5px); }
             to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
-<body class="bg-zinc-950 text-zinc-50 antialiased selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden flex h-screen">
+<body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 antialiased selection:bg-orange-500/30 selection:text-orange-200 overflow-hidden flex h-screen">
 
-    <!-- Sidebar Navigation -->
-    <aside class="w-64 border-r border-zinc-800 bg-zinc-950 flex flex-col justify-between hidden md:flex transition-all">
-        <div class="p-6">
-            <!-- Logo -->
-            <div class="flex items-center gap-2 mb-8 cursor-pointer" onclick="switchTab('dashboard')">
-                <div class="h-8 w-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center shadow-lg shadow-orange-900/20">
-                    <span class="font-semibold text-white text-lg tracking-tighter">R</span>
-                </div>
-                <h1 class="font-semibold text-lg tracking-tight text-zinc-100">ROTI BAKAR.</h1>
-            </div>
-
-            <!-- Branch Selector -->
-            <div class="mb-8">
-                <label class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2 block">Lokasi Cabang</label>
-                <button class="w-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-left px-3 py-2 rounded-md flex items-center justify-between transition-colors group">
-                    <div class="flex items-center gap-2">
-                        <div class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
-                        <span class="text-sm text-zinc-300 font-medium group-hover:text-white">Semua Cabang (6)</span>
+    <div id="app" class="flex h-full w-full">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="w-64 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex flex-col justify-between hidden md:flex transition-all">
+            <div class="p-6">
+                <!-- Logo -->
+                <div class="flex items-center gap-2 mb-8 cursor-pointer" @click="activeTab = 'dashboard'">
+                    <div class="h-8 w-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center shadow-lg shadow-orange-900/20">
+                        <span class="font-semibold text-white text-lg tracking-tighter">R</span>
                     </div>
-                    <i data-lucide="chevrons-up-down" class="text-zinc-500 h-4 w-4"></i>
-                </button>
+                    <h1 class="font-semibold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">ROTI BAKAR.</h1>
+                </div>
+
+                <!-- Branch Selector -->
+                <div class="mb-8">
+                    <label class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2 block">Lokasi Cabang</label>
+                    <button class="w-full bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-left px-3 py-2 rounded-md flex items-center justify-between transition-colors group">
+                        <div class="flex items-center gap-2">
+                            <div class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+                            <span class="text-sm text-zinc-700 dark:text-zinc-300 font-medium group-hover:text-black dark:group-hover:text-white">Semua Cabang (6)</span>
+                        </div>
+                        <i data-lucide="chevrons-up-down" class="text-zinc-500 h-4 w-4"></i>
+                    </button>
+                </div>
+
+                <!-- Navigation Links -->
+                <nav class="space-y-1">
+                    <button @click="activeTab = 'dashboard'" :class="activeTab === 'dashboard' ? 'text-orange-600 dark:text-white bg-orange-50 dark:bg-zinc-900/50 border-orange-200 dark:border-zinc-800/50' : 'text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 border-transparent'" class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium border rounded-md transition-all">
+                        <i data-lucide="layout-dashboard" :class="activeTab === 'dashboard' ? 'text-orange-500' : ''" class="h-4 w-4"></i>
+                        Dashboard
+                    </button>
+                    <button @click="activeTab = 'pos'" :class="activeTab === 'pos' ? 'text-orange-600 dark:text-white bg-orange-50 dark:bg-zinc-900/50 border-orange-200 dark:border-zinc-800/50' : 'text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 border-transparent'" class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium border rounded-md transition-all">
+                        <i data-lucide="shopping-bag" :class="activeTab === 'pos' ? 'text-orange-500' : ''" class="h-4 w-4"></i>
+                        Penjualan (POS)
+                    </button>
+                    <!-- UPDATED MENU: DAFTAR MENU (Includes Categories) -->
+                    <button @click="activeTab = 'products'" :class="activeTab === 'products' ? 'text-orange-600 dark:text-white bg-orange-50 dark:bg-zinc-900/50 border-orange-200 dark:border-zinc-800/50' : 'text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 border-transparent'" class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium border rounded-md transition-all">
+                        <i data-lucide="coffee" :class="activeTab === 'products' ? 'text-orange-500' : ''" class="h-4 w-4"></i>
+                        Manajemen Menu
+                    </button>
+                    <button @click="activeTab = 'branches'" :class="activeTab === 'branches' ? 'text-orange-600 dark:text-white bg-orange-50 dark:bg-zinc-900/50 border-orange-200 dark:border-zinc-800/50' : 'text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 border-transparent'" class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium border rounded-md transition-all">
+                        <i data-lucide="store" :class="activeTab === 'branches' ? 'text-orange-500' : ''" class="h-4 w-4"></i>
+                        Manajemen Cabang
+                    </button>
+                    <button @click="activeTab = 'inventory'" :class="activeTab === 'inventory' ? 'text-orange-600 dark:text-white bg-orange-50 dark:bg-zinc-900/50 border-orange-200 dark:border-zinc-800/50' : 'text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 border-transparent'" class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium border rounded-md transition-all">
+                        <i data-lucide="package" :class="activeTab === 'inventory' ? 'text-orange-500' : ''" class="h-4 w-4"></i>
+                        Stok Bahan
+                    </button>
+                    <button @click="activeTab = 'employees'" :class="activeTab === 'employees' ? 'text-orange-600 dark:text-white bg-orange-50 dark:bg-zinc-900/50 border-orange-200 dark:border-zinc-800/50' : 'text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 border-transparent'" class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium border rounded-md transition-all">
+                        <i data-lucide="users" :class="activeTab === 'employees' ? 'text-orange-500' : ''" class="h-4 w-4"></i>
+                        Karyawan
+                    </button>
+                </nav>
             </div>
 
-            <!-- Navigation Links -->
-            <nav class="space-y-1">
-                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-white bg-zinc-900/50 border border-zinc-800/50 rounded-md transition-all">
-                    <i data-lucide="layout-dashboard" class="h-4 w-4 text-orange-400"></i>
-                    Dashboard
-                </button>
-                <button onclick="switchTab('pos')" id="nav-pos" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md transition-all border border-transparent">
-                    <i data-lucide="shopping-bag" class="h-4 w-4"></i>
-                    Penjualan (POS)
-                </button>
-                <button onclick="switchTab('inventory')" id="nav-inventory" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md transition-all border border-transparent">
-                    <i data-lucide="package" class="h-4 w-4"></i>
-                    Stok Bahan
-                </button>
-                <button onclick="switchTab('employees')" id="nav-employees" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md transition-all border border-transparent">
-                    <i data-lucide="users" class="h-4 w-4"></i>
-                    Karyawan
-                </button>
-                <button onclick="switchTab('reports')" id="nav-reports" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md transition-all border border-transparent">
-                    <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
-                    Laporan
-                </button>
-            </nav>
-        </div>
-
-        <div class="p-6 border-t border-zinc-800">
-            <button onclick="switchTab('settings')" id="nav-settings" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md transition-all border border-transparent">
-                <i data-lucide="settings" class="h-4 w-4"></i>
-                Pengaturan
-            </button>
-            <div class="flex items-center gap-3 mt-4 px-3 pt-2">
-                <div class="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-medium text-zinc-400 border border-zinc-700">
-                    AD
-                </div>
-                <div class="flex flex-col text-left">
-                    <span class="text-sm font-medium text-zinc-200">Admin Pusat</span>
-                    <span class="text-xs text-zinc-500">owner@rotibakar.id</span>
-                </div>
-            </div>
-        </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
-        <!-- Top Bar -->
-        <header class="h-16 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-md flex items-center justify-between px-6 sticky top-0 z-20">
-            <div class="flex items-center gap-4">
-                <button class="md:hidden text-zinc-400">
-                    <i data-lucide="menu" class="h-5 w-5"></i>
-                </button>
-                <div class="flex flex-col">
-                    <h2 id="page-title" class="text-sm font-medium text-zinc-100">Ringkasan Bisnis</h2>
-                    <span class="text-xs text-zinc-500">Selasa, 24 Oktober 2023 • <span class="text-green-500">Online</span></span>
+            <div class="p-6 border-t border-zinc-200 dark:border-zinc-800">
+                <div class="flex items-center gap-3 px-3 pt-2">
+                    <div class="h-8 w-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-medium text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+                        AD
+                    </div>
+                    <div class="flex flex-col text-left">
+                        <span class="text-sm font-medium text-zinc-900 dark:text-zinc-200">Admin Pusat</span>
+                        <span class="text-xs text-zinc-500">owner@rotibakar.id</span>
+                    </div>
                 </div>
             </div>
-            <div class="flex items-center gap-4">
-                <button class="flex items-center gap-2 bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs px-3 py-1.5 rounded-full hover:bg-zinc-800 transition-colors">
-                    <i data-lucide="download" class="h-3 w-3"></i>
-                    Ekspor Data
-                </button>
-                <button class="relative text-zinc-400 hover:text-white transition-colors">
-                    <i data-lucide="bell" class="h-5 w-5"></i>
-                    <span class="absolute top-0 right-0 h-2 w-2 rounded-full bg-orange-500 border border-zinc-950"></span>
-                </button>
-            </div>
-        </header>
+        </aside>
 
-        <!-- Content Area with Multiple Views -->
-        <div id="content-area" class="flex-1 overflow-y-auto p-6 custom-scrollbar bg-zinc-950">
-            
-            <!-- VIEW: DASHBOARD -->
-            <div id="view-dashboard" class="space-y-6 fade-in">
-                <!-- Key Metrics Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <!-- Card 1 -->
-                    <div class="bg-zinc-900/40 border border-zinc-800/60 p-5 rounded-xl hover:bg-zinc-900/60 transition-colors group">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="p-2 bg-zinc-800/50 rounded-lg text-zinc-400 group-hover:text-orange-400 transition-colors">
-                                <i data-lucide="banknote" class="h-5 w-5"></i>
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden relative transition-colors duration-300">
+            <!-- Top Bar -->
+            <header class="h-16 border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md flex items-center justify-between px-6 sticky top-0 z-20">
+                <div class="flex items-center gap-4">
+                    <button class="md:hidden text-zinc-500 dark:text-zinc-400">
+                        <i data-lucide="menu" class="h-5 w-5"></i>
+                    </button>
+                    <div class="flex flex-col">
+                        <h2 class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ pageTitle }}</h2>
+                        <span class="text-xs text-zinc-500">Selasa, 24 Oktober 2023 • <span class="text-green-500">Online</span></span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                     <!-- Dark Mode Toggle -->
+                     <button @click="toggleDarkMode" class="text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                        <i :data-lucide="isDark ? 'sun' : 'moon'" class="h-5 w-5"></i>
+                    </button>
+                    <button class="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-300 text-xs px-3 py-1.5 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors">
+                        <i data-lucide="download" class="h-3 w-3"></i>
+                        Ekspor Data
+                    </button>
+                    <button class="relative text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                        <i data-lucide="bell" class="h-5 w-5"></i>
+                        <span class="absolute top-0 right-0 h-2 w-2 rounded-full bg-orange-500 border border-white dark:border-zinc-950"></span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="flex-1 overflow-y-auto p-6 custom-scrollbar bg-zinc-50 dark:bg-zinc-950 relative">
+                
+                <!-- VIEW: DASHBOARD -->
+                <div v-if="activeTab === 'dashboard'" class="space-y-6 fade-in">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                         <!-- Card 1 -->
+                         <div class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-5 rounded-xl">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="p-2 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg text-zinc-500 dark:text-zinc-400">
+                                    <i data-lucide="banknote" class="h-5 w-5"></i>
+                                </div>
+                                <span class="text-xs font-medium text-green-500 bg-green-100 dark:bg-green-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                    <i data-lucide="trending-up" class="h-3 w-3"></i> +12%
+                                </span>
                             </div>
-                            <span class="text-xs font-medium text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <i data-lucide="trending-up" class="h-3 w-3"></i> +12%
-                            </span>
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="text-zinc-500 text-xs font-medium mb-1">Total Pendapatan (Hari Ini)</span>
-                            <h3 class="text-2xl font-semibold tracking-tight text-white">Rp 8.450.000</h3>
+                            <div class="flex flex-col">
+                                <span class="text-zinc-500 text-xs font-medium mb-1">Total Pendapatan</span>
+                                <h3 class="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">Rp 8.450.000</h3>
+                            </div>
                         </div>
                     </div>
-
-                    <!-- Card 2 -->
-                    <div class="bg-zinc-900/40 border border-zinc-800/60 p-5 rounded-xl hover:bg-zinc-900/60 transition-colors group">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="p-2 bg-zinc-800/50 rounded-lg text-zinc-400 group-hover:text-blue-400 transition-colors">
-                                <i data-lucide="receipt" class="h-5 w-5"></i>
-                            </div>
-                            <span class="text-xs font-medium text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <i data-lucide="trending-up" class="h-3 w-3"></i> +5%
-                            </span>
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="text-zinc-500 text-xs font-medium mb-1">Total Transaksi</span>
-                            <h3 class="text-2xl font-semibold tracking-tight text-white">342 <span class="text-sm font-normal text-zinc-500">Nota</span></h3>
-                        </div>
-                    </div>
-
-                    <!-- Card 3 -->
-                    <div class="bg-zinc-900/40 border border-zinc-800/60 p-5 rounded-xl hover:bg-zinc-900/60 transition-colors group">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="p-2 bg-zinc-800/50 rounded-lg text-zinc-400 group-hover:text-purple-400 transition-colors">
-                                <i data-lucide="store" class="h-5 w-5"></i>
-                            </div>
-                            <span class="text-xs font-medium text-zinc-500">Live Status</span>
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="text-zinc-500 text-xs font-medium mb-1">Cabang Aktif</span>
-                            <h3 class="text-2xl font-semibold tracking-tight text-white">6 <span class="text-sm font-normal text-zinc-500">/ 6 Buka</span></h3>
-                        </div>
-                    </div>
-
-                    <!-- Card 4 -->
-                    <div class="bg-zinc-900/40 border border-zinc-800/60 p-5 rounded-xl hover:bg-zinc-900/60 transition-colors group cursor-pointer relative overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-tr from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <div class="flex justify-between items-start mb-4 relative z-10">
-                            <div class="p-2 bg-zinc-800/50 rounded-lg text-zinc-400 group-hover:text-red-400 transition-colors">
-                                <i data-lucide="alert-circle" class="h-5 w-5"></i>
-                            </div>
-                            <span class="text-xs font-medium text-red-400 bg-red-400/10 px-2 py-0.5 rounded-full">Perhatian</span>
-                        </div>
-                        <div class="flex flex-col relative z-10">
-                            <span class="text-zinc-500 text-xs font-medium mb-1">Peringatan Stok</span>
-                            <h3 class="text-lg font-medium tracking-tight text-white">Coklat (Cabang 3)</h3>
-                            <span class="text-xs text-zinc-400 mt-1">Sisa &lt; 2 Kg</span>
-                        </div>
+                    <div class="bg-white dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/60 rounded-xl p-8 text-center">
+                        <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-200">Selamat Datang di Dashboard Pusat</h3>
+                        <p class="text-sm text-zinc-500 mt-2">Gunakan menu di sidebar untuk mengelola cabang, POS, stok, dan karyawan.</p>
                     </div>
                 </div>
 
-                <!-- Dashboard Layout -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Left: Table -->
-                    <div class="lg:col-span-2 bg-zinc-900/30 border border-zinc-800/60 rounded-xl p-6">
-                        <div class="flex items-center justify-between mb-6">
-                            <h3 class="text-sm font-medium text-zinc-200">Performa Cabang</h3>
-                            <div class="flex bg-zinc-900 border border-zinc-800 rounded-md p-0.5">
-                                <button class="px-3 py-1 text-xs font-medium text-zinc-900 bg-white rounded shadow-sm">Omzet</button>
-                                <button class="px-3 py-1 text-xs font-medium text-zinc-500 hover:text-zinc-300">Transaksi</button>
+                <!-- VIEW: MANAJEMEN MENU (Unified) -->
+                <div v-if="activeTab === 'products'" class="h-full space-y-6 fade-in flex flex-col">
+                    
+                    <!-- Internal Tabs for Menu Management -->
+                    <div class="flex gap-4 border-b border-zinc-200 dark:border-zinc-800 mb-2">
+                        <button @click="productTab = 'items'" :class="productTab === 'items' ? 'text-orange-600 dark:text-orange-500 border-orange-500' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 border-transparent'" class="pb-3 text-sm font-medium border-b-2 transition-colors">
+                            Daftar Menu
+                        </button>
+                        <button @click="productTab = 'categories'" :class="productTab === 'categories' ? 'text-orange-600 dark:text-orange-500 border-orange-500' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 border-transparent'" class="pb-3 text-sm font-medium border-b-2 transition-colors">
+                            Kategori Menu
+                        </button>
+                    </div>
+
+                    <!-- SUB-VIEW: ITEM LIST -->
+                    <div v-if="productTab === 'items'" class="flex flex-col gap-6 fade-in">
+                        <div class="flex justify-between items-center">
+                            <div class="flex gap-2">
+                                <input type="text" placeholder="Cari menu roti..."
+                                    class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 w-64 shadow-sm dark:shadow-none placeholder:text-zinc-400">
+                                
+                                <select v-model="filterCategory" class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 shadow-sm dark:shadow-none">
+                                    <option value="">Semua Kategori</option>
+                                    <option v-for="cat in categories" :key="cat.value" :value="cat.value">{{ cat.name }}</option>
+                                </select>
                             </div>
+                            <button @click="openProductModal()" class="bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
+                                <i data-lucide="plus" class="h-4 w-4"></i> Tambah Menu
+                            </button>
                         </div>
-                        <div class="overflow-x-auto">
+
+                        <div class="bg-white dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/60 rounded-xl overflow-hidden shadow-sm dark:shadow-none">
                             <table class="w-full text-left text-sm">
-                                <thead>
-                                    <tr class="border-b border-zinc-800 text-xs text-zinc-500 uppercase tracking-wider">
-                                        <th class="pb-3 font-medium pl-2">Cabang</th>
-                                        <th class="pb-3 font-medium text-center">Status</th>
-                                        <th class="pb-3 font-medium text-right">Omzet</th>
-                                        <th class="pb-3 font-medium text-right pr-2">Aksi</th>
+                                <thead class="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
+                                    <tr class="text-xs text-zinc-500 uppercase tracking-wider">
+                                        <th class="py-3 px-6 font-medium">Gambar</th>
+                                        <th class="py-3 px-6 font-medium">Nama Menu</th>
+                                        <th class="py-3 px-6 font-medium">Kategori</th>
+                                        <th class="py-3 px-6 font-medium text-right">Harga</th>
+                                        <th class="py-3 px-6 font-medium text-center">Stok Harian</th>
+                                        <th class="py-3 px-6 font-medium text-right">Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-zinc-800/50">
-                                    <tr class="group hover:bg-zinc-900/40">
-                                        <td class="py-4 pl-2"><span class="text-zinc-200">Jakarta Selatan</span></td>
-                                        <td class="py-4 text-center"><span class="inline-block h-2 w-2 rounded-full bg-green-500"></span></td>
-                                        <td class="py-4 text-right text-zinc-300">Rp 2.450.000</td>
-                                        <td class="py-4 text-right pr-2"><i data-lucide="arrow-right" class="h-4 w-4 inline text-zinc-600"></i></td>
+                                <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800/50">
+                                    <tr v-for="item in filteredProducts" :key="item.id" class="hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors">
+                                        <td class="py-3 px-6">
+                                            <div class="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center text-lg shadow-sm border border-zinc-200 dark:border-zinc-700">
+                                                {{ item.icon }}
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-6">
+                                            <div class="flex flex-col">
+                                                <span class="text-zinc-900 dark:text-zinc-200 font-medium">{{ item.name }}</span>
+                                                <span class="text-xs text-zinc-500">ID: #MENU-{{ item.id }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-6">
+                                            <span class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded text-xs border border-zinc-200 dark:border-zinc-700">{{ item.categoryDisplay }}</span>
+                                        </td>
+                                        <td class="py-3 px-6 text-right font-medium text-zinc-900 dark:text-zinc-200">{{ formatRupiah(item.price) }}</td>
+                                        <td class="py-3 px-6 text-center">
+                                            <span :class="item.stock < 10 ? 'text-red-500 font-medium' : 'text-zinc-500'">{{ item.stock }} Porsi</span>
+                                        </td>
+                                        <td class="py-3 px-6 text-right">
+                                            <div class="flex justify-end gap-2">
+                                                <button @click="openProductModal(item)" class="p-1.5 text-zinc-500 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-500/10 rounded transition-colors" title="Edit">
+                                                    <i data-lucide="pencil" class="h-4 w-4"></i>
+                                                </button>
+                                                <button @click="deleteProduct(item.id)" class="p-1.5 text-zinc-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors" title="Hapus">
+                                                    <i data-lucide="trash-2" class="h-4 w-4"></i>
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
-                                    <tr class="group hover:bg-zinc-900/40">
-                                        <td class="py-4 pl-2"><span class="text-zinc-200">Tangerang</span></td>
-                                        <td class="py-4 text-center"><span class="inline-block h-2 w-2 rounded-full bg-green-500"></span></td>
-                                        <td class="py-4 text-right text-zinc-300">Rp 1.850.000</td>
-                                        <td class="py-4 text-right pr-2"><i data-lucide="arrow-right" class="h-4 w-4 inline text-zinc-600"></i></td>
-                                    </tr>
-                                    <tr class="group hover:bg-zinc-900/40">
-                                        <td class="py-4 pl-2"><span class="text-zinc-200">Bekasi Barat</span></td>
-                                        <td class="py-4 text-center"><span class="inline-block h-2 w-2 rounded-full bg-yellow-500"></span></td>
-                                        <td class="py-4 text-right text-zinc-300">Rp 920.000</td>
-                                        <td class="py-4 text-right pr-2"><i data-lucide="arrow-right" class="h-4 w-4 inline text-zinc-600"></i></td>
+                                    <tr v-if="filteredProducts.length === 0">
+                                        <td colspan="6" class="py-8 text-center text-zinc-500">Tidak ada menu yang ditemukan.</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                    <!-- Right: Feed -->
-                    <div class="bg-zinc-900/30 border border-zinc-800/60 rounded-xl p-6 flex-1">
-                        <h3 class="text-sm font-medium text-zinc-200 mb-4">Pesanan Terakhir</h3>
-                        <div class="space-y-4 relative">
-                            <div class="absolute left-2 top-2 bottom-2 w-px bg-zinc-800"></div>
-                            <div class="relative pl-6">
-                                <div class="absolute left-0 top-1.5 h-4 w-4 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center z-10"><div class="h-1.5 w-1.5 rounded-full bg-orange-500"></div></div>
-                                <p class="text-sm text-zinc-200">Roti Coklat Keju</p>
-                                <p class="text-xs text-zinc-500">Baru saja • Rp 25k</p>
-                            </div>
-                            <div class="relative pl-6">
-                                <div class="absolute left-0 top-1.5 h-4 w-4 rounded-full bg-zinc-900 border border-zinc-700 z-10"></div>
-                                <p class="text-sm text-zinc-300">Roti Spesial Komplit</p>
-                                <p class="text-xs text-zinc-500">2 min lalu • Rp 35k</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- VIEW: POS (PENJUALAN) -->
-            <div id="view-pos" class="hidden h-full flex flex-col md:flex-row gap-6 fade-in">
-                <!-- Product Grid -->
-                <div class="flex-1 flex flex-col h-full">
-                    <div class="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
-                        <button class="bg-zinc-100 text-zinc-900 px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap">Semua Menu</button>
-                        <button class="bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors">Roti Manis</button>
-                        <button class="bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors">Roti Asin</button>
-                        <button class="bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors">Minuman</button>
-                    </div>
+                    <!-- SUB-VIEW: CATEGORY LIST -->
+                    <div v-if="productTab === 'categories'" class="flex flex-col gap-6 fade-in">
+                        <div class="flex justify-between items-center">
+                            <div class="flex flex-col">
+                                <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100">Kategori Menu</h3>
+                                <p class="text-sm text-zinc-500">Kelola kategori untuk pengelompokan produk.</p>
+                            </div>
+                            <button @click="openCategoryModal()" class="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border border-transparent hover:opacity-90 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
+                                <i data-lucide="plus" class="h-4 w-4"></i> Tambah Kategori
+                            </button>
+                        </div>
 
-                    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 overflow-y-auto pb-20 md:pb-0 pr-2 custom-scrollbar">
-                        <!-- Product Card 1 -->
-                        <div class="bg-zinc-900/40 border border-zinc-800/60 p-4 rounded-xl hover:bg-zinc-800/40 cursor-pointer transition-all group">
-                            <div class="h-32 bg-zinc-800 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
-                                <div class="absolute inset-0 bg-gradient-to-tr from-orange-900/20 to-transparent"></div>
-                                <span class="text-4xl">🍞</span>
-                            </div>
-                            <h4 class="text-sm font-medium text-zinc-200">Coklat Keju</h4>
-                            <div class="flex justify-between items-center mt-2">
-                                <span class="text-xs text-zinc-500">Stok: 12</span>
-                                <span class="text-sm font-semibold text-orange-400">Rp 22k</span>
-                            </div>
-                        </div>
-                        <!-- Product Card 2 -->
-                        <div class="bg-zinc-900/40 border border-zinc-800/60 p-4 rounded-xl hover:bg-zinc-800/40 cursor-pointer transition-all group">
-                            <div class="h-32 bg-zinc-800 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
-                                <div class="absolute inset-0 bg-gradient-to-tr from-yellow-900/20 to-transparent"></div>
-                                <span class="text-4xl">🧀</span>
-                            </div>
-                            <h4 class="text-sm font-medium text-zinc-200">Keju Susu</h4>
-                            <div class="flex justify-between items-center mt-2">
-                                <span class="text-xs text-zinc-500">Stok: 24</span>
-                                <span class="text-sm font-semibold text-orange-400">Rp 18k</span>
-                            </div>
-                        </div>
-                         <!-- Product Card 3 -->
-                         <div class="bg-zinc-900/40 border border-zinc-800/60 p-4 rounded-xl hover:bg-zinc-800/40 cursor-pointer transition-all group">
-                            <div class="h-32 bg-zinc-800 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
-                                <div class="absolute inset-0 bg-gradient-to-tr from-green-900/20 to-transparent"></div>
-                                <span class="text-4xl">🧇</span>
-                            </div>
-                            <h4 class="text-sm font-medium text-zinc-200">Srikaya Pandan</h4>
-                            <div class="flex justify-between items-center mt-2">
-                                <span class="text-xs text-zinc-500">Stok: 8</span>
-                                <span class="text-sm font-semibold text-orange-400">Rp 20k</span>
-                            </div>
-                        </div>
-                         <!-- Product Card 4 -->
-                         <div class="bg-zinc-900/40 border border-zinc-800/60 p-4 rounded-xl hover:bg-zinc-800/40 cursor-pointer transition-all group">
-                            <div class="h-32 bg-zinc-800 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
-                                <div class="absolute inset-0 bg-gradient-to-tr from-red-900/20 to-transparent"></div>
-                                <span class="text-4xl">🥩</span>
-                            </div>
-                            <h4 class="text-sm font-medium text-zinc-200">Daging Telur</h4>
-                            <div class="flex justify-between items-center mt-2">
-                                <span class="text-xs text-zinc-500">Stok: 15</span>
-                                <span class="text-sm font-semibold text-orange-400">Rp 28k</span>
-                            </div>
+                        <div class="bg-white dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/60 rounded-xl overflow-hidden shadow-sm dark:shadow-none">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
+                                    <tr class="text-xs text-zinc-500 uppercase tracking-wider">
+                                        <th class="py-3 px-6 font-medium w-16">Ikon</th>
+                                        <th class="py-3 px-6 font-medium">Nama Kategori</th>
+                                        <th class="py-3 px-6 font-medium">Value (ID Sistem)</th>
+                                        <th class="py-3 px-6 font-medium text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800/50">
+                                    <tr v-for="cat in categories" :key="cat.id" class="hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors">
+                                        <td class="py-3 px-6">
+                                            <div class="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center text-lg">
+                                                {{ cat.icon }}
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-6 font-medium text-zinc-900 dark:text-zinc-200">{{ cat.name }}</td>
+                                        <td class="py-3 px-6 text-zinc-500 font-mono text-xs">{{ cat.value }}</td>
+                                        <td class="py-3 px-6 text-right">
+                                            <div class="flex justify-end gap-2">
+                                                <button @click="openCategoryModal(cat)" class="p-1.5 text-zinc-500 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-500/10 rounded transition-colors">
+                                                    <i data-lucide="pencil" class="h-4 w-4"></i>
+                                                </button>
+                                                <button @click="deleteCategory(cat.id)" class="p-1.5 text-zinc-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors">
+                                                    <i data-lucide="trash-2" class="h-4 w-4"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- Cart Panel -->
-                <div class="w-full md:w-80 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col h-[calc(100vh-8rem)]">
-                    <div class="p-4 border-b border-zinc-800">
-                        <h3 class="font-medium text-zinc-200">Pesanan Baru</h3>
-                        <span class="text-xs text-zinc-500">Order #2940</span>
-                    </div>
-                    <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-                        <!-- Cart Item 1 -->
-                        <div class="flex justify-between items-start">
-                            <div class="flex gap-3">
-                                <div class="h-10 w-10 bg-zinc-800 rounded flex items-center justify-center text-lg">🍞</div>
-                                <div>
-                                    <p class="text-sm text-zinc-200 font-medium">Coklat Keju</p>
-                                    <p class="text-xs text-zinc-500">1 x Rp 22.000</p>
-                                </div>
-                            </div>
-                            <p class="text-sm font-medium text-white">Rp 22k</p>
+                <!-- VIEW: BRANCH MANAGEMENT -->
+                <div v-if="activeTab === 'branches'" class="h-full space-y-6 fade-in flex flex-col">
+                    <div class="flex justify-between items-center">
+                        <div class="flex gap-2">
+                            <input type="text" placeholder="Cari cabang..."
+                                class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 w-64 shadow-sm dark:shadow-none placeholder:text-zinc-400">
+                            <button class="bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 px-4 py-2 rounded-lg text-sm border border-zinc-200 dark:border-zinc-700 shadow-sm dark:shadow-none">
+                                <i data-lucide="filter" class="h-4 w-4"></i>
+                            </button>
                         </div>
-                        <!-- Cart Item 2 -->
-                        <div class="flex justify-between items-start">
-                            <div class="flex gap-3">
-                                <div class="h-10 w-10 bg-zinc-800 rounded flex items-center justify-center text-lg">🥤</div>
-                                <div>
-                                    <p class="text-sm text-zinc-200 font-medium">Es Teh Manis</p>
-                                    <p class="text-xs text-zinc-500">2 x Rp 5.000</p>
-                                </div>
-                            </div>
-                            <p class="text-sm font-medium text-white">Rp 10k</p>
-                        </div>
-                    </div>
-                    <div class="p-4 bg-zinc-900 border-t border-zinc-800">
-                        <div class="flex justify-between mb-2 text-sm text-zinc-400">
-                            <span>Subtotal</span>
-                            <span>Rp 32.000</span>
-                        </div>
-                        <div class="flex justify-between mb-4 text-sm text-zinc-400">
-                            <span>Pajak (10%)</span>
-                            <span>Rp 3.200</span>
-                        </div>
-                        <div class="flex justify-between mb-6 text-base font-semibold text-white">
-                            <span>Total</span>
-                            <span>Rp 35.200</span>
-                        </div>
-                        <button class="w-full bg-white hover:bg-zinc-200 text-zinc-950 font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2">
-                            <i data-lucide="printer" class="h-4 w-4"></i> Proses &amp; Cetak
+                        <button @click="showBranchModal = true" class="bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
+                            <i data-lucide="plus" class="h-4 w-4"></i> Tambah Cabang
                         </button>
                     </div>
-                </div>
-            </div>
 
-            <!-- VIEW: INVENTORY -->
-            <div id="view-inventory" class="hidden space-y-6 fade-in">
-                <div class="flex justify-between items-center">
-                    <div class="flex gap-2">
-                        <input type="text" placeholder="Cari bahan baku..." class="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-zinc-600 w-64">
-                        <button class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 py-2 rounded-lg text-sm border border-zinc-700"><i data-lucide="filter" class="h-4 w-4"></i></button>
+                    <!-- Branch Grid Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+                        <div v-for="branch in branches" :key="branch.id" class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 rounded-xl p-6 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all group shadow-sm dark:shadow-none">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{{ branch.name }}</h3>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span v-if="branch.isOpen" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-500 border border-green-200 dark:border-green-500/20">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span> Buka
+                                        </span>
+                                        <span v-else class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-zinc-500"></span> Tutup
+                                        </span>
+                                    </div>
+                                </div>
+                                <button class="text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                                    <i data-lucide="more-horizontal" class="h-5 w-5"></i>
+                                </button>
+                            </div>
+
+                            <div class="space-y-4 mb-6">
+                                <div>
+                                    <p class="text-xs text-zinc-500 mb-1">Omzet Hari Ini</p>
+                                    <p class="text-2xl font-bold text-zinc-900 dark:text-white">{{ formatRupiah(branch.dailyRevenue) }}</p>
+                                </div>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-zinc-500">Total Transaksi</span>
+                                    <span class="font-medium text-zinc-900 dark:text-zinc-200">{{ branch.transactionCount }} Nota</span>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-zinc-100 dark:border-zinc-800/50 space-y-3">
+                                <div class="flex items-start gap-3">
+                                    <i data-lucide="map-pin" class="h-4 w-4 text-zinc-400 mt-0.5"></i>
+                                    <p class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2">{{ branch.address }}</p>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="user-circle" class="h-4 w-4 text-zinc-400"></i>
+                                    <p class="text-sm text-zinc-600 dark:text-zinc-400">Manajer: <span class="text-zinc-900 dark:text-zinc-300">{{ branch.manager }}</span></p>
+                                </div>
+                            </div>
+
+                            <button class="mt-4 w-full py-2 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-sm font-medium text-zinc-900 dark:text-zinc-300 rounded-lg border border-zinc-200 dark:border-zinc-700/50 transition-colors flex items-center justify-center gap-2">
+                                Lihat Detail <i data-lucide="arrow-right" class="h-3 w-3"></i>
+                            </button>
+                        </div>
                     </div>
-                    <button class="bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                        <i data-lucide="plus" class="h-4 w-4"></i> Tambah Stok
-                    </button>
+                </div>
+
+                <!-- VIEW: POS (PENJUALAN) -->
+                <div v-if="activeTab === 'pos'" class="h-full flex flex-col md:flex-row gap-6 fade-in">
+                    <!-- Product Grid -->
+                    <div class="flex-1 flex flex-col h-full overflow-hidden">
+                        <!-- Filters -->
+                        <div class="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
+                            <button @click="posCategory = 'all'" :class="posCategory === 'all' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'" class="px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap shadow-sm border border-zinc-200 dark:border-zinc-800 transition-colors">Semua Menu</button>
+                            <button v-for="cat in categories" :key="cat.value" @click="posCategory = cat.value" :class="posCategory === cat.value ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'" class="px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors shadow-sm border border-zinc-200 dark:border-zinc-800">{{ cat.name }}</button>
+                        </div>
+
+                        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 overflow-y-auto pb-20 md:pb-0 pr-2 custom-scrollbar">
+                            
+                            <!-- Custom Order Card (Active) -->
+                            <div @click="openCustomModal"
+                                class="bg-white dark:bg-zinc-900/20 border-2 border-dashed border-zinc-300 dark:border-zinc-800 p-4 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800/40 hover:border-orange-500/50 cursor-pointer transition-all group flex flex-col items-center justify-center text-center h-full min-h-[14rem]">
+                                <div class="h-16 w-16 bg-zinc-100 dark:bg-zinc-800 rounded-full mb-3 flex items-center justify-center text-zinc-400 group-hover:text-orange-500 group-hover:scale-110 transition-all">
+                                    <i data-lucide="edit-3" class="h-6 w-6"></i>
+                                </div>
+                                <h4 class="text-sm font-medium text-zinc-900 dark:text-zinc-200">Custom Order</h4>
+                                <span class="text-xs text-zinc-500 mt-1">Input item manual</span>
+                            </div>
+
+                            <!-- Products -->
+                            <div v-for="product in filteredPosProducts" :key="product.id" @click="addToCart(product)"
+                                class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-4 rounded-xl hover:border-zinc-300 dark:hover:bg-zinc-800/40 cursor-pointer transition-all group shadow-sm dark:shadow-none flex flex-col h-full justify-between">
+                                <div>
+                                    <div class="h-32 bg-zinc-100 dark:bg-zinc-800 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
+                                        <div :class="`absolute inset-0 bg-gradient-to-tr ${product.color} to-transparent`"></div>
+                                        <span class="text-4xl drop-shadow-sm">{{ product.icon }}</span>
+                                    </div>
+                                    <h4 class="text-sm font-medium text-zinc-900 dark:text-zinc-200 line-clamp-2">{{ product.name }}</h4>
+                                </div>
+                                <div class="flex justify-between items-center mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                                    <span class="text-xs text-zinc-500">Stok: {{ product.stock }}</span>
+                                    <span class="text-sm font-semibold text-orange-600 dark:text-orange-400">{{ formatRupiah(product.price) }}</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Cart Panel -->
+                    <div class="w-full md:w-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl flex flex-col h-[calc(100vh-10rem)] shadow-sm dark:shadow-none">
+                        <div class="p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                            <div>
+                                <h3 class="font-medium text-zinc-900 dark:text-zinc-200">Pesanan Baru</h3>
+                                <span class="text-xs text-zinc-500">Order #2940</span>
+                            </div>
+                            <button v-if="cart.length > 0" @click="cart = []" class="text-red-500 hover:text-red-700 text-xs">Reset</button>
+                        </div>
+                        
+                        <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                            <div v-if="cart.length === 0" class="h-full flex flex-col items-center justify-center text-zinc-400">
+                                <i data-lucide="shopping-cart" class="h-8 w-8 mb-2 opacity-50"></i>
+                                <span class="text-xs">Keranjang kosong</span>
+                            </div>
+                            <div v-for="(item, index) in cart" :key="index" class="flex justify-between items-start group">
+                                <div class="flex gap-3">
+                                    <div class="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded flex items-center justify-center text-lg">{{ item.icon }}</div>
+                                    <div>
+                                        <p class="text-sm text-zinc-900 dark:text-zinc-200 font-medium">{{ item.name }}</p>
+                                        <div class="flex items-center gap-2">
+                                            <p class="text-xs text-zinc-500">{{ item.qty }} x {{ formatRupiah(item.price) }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end gap-1">
+                                    <p class="text-sm font-medium text-zinc-900 dark:text-white">{{ formatRupiah(item.price * item.qty) }}</p>
+                                    <button @click="removeFromCart(index)" class="text-xs text-red-500 opacity-0 group-hover:opacity-100 hover:text-red-600 transition-opacity">Hapus</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-zinc-50 dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 rounded-b-xl">
+                             <button @click="openCustomModal" class="w-full mb-4 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-300 text-xs font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2 border-dashed">
+                                <i data-lucide="plus-circle" class="h-3 w-3"></i> Tambah Custom Order
+                            </button>
+                            <div class="flex justify-between mb-2 text-sm text-zinc-500 dark:text-zinc-400">
+                                <span>Subtotal</span>
+                                <span>{{ formatRupiah(subtotal) }}</span>
+                            </div>
+                            <div class="flex justify-between mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+                                <span>Pajak (10%)</span>
+                                <span>{{ formatRupiah(tax) }}</span>
+                            </div>
+                            <div class="flex justify-between mb-6 text-base font-semibold text-zinc-900 dark:text-white">
+                                <span>Total</span>
+                                <span>{{ formatRupiah(grandTotal) }}</span>
+                            </div>
+                            <button
+                                :disabled="cart.length === 0"
+                                :class="cart.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-zinc-800 dark:hover:bg-zinc-200'"
+                                class="w-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm">
+                                <i data-lucide="printer" class="h-4 w-4"></i> Proses &amp; Cetak
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: INVENTORY -->
+                <div v-if="activeTab === 'inventory'" class="h-full space-y-6 fade-in">
+                     <div class="flex justify-between items-center">
+                        <div class="flex gap-2">
+                            <input type="text" placeholder="Cari bahan baku..."
+                                class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 w-64 shadow-sm dark:shadow-none placeholder:text-zinc-400">
+                            <button
+                                class="bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 px-4 py-2 rounded-lg text-sm border border-zinc-200 dark:border-zinc-700 shadow-sm dark:shadow-none"><i
+                                    data-lucide="filter" class="h-4 w-4"></i></button>
+                        </div>
+                        <button
+                            class="bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
+                            <i data-lucide="plus" class="h-4 w-4"></i> Tambah Stok
+                        </button>
+                    </div>
+                    <div class="bg-white dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/60 rounded-xl overflow-hidden shadow-sm dark:shadow-none">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
+                                <tr class="text-xs text-zinc-500 uppercase tracking-wider">
+                                    <th class="py-3 px-6 font-medium">Nama Bahan</th>
+                                    <th class="py-3 px-6 font-medium">Kategori</th>
+                                    <th class="py-3 px-6 font-medium">Stok</th>
+                                    <th class="py-3 px-6 font-medium">Unit</th>
+                                    <th class="py-3 px-6 font-medium text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800/50">
+                                <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors">
+                                    <td class="py-4 px-6 text-zinc-900 dark:text-zinc-200 font-medium">Roti Tawar Premium</td>
+                                    <td class="py-4 px-6 text-zinc-500">Bahan Utama</td>
+                                    <td class="py-4 px-6 text-zinc-700 dark:text-zinc-300">45</td>
+                                    <td class="py-4 px-6 text-zinc-500">Pack</td>
+                                    <td class="py-4 px-6 text-center"><span class="bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-500 px-2 py-1 rounded text-xs font-medium">Aman</span></td>
+                                </tr>
+                                 <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors">
+                                    <td class="py-4 px-6 text-zinc-900 dark:text-zinc-200 font-medium">Selai Coklat</td>
+                                    <td class="py-4 px-6 text-zinc-500">Topping</td>
+                                    <td class="py-4 px-6 text-red-600 dark:text-red-400 font-medium">2.1</td>
+                                    <td class="py-4 px-6 text-zinc-500">Kg</td>
+                                    <td class="py-4 px-6 text-center"><span class="bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-500 px-2 py-1 rounded text-xs font-medium">Kritis</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 
-                <div class="bg-zinc-900/30 border border-zinc-800/60 rounded-xl overflow-hidden">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-zinc-900/50">
-                            <tr class="text-xs text-zinc-500 uppercase tracking-wider">
-                                <th class="py-3 px-6 font-medium">Nama Bahan</th>
-                                <th class="py-3 px-6 font-medium">Kategori</th>
-                                <th class="py-3 px-6 font-medium">Stok Saat Ini</th>
-                                <th class="py-3 px-6 font-medium">Unit</th>
-                                <th class="py-3 px-6 font-medium text-center">Status</th>
-                                <th class="py-3 px-6 font-medium text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-zinc-800/50">
-                            <tr class="hover:bg-zinc-900/40">
-                                <td class="py-4 px-6 text-zinc-200 font-medium">Roti Tawar Premium</td>
-                                <td class="py-4 px-6 text-zinc-500">Bahan Utama</td>
-                                <td class="py-4 px-6 text-zinc-300">45</td>
-                                <td class="py-4 px-6 text-zinc-500">Pack</td>
-                                <td class="py-4 px-6 text-center"><span class="bg-green-500/10 text-green-500 px-2 py-1 rounded text-xs font-medium border border-green-500/20">Aman</span></td>
-                                <td class="py-4 px-6 text-right"><i data-lucide="more-horizontal" class="h-4 w-4 text-zinc-500 inline cursor-pointer"></i></td>
-                            </tr>
-                            <tr class="hover:bg-zinc-900/40">
-                                <td class="py-4 px-6 text-zinc-200 font-medium">Selai Coklat</td>
-                                <td class="py-4 px-6 text-zinc-500">Topping</td>
-                                <td class="py-4 px-6 text-red-400 font-medium">2.1</td>
-                                <td class="py-4 px-6 text-zinc-500">Kg</td>
-                                <td class="py-4 px-6 text-center"><span class="bg-red-500/10 text-red-500 px-2 py-1 rounded text-xs font-medium border border-red-500/20">Kritis</span></td>
-                                <td class="py-4 px-6 text-right"><i data-lucide="more-horizontal" class="h-4 w-4 text-zinc-500 inline cursor-pointer"></i></td>
-                            </tr>
-                            <tr class="hover:bg-zinc-900/40">
-                                <td class="py-4 px-6 text-zinc-200 font-medium">Keju Mozzarella</td>
-                                <td class="py-4 px-6 text-zinc-500">Topping</td>
-                                <td class="py-4 px-6 text-orange-400 font-medium">4.5</td>
-                                <td class="py-4 px-6 text-zinc-500">Kg</td>
-                                <td class="py-4 px-6 text-center"><span class="bg-orange-500/10 text-orange-500 px-2 py-1 rounded text-xs font-medium border border-orange-500/20">Warning</span></td>
-                                <td class="py-4 px-6 text-right"><i data-lucide="more-horizontal" class="h-4 w-4 text-zinc-500 inline cursor-pointer"></i></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- VIEW: EMPLOYEES -->
-            <div id="view-employees" class="hidden space-y-6 fade-in">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Employee Card -->
-                    <div class="bg-zinc-900/40 border border-zinc-800/60 p-6 rounded-xl flex items-center gap-4">
-                        <div class="h-12 w-12 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-400">AG</div>
-                        <div>
-                            <h4 class="text-zinc-200 font-medium">Agus Santoso</h4>
-                            <p class="text-xs text-zinc-500">Kasir - Shift Pagi</p>
-                        </div>
-                        <span class="ml-auto h-2 w-2 rounded-full bg-green-500"></span>
-                    </div>
-                    <!-- Employee Card -->
-                    <div class="bg-zinc-900/40 border border-zinc-800/60 p-6 rounded-xl flex items-center gap-4">
-                        <div class="h-12 w-12 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-400">BS</div>
-                        <div>
-                            <h4 class="text-zinc-200 font-medium">Budi Setiawan</h4>
-                            <p class="text-xs text-zinc-500">Koki - Shift Pagi</p>
-                        </div>
-                        <span class="ml-auto h-2 w-2 rounded-full bg-green-500"></span>
-                    </div>
-                    <!-- Employee Card -->
-                    <div class="bg-zinc-900/40 border border-zinc-800/60 p-6 rounded-xl flex items-center gap-4">
-                        <div class="h-12 w-12 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-400">DN</div>
-                        <div>
-                            <h4 class="text-zinc-200 font-medium">Diana Novita</h4>
-                            <p class="text-xs text-zinc-500">Manajer Cabang</p>
-                        </div>
-                        <span class="ml-auto h-2 w-2 rounded-full bg-zinc-600"></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- VIEW: REPORTS -->
-            <div id="view-reports" class="hidden space-y-6 fade-in">
-                <div class="bg-zinc-900/30 border border-zinc-800/60 rounded-xl p-8 flex flex-col items-center justify-center text-center h-96">
-                    <div class="h-16 w-16 bg-zinc-800 rounded-full flex items-center justify-center mb-4">
-                        <i data-lucide="pie-chart" class="h-8 w-8 text-zinc-500"></i>
-                    </div>
-                    <h3 class="text-lg font-medium text-zinc-200 mb-2">Laporan Lengkap</h3>
-                    <p class="text-sm text-zinc-500 max-w-md">Fitur analisis mendalam dan laporan pajak bulanan akan tersedia pada pembaruan versi 2.0.</p>
-                    <button class="mt-6 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm border border-zinc-700">Unduh Laporan Excel (BETA)</button>
-                </div>
-            </div>
-
-            <!-- VIEW: SETTINGS -->
-            <div id="view-settings" class="hidden max-w-2xl fade-in">
-                <div class="space-y-6">
-                    <div class="bg-zinc-900/30 border border-zinc-800/60 rounded-xl p-6">
-                        <h3 class="text-base font-medium text-white mb-4">Profil Toko</h3>
-                        <div class="space-y-4">
+                 <!-- VIEW: EMPLOYEES -->
+                 <div v-if="activeTab === 'employees'" class="space-y-6 fade-in">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-6 rounded-xl flex items-center gap-4">
+                            <div class="h-12 w-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400">AG</div>
                             <div>
-                                <label class="block text-xs font-medium text-zinc-500 mb-1">Nama Bisnis</label>
-                                <input type="text" value="Roti Bakar Central" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-zinc-500 mb-1">Alamat Pusat</label>
-                                <textarea class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 h-24">Jl. Fatmawati Raya No. 10, Jakarta Selatan</textarea>
+                                <h4 class="text-zinc-900 dark:text-zinc-200 font-medium">Agus Santoso</h4>
+                                <p class="text-xs text-zinc-500">Kasir - Shift Pagi</p>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-zinc-900/30 border border-zinc-800/60 rounded-xl p-6">
-                        <h3 class="text-base font-medium text-white mb-4">Preferensi Sistem</h3>
-                        <div class="flex items-center justify-between py-3 border-b border-zinc-800/50">
-                            <span class="text-sm text-zinc-300">Notifikasi Stok Menipis</span>
-                            <div class="w-10 h-5 bg-orange-600 rounded-full relative cursor-pointer"><div class="absolute right-1 top-1 h-3 w-3 bg-white rounded-full"></div></div>
+                </div>
+
+            </div>
+            
+            <!-- MODALS -->
+            
+            <!-- CUSTOM ORDER MODAL -->
+            <div v-if="showCustomModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm fade-in">
+                <div class="bg-white dark:bg-zinc-900 w-full max-w-md rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                    <div class="p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Custom Order</h3>
+                        <button @click="showCustomModal = false" class="text-zinc-500 hover:text-zinc-900 dark:hover:text-white">
+                            <i data-lucide="x" class="h-5 w-5"></i>
+                        </button>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Nama Item</label>
+                            <input v-model="customForm.name" type="text" placeholder="Contoh: Roti Bakar Spesial Request"
+                                class="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500">
                         </div>
-                        <div class="flex items-center justify-between py-3">
-                            <span class="text-sm text-zinc-300">Cetak Struk Otomatis</span>
-                            <div class="w-10 h-5 bg-zinc-700 rounded-full relative cursor-pointer"><div class="absolute left-1 top-1 h-3 w-3 bg-zinc-400 rounded-full"></div></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Harga (Rp)</label>
+                                <input v-model="customForm.price" type="number" placeholder="0"
+                                    class="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Jumlah</label>
+                                <div class="flex items-center border border-zinc-300 dark:border-zinc-700 rounded-lg overflow-hidden">
+                                    <button @click="customForm.qty > 1 ? customForm.qty-- : null" class="px-3 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300">-</button>
+                                    <input v-model="customForm.qty" type="number" class="w-full px-2 py-2 text-center bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white focus:outline-none border-x border-zinc-300 dark:border-zinc-700 appearance-none m-0">
+                                    <button @click="customForm.qty++" class="px-3 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300">+</button>
+                                </div>
+                            </div>
                         </div>
+                    </div>
+                    <div class="p-4 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800 flex justify-end gap-3">
+                        <button @click="showCustomModal = false" class="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors">Batal</button>
+                        <button @click="submitCustomOrder" class="px-4 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-500 rounded-lg shadow-sm shadow-orange-500/20 transition-colors">Tambahkan ke Order</button>
                     </div>
                 </div>
             </div>
 
-        </div>
-    </main>
+            <!-- ADD BRANCH MODAL -->
+            <div v-if="showBranchModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm fade-in">
+                <div class="bg-white dark:bg-zinc-900 w-full max-w-md rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                    <div class="p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Tambah Cabang Baru</h3>
+                        <button @click="showBranchModal = false" class="text-zinc-500 hover:text-zinc-900 dark:hover:text-white">
+                            <i data-lucide="x" class="h-5 w-5"></i>
+                        </button>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Nama Cabang</label>
+                            <input v-model="branchForm.name" type="text" placeholder="Contoh: Cabang Bandung Indah"
+                                class="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Alamat Lengkap</label>
+                            <textarea v-model="branchForm.address" placeholder="Jl. Merdeka No. 45"
+                                class="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 h-20"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Nama Manajer</label>
+                            <input v-model="branchForm.manager" type="text" placeholder="Budi Santoso"
+                                class="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                    </div>
+                    <div class="p-4 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800 flex justify-end gap-3">
+                        <button @click="showBranchModal = false" class="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors">Batal</button>
+                        <button @click="addBranch" class="px-4 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-500 rounded-lg shadow-sm shadow-orange-500/20 transition-colors">Simpan Cabang</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRODUCT MODAL -->
+            <div v-if="showProductModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm fade-in">
+                <div class="bg-white dark:bg-zinc-900 w-full max-w-md rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                    <div class="p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">{{ isEditing ? 'Edit Menu' : 'Tambah Menu Baru' }}</h3>
+                        <button @click="showProductModal = false" class="text-zinc-500 hover:text-zinc-900 dark:hover:text-white">
+                            <i data-lucide="x" class="h-5 w-5"></i>
+                        </button>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Nama Menu</label>
+                            <input v-model="productForm.name" type="text" placeholder="Contoh: Ovomaltine Keju"
+                                class="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Kategori</label>
+                            <select v-model="productForm.category" class="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                <option v-for="cat in categories" :key="cat.value" :value="cat.value">{{ cat.name }}</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Harga (Rp)</label>
+                                <input v-model="productForm.price" type="number" placeholder="25000"
+                                    class="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Stok Harian</label>
+                                <input v-model="productForm.stock" type="number" placeholder="20"
+                                    class="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800 flex justify-end gap-3">
+                        <button @click="showProductModal = false" class="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors">Batal</button>
+                        <button @click="saveProduct" class="px-4 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-500 rounded-lg shadow-sm shadow-orange-500/20 transition-colors">Simpan Menu</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CATEGORY MODAL (NEW) -->
+            <div v-if="showCategoryModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm fade-in">
+                <div class="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                    <div class="p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">{{ categoryForm.id ? 'Edit Kategori' : 'Tambah Kategori' }}</h3>
+                        <button @click="showCategoryModal = false" class="text-zinc-500 hover:text-zinc-900 dark:hover:text-white">
+                            <i data-lucide="x" class="h-5 w-5"></i>
+                        </button>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Nama Kategori</label>
+                            <input v-model="categoryForm.name" type="text" placeholder="Contoh: Aneka Durian"
+                                class="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Ikon (Emoji)</label>
+                            <input v-model="categoryForm.icon" type="text" placeholder="Contoh: 🍈"
+                                class="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                    </div>
+                    <div class="p-4 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800 flex justify-end gap-3">
+                        <button @click="showCategoryModal = false" class="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors">Batal</button>
+                        <button @click="saveCategory" class="px-4 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-500 rounded-lg shadow-sm shadow-orange-500/20 transition-colors">Simpan</button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
 
     <script>
-        // Initialize Icons
-        lucide.createIcons();
+        const { createApp, ref, reactive, computed, watch, nextTick } = Vue;
 
-        // View Switching Logic
-        function switchTab(viewId) {
-            // Define all views and nav items
-            const views = ['dashboard', 'pos', 'inventory', 'employees', 'reports', 'settings'];
-            
-            // Hide all views
-            views.forEach(id => {
-                document.getElementById('view-' + id).classList.add('hidden');
-                
-                // Reset Nav Styles
-                const navBtn = document.getElementById('nav-' + id);
-                if(navBtn) {
-                    navBtn.className = 'nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md transition-all border border-transparent';
-                    // Reset icon color inside button
-                    const icon = navBtn.querySelector('i');
-                    if(icon) icon.classList.remove('text-orange-400');
+        createApp({
+            setup() {
+                const activeTab = ref('dashboard');
+                const productTab = ref('items'); // New state for product sub-tabs
+                const showCustomModal = ref(false);
+                const showBranchModal = ref(false);
+                const showProductModal = ref(false);
+                const showCategoryModal = ref(false); // New modal state
+                const isDark = ref(true);
+                const isEditing = ref(false);
+                const filterCategory = ref('');
+                const posCategory = ref('all');
+
+                // Data Categories (Dynamic)
+                const categories = ref([
+                    { id: 1, name: 'Aneka Ovomaltine', value: 'Ovomaltine', icon: '🍫', color: 'from-orange-500/10 dark:from-orange-900/20' },
+                    { id: 2, name: 'Aneka Taro', value: 'Taro', icon: '🍠', color: 'from-purple-500/10 dark:from-purple-900/20' },
+                    { id: 3, name: 'Cheese Crunchy', value: 'Cheese', icon: '🧀', color: 'from-yellow-500/10 dark:from-yellow-900/20' },
+                    { id: 4, name: 'Aneka Oreo', value: 'Oreo', icon: '🍪', color: 'from-slate-500/10 dark:from-slate-900/20' },
+                    { id: 5, name: 'Aneka Pisang', value: 'Pisang', icon: '🍌', color: 'from-yellow-500/10 dark:from-yellow-900/20' },
+                    { id: 6, name: 'Aneka Cappucino', value: 'Cappucino', icon: '☕', color: 'from-orange-500/10 dark:from-orange-900/20' },
+                ]);
+
+                // Data Produk
+                const products = ref([
+                    // Ovomaltine Series
+                    { id: 1, name: 'Ovomaltine Selay', price: 25000, stock: 15, icon: '🍫', category: 'Ovomaltine', categoryDisplay: 'Aneka Ovomaltine', color: 'from-orange-500/10 dark:from-orange-900/20' },
+                    { id: 2, name: 'Ovomaltine Coklat', price: 28000, stock: 12, icon: '🍫', category: 'Ovomaltine', categoryDisplay: 'Aneka Ovomaltine', color: 'from-orange-500/10 dark:from-orange-900/20' },
+                    { id: 3, name: 'Ovomaltine Keju', price: 30000, stock: 10, icon: '🧀', category: 'Ovomaltine', categoryDisplay: 'Aneka Ovomaltine', color: 'from-yellow-500/10 dark:from-yellow-900/20' },
+                    
+                    // Taro Series
+                    { id: 4, name: 'Taro Selay', price: 19000, stock: 20, icon: '🍠', category: 'Taro', categoryDisplay: 'Aneka Taro', color: 'from-purple-500/10 dark:from-purple-900/20' },
+                    { id: 5, name: 'Taro Oreo', price: 22000, stock: 18, icon: '🍪', category: 'Taro', categoryDisplay: 'Aneka Taro', color: 'from-purple-500/10 dark:from-purple-900/20' },
+                    
+                    // Cheese Crunchy
+                    { id: 6, name: 'Cheese Crunchy Coklat', price: 19000, stock: 25, icon: '🧀', category: 'Cheese', categoryDisplay: 'Cheese Crunchy', color: 'from-yellow-500/10 dark:from-yellow-900/20' },
+                    
+                    // Pisang Series
+                    { id: 7, name: 'Pisang Coklat Keju', price: 21000, stock: 15, icon: '🍌', category: 'Pisang', categoryDisplay: 'Aneka Pisang', color: 'from-yellow-500/10 dark:from-yellow-900/20' },
+                ]);
+
+                // Data Cabang (Dummy)
+                const branches = ref([
+                    { id: 1, name: 'Jakarta Selatan', address: 'Jl. Fatmawati No. 10', manager: 'Budi Santoso', isOpen: true, dailyRevenue: 2450000, transactionCount: 45 },
+                    { id: 2, name: 'Tangerang', address: 'BSD Sektor 1.2', manager: 'Siti Aminah', isOpen: true, dailyRevenue: 1850000, transactionCount: 32 },
+                    { id: 3, name: 'Bekasi Barat', address: 'Grand Wisata Ruko AA', manager: 'Joko Widodo', isOpen: false, dailyRevenue: 0, transactionCount: 0 },
+                ]);
+
+                // Forms
+                const branchForm = reactive({ name: '', address: '', manager: '' });
+                const customForm = reactive({ name: '', price: 0, qty: 1 });
+                const productForm = reactive({ id: null, name: '', category: 'Ovomaltine', price: 0, stock: 0 });
+                const categoryForm = reactive({ id: null, name: '', value: '', icon: '' });
+
+                const cart = ref([]);
+
+                // Computed Properties
+                const filteredProducts = computed(() => {
+                    if (!filterCategory.value) return products.value;
+                    return products.value.filter(p => p.category === filterCategory.value);
+                });
+
+                const filteredPosProducts = computed(() => {
+                    if (posCategory.value === 'all') return products.value;
+                    return products.value.filter(p => p.category === posCategory.value);
+                });
+
+                // --- CRUD Logic Product ---
+
+                const openProductModal = (item = null) => {
+                    if (item) {
+                        isEditing.value = true;
+                        productForm.id = item.id;
+                        productForm.name = item.name;
+                        productForm.category = item.category;
+                        productForm.price = item.price;
+                        productForm.stock = item.stock;
+                    } else {
+                        isEditing.value = false;
+                        productForm.id = null;
+                        productForm.name = '';
+                        productForm.category = categories.value.length > 0 ? categories.value[0].value : '';
+                        productForm.price = 0;
+                        productForm.stock = 0;
+                    }
+                    showProductModal.value = true;
+                };
+
+                const saveProduct = () => {
+                    if (!productForm.name || productForm.price <= 0) return alert('Mohon lengkapi data produk');
+
+                    const selectedCategory = categories.value.find(c => c.value === productForm.category);
+                    const categoryDisplay = selectedCategory ? selectedCategory.name : productForm.category;
+                    const icon = selectedCategory ? selectedCategory.icon : '🍞';
+                    const color = selectedCategory ? selectedCategory.color : 'from-gray-500/10 dark:from-gray-900/20';
+
+                    if (isEditing.value) {
+                        const index = products.value.findIndex(p => p.id === productForm.id);
+                        if (index !== -1) {
+                            products.value[index] = {
+                                ...products.value[index],
+                                name: productForm.name,
+                                category: productForm.category,
+                                categoryDisplay: categoryDisplay,
+                                price: productForm.price,
+                                stock: productForm.stock,
+                                icon: icon,
+                                color: color
+                            };
+                        }
+                    } else {
+                        products.value.push({
+                            id: Date.now(),
+                            name: productForm.name,
+                            category: productForm.category,
+                            categoryDisplay: categoryDisplay,
+                            price: productForm.price,
+                            stock: productForm.stock,
+                            icon: icon,
+                            color: color
+                        });
+                    }
+                    showProductModal.value = false;
+                };
+
+                const deleteProduct = (id) => {
+                    if (confirm('Apakah Anda yakin ingin menghapus menu ini?')) {
+                        products.value = products.value.filter(p => p.id !== id);
+                    }
+                };
+
+                // --- CRUD Logic Category ---
+
+                const openCategoryModal = (cat = null) => {
+                    if (cat) {
+                        categoryForm.id = cat.id;
+                        categoryForm.name = cat.name;
+                        categoryForm.value = cat.value;
+                        categoryForm.icon = cat.icon;
+                    } else {
+                        categoryForm.id = null;
+                        categoryForm.name = '';
+                        categoryForm.value = '';
+                        categoryForm.icon = '';
+                    }
+                    showCategoryModal.value = true;
+                };
+
+                const saveCategory = () => {
+                    if (!categoryForm.name || !categoryForm.icon) return alert('Lengkapi nama dan ikon kategori');
+                    
+                    const valueSlug = categoryForm.name.split(' ')[0]; // Simple slug logic
+
+                    if (categoryForm.id) {
+                        const index = categories.value.findIndex(c => c.id === categoryForm.id);
+                        if (index !== -1) {
+                            categories.value[index].name = categoryForm.name;
+                            categories.value[index].icon = categoryForm.icon;
+                            // Optionally update value if you want, but might break products link
+                        }
+                    } else {
+                        categories.value.push({
+                            id: Date.now(),
+                            name: categoryForm.name,
+                            value: valueSlug, 
+                            icon: categoryForm.icon,
+                            color: 'from-orange-500/10 dark:from-orange-900/20' // Default color
+                        });
+                    }
+                    showCategoryModal.value = false;
+                };
+
+                const deleteCategory = (id) => {
+                    if (confirm('Hapus kategori ini? Produk dalam kategori ini mungkin tidak akan muncul di filter.')) {
+                        categories.value = categories.value.filter(c => c.id !== id);
+                    }
+                };
+
+                // --- Other Logic ---
+
+                const addBranch = () => {
+                    if (!branchForm.name || !branchForm.manager) return;
+                    branches.value.push({
+                        id: branches.value.length + 1,
+                        name: branchForm.name,
+                        address: branchForm.address,
+                        manager: branchForm.manager,
+                        isOpen: true,
+                        dailyRevenue: 0,
+                        transactionCount: 0
+                    });
+                    showBranchModal.value = false;
+                };
+
+                const addToCart = (product) => {
+                    const existingItem = cart.value.find(item => item.id === product.id && !item.isCustom);
+                    if (existingItem) {
+                        existingItem.qty++;
+                    } else {
+                        cart.value.push({
+                            id: product.id,
+                            name: product.name,
+                            price: product.price,
+                            qty: 1,
+                            icon: product.icon,
+                            isCustom: false
+                        });
+                    }
+                };
+
+                const openCustomModal = () => {
+                    customForm.name = '';
+                    customForm.price = 0;
+                    customForm.qty = 1;
+                    showCustomModal.value = true;
+                };
+
+                const submitCustomOrder = () => {
+                    if (!customForm.name || customForm.price <= 0) return;
+                    cart.value.push({
+                        name: customForm.name,
+                        price: customForm.price,
+                        qty: customForm.qty,
+                        icon: '✏️',
+                        isCustom: true
+                    });
+                    showCustomModal.value = false;
+                };
+
+                const removeFromCart = (index) => {
+                    cart.value.splice(index, 1);
+                };
+
+                const subtotal = computed(() => {
+                    return cart.value.reduce((acc, item) => acc + (item.price * item.qty), 0);
+                });
+
+                const tax = computed(() => {
+                    return subtotal.value * 0.1;
+                });
+
+                const grandTotal = computed(() => {
+                    return subtotal.value + tax.value;
+                });
+
+                const formatRupiah = (value) => {
+                    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+                };
+
+                const pageTitle = computed(() => {
+                    const titles = {
+                        'dashboard': 'Ringkasan Bisnis',
+                        'pos': 'Point of Sales',
+                        'products': 'Daftar Menu',
+                        'categories': 'Kategori Menu', // Title for new page
+                        'branches': 'Manajemen Cabang',
+                        'inventory': 'Manajemen Stok',
+                        'employees': 'Data Karyawan',
+                        'reports': 'Laporan Keuangan',
+                        'settings': 'Pengaturan Sistem'
+                    };
+                    return titles[activeTab.value];
+                });
+
+                const toggleDarkMode = () => {
+                    isDark.value = !isDark.value;
+                    if(isDark.value) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
                 }
-            });
 
-            // Show selected view
-            document.getElementById('view-' + viewId).classList.remove('hidden');
+                watch([activeTab, showCustomModal, showBranchModal, showProductModal, showCategoryModal, cart, branches, products, categories], () => {
+                    nextTick(() => {
+                        lucide.createIcons();
+                    });
+                }, { deep: true });
 
-            // Set Active Nav Style
-            const activeNav = document.getElementById('nav-' + viewId);
-            if(activeNav) {
-                activeNav.className = 'nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-white bg-zinc-900/50 border border-zinc-800/50 rounded-md transition-all';
-                const activeIcon = activeNav.querySelector('i');
-                if(activeIcon) activeIcon.classList.add('text-orange-400');
+                return {
+                    activeTab,
+                    productTab, // Export product tab state
+                    products,
+                    categories, // Export categories
+                    filteredProducts,
+                    filteredPosProducts,
+                    branches,
+                    branchForm,
+                    cart,
+                    customForm,
+                    productForm,
+                    categoryForm, // Export form
+                    showCustomModal,
+                    showBranchModal,
+                    showProductModal,
+                    showCategoryModal, // Export modal state
+                    isEditing,
+                    filterCategory,
+                    posCategory,
+                    addBranch,
+                    addToCart,
+                    openProductModal,
+                    saveProduct,
+                    deleteProduct,
+                    openCategoryModal, // Export CRUD functions
+                    saveCategory,
+                    deleteCategory,
+                    openCustomModal,
+                    submitCustomOrder,
+                    removeFromCart,
+                    subtotal,
+                    tax,
+                    grandTotal,
+                    formatRupiah,
+                    pageTitle,
+                    isDark,
+                    toggleDarkMode
+                };
+            },
+            mounted() {
+                lucide.createIcons();
             }
-
-            // Update Page Title based on view
-            const titles = {
-                'dashboard': 'Ringkasan Bisnis',
-                'pos': 'Point of Sales',
-                'inventory': 'Manajemen Stok',
-                'employees': 'Data Karyawan',
-                'reports': 'Laporan Keuangan',
-                'settings': 'Pengaturan Sistem'
-            };
-            document.getElementById('page-title').innerText = titles[viewId];
-        }
+        }).mount('#app');
     </script>
-
-</body></html>
+</body>
+</html>

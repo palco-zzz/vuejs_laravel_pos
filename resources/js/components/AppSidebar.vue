@@ -14,7 +14,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { BarChart3, BookOpen, Folder, LayoutGrid, Package, ShoppingBag, User } from 'lucide-vue-next';
+import { BarChart3, BookOpen, Folder, LayoutGrid, Package, ShoppingBag, Store, User } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -27,6 +27,11 @@ const mainNavItems: NavItem[] = [
         title: 'Penjualan (POS)',
         href: '/pos',
         icon: ShoppingBag,
+    },
+    {
+        title: 'Manajemen Cabang',
+        href: '/branch',
+        icon: Store,
     },
     {
         title: 'Stok Bahan',
