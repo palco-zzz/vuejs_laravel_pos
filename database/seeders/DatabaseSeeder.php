@@ -19,5 +19,11 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        // Seed categories and menus
+        $this->call([
+            CategorySeeder::class,
+            MenuSeeder::class,
+        ]);
     }
 }

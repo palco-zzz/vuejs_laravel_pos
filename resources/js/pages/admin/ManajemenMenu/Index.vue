@@ -344,29 +344,29 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                 <div v-if="activeTab === 'items'" class="space-y-6">
                     <!-- Search & Actions -->
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <div class="flex gap-2 w-full sm:w-auto">
-                            <div class="relative flex-1 sm:flex-initial">
+                        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                            <div class="relative w-full sm:w-auto">
                                 <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                                 <Input v-model="searchQuery" type="text" placeholder="Cari menu..."
                                     class="pl-9 w-full sm:w-64" />
                             </div>
                             <select v-model="filterCategory"
-                                class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-600">
+                                class="w-full sm:w-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-600">
                                 <option value="">Semua Kategori</option>
                                 <option v-for="cat in categories" :key="cat.id" :value="cat.id">
                                     {{ cat.icon }} {{ cat.nama }}
                                 </option>
                             </select>
                         </div>
-                        <Button class="gap-2" @click="openMenuCreateModal">
+                        <Button class="w-full sm:w-auto gap-2" @click="openMenuCreateModal">
                             <Plus class="h-4 w-4" />
-                            <span class="hidden sm:inline">Tambah Menu</span>
+                            <span>Tambah Menu</span>
                         </Button>
                     </div>
 
-                    <!-- Menu Table -->
+                    <!-- Menu Table (Desktop) -->
                     <div
-                        class="bg-white dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/60 rounded-xl overflow-hidden shadow-sm">
+                        class="hidden md:block bg-white dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/60 rounded-xl overflow-hidden shadow-sm">
                         <table class="w-full text-left text-sm">
                             <thead class="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
                                 <tr class="text-xs text-zinc-500 uppercase tracking-wider">
@@ -440,6 +440,73 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Menu Cards (Mobile) -->
+                    <div class="md:hidden space-y-4">
+                        <div v-for="menu in filteredMenus" :key="menu.id"
+                            class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 shadow-sm">
+                            <div class="flex items-start justify-between">
+                                <div class="flex gap-3">
+                                    <div
+                                        class="h-12 w-12 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center text-2xl shrink-0 border border-zinc-200 dark:border-zinc-700">
+                                        {{ menu.icon || '🍞' }}
+                                    </div>
+                                    <div>
+                                        <h3 class="font-medium text-zinc-900 dark:text-white">{{ menu.nama }}</h3>
+                                        <p class="text-xs text-zinc-500 mb-1">ID: #MENU-{{ menu.id }}</p>
+                                        <span
+                                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+                                            {{ menu.category?.icon }} {{ menu.category?.nama }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                class="mt-4 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800 pt-3">
+                                <div class="flex flex-col">
+                                    <span class="text-xs text-zinc-500">Harga</span>
+                                    <span class="font-medium text-zinc-900 dark:text-zinc-200">{{
+                                        formatRupiah(menu.harga) }}</span>
+                                </div>
+                                <div class="flex flex-col items-end">
+                                    <span class="text-xs text-zinc-500">Stok</span>
+                                    <span
+                                        :class="menu.stok < 10 ? 'text-red-500 font-medium' : 'text-zinc-900 dark:text-zinc-200'">
+                                        {{ menu.stok }} Porsi
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="mt-3 flex gap-2">
+                                <Button variant="outline" size="sm" class="flex-1" @click="openMenuEditModal(menu)">
+                                    <Pencil class="h-4 w-4 mr-2" /> Edit
+                                </Button>
+                                <Button variant="outline" size="sm"
+                                    class="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 dark:border-red-900/30"
+                                    @click="openMenuDeleteDialog(menu)">
+                                    <Trash2 class="h-4 w-4 mr-2" /> Hapus
+                                </Button>
+                            </div>
+                        </div>
+
+                        <!-- Empty State Mobile -->
+                        <div v-if="filteredMenus.length === 0"
+                            class="text-center py-12 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                            <div class="flex flex-col items-center">
+                                <div
+                                    class="h-12 w-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-3">
+                                    <Package class="h-6 w-6 text-zinc-400" />
+                                </div>
+                                <p class="text-zinc-500">Tidak ada menu yang ditemukan.</p>
+                                <Button v-if="!searchQuery && !filterCategory" variant="outline" size="sm" class="mt-3"
+                                    @click="openMenuCreateModal">
+                                    <Plus class="h-4 w-4 mr-2" />
+                                    Tambah Menu Pertama
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- ==================== CATEGORY LIST TAB ==================== -->
@@ -450,15 +517,15 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                             <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100">Kategori Menu</h3>
                             <p class="text-sm text-zinc-500">Kelola kategori untuk pengelompokan produk.</p>
                         </div>
-                        <Button class="gap-2" @click="openCategoryCreateModal">
+                        <Button class="w-full sm:w-auto gap-2" @click="openCategoryCreateModal">
                             <Plus class="h-4 w-4" />
-                            <span class="hidden sm:inline">Tambah Kategori</span>
+                            <span>Tambah Kategori</span>
                         </Button>
                     </div>
 
-                    <!-- Category Table -->
+                    <!-- Category Table (Desktop) -->
                     <div
-                        class="bg-white dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/60 rounded-xl overflow-hidden shadow-sm">
+                        class="hidden md:block bg-white dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/60 rounded-xl overflow-hidden shadow-sm">
                         <table class="w-full text-left text-sm">
                             <thead class="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
                                 <tr class="text-xs text-zinc-500 uppercase tracking-wider">
@@ -517,6 +584,56 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- Category Cards (Mobile) -->
+                    <div class="md:hidden space-y-4">
+                        <div v-for="category in categories" :key="category.id"
+                            class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="h-12 w-12 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center text-2xl shrink-0 border border-zinc-200 dark:border-zinc-700">
+                                        {{ category.icon || '🍞' }}
+                                    </div>
+                                    <div>
+                                        <h3 class="font-medium text-zinc-900 dark:text-white">{{ category.nama }}</h3>
+                                        <span
+                                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 mt-1">
+                                            {{ category.menus_count }} menu
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 flex gap-2">
+                                <Button variant="outline" size="sm" class="flex-1"
+                                    @click="openCategoryEditModal(category)">
+                                    <Pencil class="h-4 w-4 mr-2" /> Edit
+                                </Button>
+                                <Button variant="outline" size="sm"
+                                    class="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 dark:border-red-900/30"
+                                    @click="openCategoryDeleteDialog(category)">
+                                    <Trash2 class="h-4 w-4 mr-2" /> Hapus
+                                </Button>
+                            </div>
+                        </div>
+
+                        <!-- Empty State Mobile -->
+                        <div v-if="categories.length === 0"
+                            class="text-center py-12 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                            <div class="flex flex-col items-center">
+                                <div
+                                    class="h-12 w-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-3">
+                                    <Tag class="h-6 w-6 text-zinc-400" />
+                                </div>
+                                <p class="text-zinc-500">Belum ada kategori.</p>
+                                <Button variant="outline" size="sm" class="mt-3" @click="openCategoryCreateModal">
+                                    <Plus class="h-4 w-4 mr-2" />
+                                    Tambah Kategori Pertama
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

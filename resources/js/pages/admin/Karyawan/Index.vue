@@ -179,12 +179,13 @@ const formatDate = (dateString: string) => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <main class="h-full flex flex-col bg-zinc-50 dark:bg-black transition-colors duration-300">
             <!-- Header -->
-            <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+            <div
+                class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 class="text-xl font-semibold text-zinc-900 dark:text-white">Manajemen Karyawan</h1>
                     <p class="text-sm text-zinc-500 dark:text-zinc-400">Kelola data karyawan dan akun pengguna</p>
                 </div>
-                <Button class="gap-2" @click="openCreateModal">
+                <Button class="w-full sm:w-auto gap-2" @click="openCreateModal">
                     <Plus class="h-4 w-4" />
                     Tambah Karyawan
                 </Button>
@@ -192,7 +193,8 @@ const formatDate = (dateString: string) => {
 
             <!-- Content -->
             <div class="flex-1 overflow-y-auto p-6">
-                <Card>
+                <!-- Desktop View -->
+                <Card class="hidden md:block">
                     <CardHeader>
                         <CardTitle class="text-lg">Daftar Karyawan</CardTitle>
                     </CardHeader>
@@ -277,6 +279,59 @@ const formatDate = (dateString: string) => {
                         </div>
                     </CardContent>
                 </Card>
+
+                <!-- Mobile View -->
+                <div class="md:hidden space-y-4">
+                    <div v-for="user in users" :key="user.id"
+                        class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                                    <User class="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+                                </div>
+                                <div>
+                                    <h3 class="font-medium text-zinc-900 dark:text-white">{{ user.name }}</h3>
+                                    <p class="text-xs text-zinc-500">{{ user.email }}</p>
+                                </div>
+                            </div>
+                            <Badge :variant="user.role === 'admin' ? 'default' : 'secondary'">
+                                {{ user.role === 'admin' ? 'Admin' : 'Cashier' }}
+                            </Badge>
+                        </div>
+
+                        <div class="space-y-2 text-sm border-t border-zinc-100 dark:border-zinc-800 pt-3">
+                            <div class="flex justify-between">
+                                <span class="text-zinc-500">Cabang</span>
+                                <span class="text-zinc-900 dark:text-zinc-200 flex items-center gap-1">
+                                    <MapPin v-if="user.branch" class="h-3.5 w-3.5 text-zinc-400" />
+                                    {{ user.branch ? user.branch.nama : '-' }}
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-zinc-500">Bergabung</span>
+                                <span class="text-zinc-900 dark:text-zinc-200">{{ formatDate(user.created_at) }}</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 flex gap-2">
+                            <Button variant="outline" size="sm" class="flex-1" @click="openEditModal(user)">
+                                <Pencil class="h-4 w-4 mr-2" /> Edit
+                            </Button>
+                            <Button variant="outline" size="sm"
+                                class="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 dark:border-red-900/30"
+                                @click="openDeleteDialog(user)">
+                                <Trash2 class="h-4 w-4 mr-2" /> Hapus
+                            </Button>
+                        </div>
+                    </div>
+
+                    <!-- Empty State Mobile -->
+                    <div v-if="users.length === 0"
+                        class="text-center py-12 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                        <p class="text-zinc-500">Belum ada data karyawan</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Create Modal -->
