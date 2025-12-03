@@ -3,9 +3,10 @@
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Admin\ManajemenCabangController;
 use App\Http\Controllers\KaryawanController;
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\ManajemenMenuController;
+use App\Http\Controllers\Admin\ManajemenCabangController;
 
 
 Route::get('/', function () {
@@ -31,6 +32,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('branch', [ManajemenCabangController::class, 'store'])->name('branch.store');
     Route::put('branch/{branch}', [ManajemenCabangController::class, 'update'])->name('branch.update');
     Route::delete('branch/{branch}', [ManajemenCabangController::class, 'destroy'])->name('branch.destroy');
+
+    // Menu CRUD Routes
+    Route::get('/menu', [ManajemenMenuController::class, 'index'])->name('menu.index');
+    Route::post('/menu', [ManajemenMenuController::class, 'storeMenu'])->name('menu.store');
+    Route::put('/menu/{menu}', [ManajemenMenuController::class, 'updateMenu'])->name('menu.update');
+    Route::delete('/menu/{menu}', [ManajemenMenuController::class, 'destroyMenu'])->name('menu.destroy');
+
+    // Category CRUD Routes
+    Route::post('/category', [ManajemenMenuController::class, 'storeCategory'])->name('category.store');
+    Route::put('/category/{category}', [ManajemenMenuController::class, 'updateCategory'])->name('category.update');
+    Route::delete('/category/{category}', [ManajemenMenuController::class, 'destroyCategory'])->name('category.destroy');
 });
 
 require __DIR__ . '/settings.php';
