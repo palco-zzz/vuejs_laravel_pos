@@ -76,7 +76,8 @@ const maxChartValue = Math.max(...props.chartData, 1);
         <div class="p-6 space-y-6">
 
             <!-- Key Metrics Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div
+                :class="isCashier ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8' : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8'">
                 <!-- Card 1 (Total Income) - Clickable -> Report -->
                 <Link href="/dashboard"
                     class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-5 rounded-xl hover:border-zinc-300 dark:hover:bg-zinc-900/60 transition-colors group shadow-sm dark:shadow-none cursor-pointer block">
@@ -114,12 +115,12 @@ const maxChartValue = Math.max(...props.chartData, 1);
                 <div class="flex flex-col">
                     <span class="text-zinc-500 text-xs font-medium mb-1">Total Transaksi</span>
                     <h3 class="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">{{ totalTransactions
-                    }} <span class="text-sm font-normal text-zinc-500">Nota</span></h3>
+                        }} <span class="text-sm font-normal text-zinc-500">Nota</span></h3>
                 </div>
                 </Link>
 
-                <!-- Card 3 (Active Branches) - Clickable -> Branch Management -->
-                <Link href="/branch"
+                <!-- Card 3 (Active Branches) - ADMIN ONLY -->
+                <Link v-if="!isCashier" href="/branch"
                     class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-5 rounded-xl hover:border-zinc-300 dark:hover:bg-zinc-900/60 transition-colors group shadow-sm dark:shadow-none cursor-pointer block">
                 <div class="flex justify-between items-start mb-4">
                     <div
@@ -436,7 +437,7 @@ const maxChartValue = Math.max(...props.chartData, 1);
                                 <div class="text-right">
                                     <span class="text-sm font-semibold"
                                         :class="order.is_new ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-700 dark:text-zinc-300'">{{
-                                        formatRupiah(order.total) }}</span>
+                                            formatRupiah(order.total) }}</span>
                                     <span class="text-[10px] text-zinc-400 dark:text-zinc-600 block mt-0.5">{{
                                         order.is_new ? 'Baru saja' : order.time_ago }}</span>
                                 </div>
