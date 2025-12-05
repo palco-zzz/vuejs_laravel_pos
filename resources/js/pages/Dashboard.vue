@@ -137,8 +137,8 @@ const maxChartValue = Math.max(...props.chartData, 1);
                 </div>
                 </Link>
 
-                <!-- Card 4 (Top Selling) - Clickable -> Menu Management -->
-                <Link href="/menu"
+                <!-- Card 4 (Top Selling) - Clickable -> Menu Analysis -->
+                <Link href="/reports/menu-analysis"
                     class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-5 rounded-xl hover:border-zinc-300 dark:hover:bg-zinc-900/60 transition-colors group cursor-pointer relative overflow-hidden shadow-sm dark:shadow-none block">
                 <div
                     class="absolute inset-0 bg-gradient-to-tr from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
@@ -322,7 +322,7 @@ const maxChartValue = Math.max(...props.chartData, 1);
                             </div>
                         </div>
                         <div class="mt-6 flex justify-center">
-                            <Link href="/admin/menu"
+                            <Link href="/reports/menu-analysis"
                                 class="text-xs text-orange-500 hover:text-orange-600 font-medium cursor-pointer">Lihat
                             Analisa Menu</Link>
                         </div>

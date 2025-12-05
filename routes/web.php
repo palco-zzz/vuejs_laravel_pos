@@ -22,6 +22,7 @@ Route::get('dashboard', [App\Http\Controllers\DashboardController::class, 'index
 // Reports Routes - Admin Only
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/reports/transactions', [App\Http\Controllers\ReportController::class, 'transactions'])->name('reports.transactions');
+    Route::get('/reports/menu-analysis', [App\Http\Controllers\ReportController::class, 'menuAnalysis'])->name('reports.menu-analysis');
 });
 
 
