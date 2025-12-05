@@ -1,19 +1,463 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
+import { ref, computed, nextTick } from 'vue';
+import { ShoppingCart, Printer, PlusCircle, Edit3, Trash2, Plus, Minus, X, Search } from 'lucide-vue-next';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { useToast } from '@/composables/useToast';
+import axios from 'axios';
+
+const toast = useToast();
+
+interface CategoryData {
+    id: number;
+    nama: string;
+    icon: string | null;
+}
+
+interface MenuData {
+    id: number;
+    category_id: number;
+    nama: string;
+    harga: number;
+    stok: number;
+    icon: string | null;
+    category: CategoryData;
+}
+
+interface CartItem {
+    id: number;
+    name: string;
+    price: number;
+    qty: number;
+    icon: string;
+    is_custom?: boolean;
+}
+
+interface OrderResponse {
+    success: boolean;
+    message: string;
+    order: {
+        id: number;
+        order_number: string;
+        subtotal: number;
+        tax: number;
+        total: number;
+        created_at: string;
+        items: Array<{
+            item_name: string;
+            price: number;
+            quantity: number;
+            subtotal: number;
+        }>;
+    };
+}
+
+const props = defineProps<{
+    menus: MenuData[];
+    categories: CategoryData[];
+}>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Pos',
+        title: 'Point of Sales',
         href: '/pos',
     },
 ];
 
-// State sederhana untuk demo perpindahan tab antara POS dan Inventory
-const activeTab = ref('pos');
+// State
+const posCategory = ref<number | 'all'>('all');
+const cart = ref<CartItem[]>([]);
+const orderNumber = ref(Math.floor(Math.random() * 9000) + 1000);
+const searchQuery = ref('');
+const isProcessing = ref(false);
+
+// Custom Order Modal
+const showCustomOrderModal = ref(false);
+const customOrderName = ref('');
+const customOrderPrice = ref<number>(0);
+
+// Filtered products based on category and search
+const filteredPosProducts = computed(() => {
+    let result = props.menus;
+
+    if (posCategory.value !== 'all') {
+        result = result.filter(menu => menu.category_id === posCategory.value);
+    }
+
+    if (searchQuery.value) {
+        const query = searchQuery.value.toLowerCase();
+        result = result.filter(menu =>
+            menu.nama.toLowerCase().includes(query) ||
+            menu.category.nama.toLowerCase().includes(query)
+        );
+    }
+
+    return result;
+});
+
+// Cart calculations
+const subtotal = computed(() => {
+    return cart.value.reduce((sum, item) => sum + (item.price * item.qty), 0);
+});
+
+const tax = computed(() => {
+    return subtotal.value * 0.1;
+});
+
+const grandTotal = computed(() => {
+    return subtotal.value + tax.value;
+});
+
+// Format currency
+const formatRupiah = (value: number) => {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+    }).format(value);
+};
+
+// Add to cart
+const addToCart = (product: MenuData) => {
+    const existingItem = cart.value.find(item => item.id === product.id && !item.is_custom);
+    if (existingItem) {
+        existingItem.qty++;
+    } else {
+        cart.value.push({
+            id: product.id,
+            name: product.nama,
+            price: product.harga,
+            qty: 1,
+            icon: product.icon || '🍞',
+            is_custom: false,
+        });
+    }
+};
+
+// Custom Order Modal Handlers
+const openCustomOrderModal = () => {
+    customOrderName.value = '';
+    customOrderPrice.value = 0;
+    showCustomOrderModal.value = true;
+};
+
+const closeCustomOrderModal = () => {
+    showCustomOrderModal.value = false;
+    customOrderName.value = '';
+    customOrderPrice.value = 0;
+};
+
+const addCustomOrder = () => {
+    if (!customOrderName.value.trim()) {
+        toast.error('Error', 'Nama item harus diisi');
+        return;
+    }
+    if (customOrderPrice.value <= 0) {
+        toast.error('Error', 'Harga harus lebih dari 0');
+        return;
+    }
+
+    // Generate unique ID for custom item (negative to avoid collision with menu IDs)
+    const customId = -Date.now();
+
+    cart.value.push({
+        id: customId,
+        name: customOrderName.value.trim(),
+        price: customOrderPrice.value,
+        qty: 1,
+        icon: '✏️',
+        is_custom: true,
+    });
+
+    toast.success('Berhasil', 'Custom order ditambahkan ke keranjang');
+    closeCustomOrderModal();
+};
+
+// Update quantity
+const updateQty = (index: number, delta: number) => {
+    const item = cart.value[index];
+    if (item) {
+        item.qty += delta;
+        if (item.qty <= 0) {
+            cart.value.splice(index, 1);
+        }
+    }
+};
+
+// Remove from cart
+const removeFromCart = (index: number) => {
+    cart.value.splice(index, 1);
+};
+
+// Reset cart
+const resetCart = () => {
+    cart.value = [];
+    orderNumber.value = Math.floor(Math.random() * 9000) + 1000;
+};
+
+// Process Order & Print
+const processAndPrint = async () => {
+    if (cart.value.length === 0) {
+        toast.error('Error', 'Keranjang kosong');
+        return;
+    }
+
+    isProcessing.value = true;
+
+    try {
+        const payload = {
+            items: cart.value.map(item => ({
+                id: item.is_custom ? null : item.id,
+                name: item.name,
+                price: item.price,
+                qty: item.qty,
+                is_custom: item.is_custom || false,
+            })),
+            subtotal: subtotal.value,
+            tax: tax.value,
+            total: grandTotal.value,
+            payment_method: 'cash',
+        };
+
+        const response = await axios.post<OrderResponse>('/pos/order', payload);
+
+        if (response.data.success) {
+            toast.success('Berhasil', 'Pesanan berhasil disimpan');
+
+            // Print receipt
+            printReceipt(response.data.order);
+
+            // Reset cart after successful order
+            resetCart();
+
+            // Refresh page to update stock
+            router.reload({ only: ['menus'] });
+        }
+    } catch (error: any) {
+        console.error('Order error:', error);
+        toast.error('Gagal', error.response?.data?.message || 'Gagal menyimpan pesanan');
+    } finally {
+        isProcessing.value = false;
+    }
+};
+
+// Print Receipt Function
+const printReceipt = (order: OrderResponse['order']) => {
+    const receiptWindow = window.open('', '_blank', 'width=300,height=600');
+    if (!receiptWindow) {
+        toast.error('Error', 'Popup diblokir. Izinkan popup untuk mencetak struk.');
+        return;
+    }
+
+    const receiptDate = new Date(order.created_at).toLocaleString('id-ID', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+
+    const receiptHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Struk - ${order.order_number}</title>
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                body {
+                    font-family: 'Courier New', monospace;
+                    font-size: 12px;
+                    width: 80mm;
+                    padding: 10px;
+                    background: white;
+                }
+                .header {
+                    text-align: center;
+                    border-bottom: 1px dashed #000;
+                    padding-bottom: 10px;
+                    margin-bottom: 10px;
+                }
+                .header h1 {
+                    font-size: 16px;
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                }
+                .header p {
+                    font-size: 10px;
+                    color: #666;
+                }
+                .info {
+                    margin-bottom: 10px;
+                    padding-bottom: 10px;
+                    border-bottom: 1px dashed #000;
+                }
+                .info-row {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 3px;
+                }
+                .items {
+                    margin-bottom: 10px;
+                    padding-bottom: 10px;
+                    border-bottom: 1px dashed #000;
+                }
+                .item {
+                    margin-bottom: 8px;
+                }
+                .item-name {
+                    font-weight: bold;
+                }
+                .item-details {
+                    display: flex;
+                    justify-content: space-between;
+                    padding-left: 10px;
+                    color: #666;
+                }
+                .totals {
+                    margin-bottom: 10px;
+                }
+                .total-row {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 3px;
+                }
+                .total-row.grand {
+                    font-weight: bold;
+                    font-size: 14px;
+                    border-top: 1px solid #000;
+                    padding-top: 5px;
+                    margin-top: 5px;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 20px;
+                    padding-top: 10px;
+                    border-top: 1px dashed #000;
+                }
+                .footer p {
+                    font-size: 10px;
+                    color: #666;
+                }
+                @media print {
+                    body {
+                        width: 80mm;
+                    }
+                    @page {
+                        size: 80mm auto;
+                        margin: 0;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>ROTI BAKAR EPOK</h1>
+                <p>BANDUNG</p>
+                <p>Jl. Contoh Alamat No. 123</p>
+                <p>Telp: 0812-3456-7890</p>
+            </div>
+            
+            <div class="info">
+                <div class="info-row">
+                    <span>No. Order:</span>
+                    <span>${order.order_number}</span>
+                </div>
+                <div class="info-row">
+                    <span>Tanggal:</span>
+                    <span>${receiptDate}</span>
+                </div>
+                <div class="info-row">
+                    <span>Kasir:</span>
+                    <span>Admin</span>
+                </div>
+            </div>
+            
+            <div class="items">
+                ${order.items.map(item => `
+                    <div class="item">
+                        <div class="item-name">${item.item_name}</div>
+                        <div class="item-details">
+                            <span>${item.quantity} x ${formatRupiahPlain(item.price)}</span>
+                            <span>${formatRupiahPlain(item.subtotal)}</span>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            
+            <div class="totals">
+                <div class="total-row">
+                    <span>Subtotal</span>
+                    <span>${formatRupiahPlain(order.subtotal)}</span>
+                </div>
+                <div class="total-row">
+                    <span>Pajak (10%)</span>
+                    <span>${formatRupiahPlain(order.tax)}</span>
+                </div>
+                <div class="total-row grand">
+                    <span>TOTAL</span>
+                    <span>${formatRupiahPlain(order.total)}</span>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p>================================</p>
+                <p>Terima Kasih</p>
+                <p>Atas Kunjungan Anda</p>
+                <p>================================</p>
+            </div>
+            
+            <scr` + `ipt>
+                window.onload = function() {
+                    window.print();
+                    setTimeout(function() {
+                        window.close();
+                    }, 500);
+                }
+            </scr` + `ipt>
+        </bo` + `dy>
+        </ht` + `ml>
+    `;
+
+    receiptWindow.document.write(receiptHTML);
+    receiptWindow.document.close();
+};
+
+// Plain format for receipt (without Rp symbol formatting issues)
+const formatRupiahPlain = (value: number) => {
+    return 'Rp ' + new Intl.NumberFormat('id-ID').format(value);
+};
+
+// Gradient colors for product cards
+const getGradientColor = (categoryId: number) => {
+    const colors = [
+        'from-orange-500/20',
+        'from-purple-500/20',
+        'from-amber-500/20',
+        'from-yellow-500/20',
+        'from-blue-500/20',
+        'from-green-500/20',
+        'from-pink-500/20',
+        'from-red-500/20',
+    ];
+    return colors[categoryId % colors.length];
+};
 </script>
 
 <template>
@@ -22,254 +466,252 @@ const activeTab = ref('pos');
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <!-- Main Content Wrapper -->
-        <main class="h-full flex flex-col bg-zinc-50 dark:bg-black transition-colors duration-300">
+        <div class="h-full flex flex-col md:flex-row gap-6 fade-in">
+            <!-- Product Grid -->
+            <div class="flex-1 flex flex-col h-full overflow-hidden">
+                <!-- Search Bar -->
+                <div class="mb-4 relative">
+                    <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                    <Input v-model="searchQuery" type="text" placeholder="Cari menu..."
+                        class="pl-9 w-full bg-white dark:bg-zinc-900" />
+                </div>
 
-            <!-- Tab Switcher (Optional: Added for demo purposes to switch views) -->
-            <div class="px-6 pt-4 pb-2 flex gap-4 border-b border-zinc-200 dark:border-zinc-800">
-                <button @click="activeTab = 'pos'"
-                    :class="activeTab === 'pos' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'"
-                    class="pb-2 text-sm font-medium transition-colors">
-                    Point of Sales
-                </button>
-                <button @click="activeTab = 'inventory'"
-                    :class="activeTab === 'inventory' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'"
-                    class="pb-2 text-sm font-medium transition-colors">
-                    Inventory
-                </button>
-            </div>
+                <!-- Category Filters -->
+                <div class="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
+                    <button @click="posCategory = 'all'"
+                        :class="posCategory === 'all' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800'"
+                        class="px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap shadow-sm border border-zinc-200 dark:border-zinc-800 transition-colors">
+                        Semua Menu
+                    </button>
+                    <button v-for="cat in categories" :key="cat.id" @click="posCategory = cat.id"
+                        :class="posCategory === cat.id ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800'"
+                        class="px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors shadow-sm border border-zinc-200 dark:border-zinc-800">
+                        {{ cat.icon }} {{ cat.nama }}
+                    </button>
+                </div>
 
-            <div class="flex-1 overflow-hidden p-6 relative">
+                <!-- Products Grid -->
+                <div
+                    class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 overflow-y-auto pb-20 md:pb-0 pr-2 custom-scrollbar">
 
-                <!-- VIEW: POS -->
-                <div v-if="activeTab === 'pos'" id="view-pos" class="h-full flex flex-col md:flex-row gap-6 fade-in">
-                    <!-- Product Grid -->
-                    <div class="flex-1 flex flex-col h-full overflow-hidden">
-                        <!-- Category Filters -->
-                        <div class="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
-                            <button
-                                class="bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap shadow-sm">
-                                Semua Menu
-                            </button>
-                            <button
-                                class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:text-white px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors shadow-sm dark:shadow-none">
-                                Roti Manis
-                            </button>
-                            <button
-                                class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:text-white px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors shadow-sm dark:shadow-none">
-                                Roti Asin
-                            </button>
-                            <button
-                                class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:text-white px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors shadow-sm dark:shadow-none">
-                                Minuman
-                            </button>
-                        </div>
-
+                    <!-- Custom Order Card -->
+                    <div @click="openCustomOrderModal"
+                        class="bg-white dark:bg-zinc-900/20 border-2 border-dashed border-zinc-300 dark:border-zinc-800 p-4 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800/40 hover:border-orange-500/50 cursor-pointer transition-all group flex flex-col items-center justify-center text-center h-full min-h-[14rem]">
                         <div
-                            class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 overflow-y-auto pb-20 md:pb-0 pr-2 custom-scrollbar">
-                            <!-- Product Card 1 -->
+                            class="h-16 w-16 bg-zinc-100 dark:bg-zinc-800 rounded-full mb-3 flex items-center justify-center text-zinc-400 group-hover:text-orange-500 group-hover:scale-110 transition-all">
+                            <Edit3 class="h-6 w-6" />
+                        </div>
+                        <h4 class="text-sm font-medium text-zinc-900 dark:text-zinc-200">Custom Order</h4>
+                        <span class="text-xs text-zinc-500 mt-1">Input item manual</span>
+                    </div>
+
+                    <!-- Product Cards -->
+                    <div v-for="product in filteredPosProducts" :key="product.id" @click="addToCart(product)"
+                        class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-4 rounded-xl hover:border-zinc-300 dark:hover:bg-zinc-800/40 cursor-pointer transition-all group shadow-sm dark:shadow-none flex flex-col h-full justify-between active:scale-95">
+                        <div>
                             <div
-                                class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-4 rounded-xl hover:border-zinc-300 dark:hover:bg-zinc-800/40 cursor-pointer transition-all group shadow-sm dark:shadow-none">
+                                class="h-32 bg-zinc-100 dark:bg-zinc-800 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
                                 <div
-                                    class="h-32 bg-zinc-100 dark:bg-zinc-800 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
-                                    <div
-                                        class="absolute inset-0 bg-gradient-to-tr from-orange-500/10 dark:from-orange-900/20 to-transparent">
-                                    </div>
-                                    <span class="text-4xl drop-shadow-sm">🍞</span>
+                                    :class="`absolute inset-0 bg-gradient-to-tr ${getGradientColor(product.category_id)} to-transparent`">
                                 </div>
-                                <h4 class="text-sm font-medium text-zinc-900 dark:text-zinc-200">Coklat Keju</h4>
-                                <div class="flex justify-between items-center mt-2">
-                                    <span class="text-xs text-zinc-500">Stok: 12</span>
-                                    <span class="text-sm font-semibold text-orange-600 dark:text-orange-400">Rp
-                                        22k</span>
-                                </div>
+                                <span class="text-4xl drop-shadow-sm relative z-10">{{ product.icon || '🍞' }}</span>
                             </div>
-                            <!-- Product Card 2 -->
-                            <div
-                                class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-4 rounded-xl hover:border-zinc-300 dark:hover:bg-zinc-800/40 cursor-pointer transition-all group shadow-sm dark:shadow-none">
-                                <div
-                                    class="h-32 bg-zinc-100 dark:bg-zinc-800 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
-                                    <div
-                                        class="absolute inset-0 bg-gradient-to-tr from-yellow-500/10 dark:from-yellow-900/20 to-transparent">
-                                    </div>
-                                    <span class="text-4xl drop-shadow-sm">🧀</span>
-                                </div>
-                                <h4 class="text-sm font-medium text-zinc-900 dark:text-zinc-200">Keju Susu</h4>
-                                <div class="flex justify-between items-center mt-2">
-                                    <span class="text-xs text-zinc-500">Stok: 24</span>
-                                    <span class="text-sm font-semibold text-orange-600 dark:text-orange-400">Rp
-                                        18k</span>
-                                </div>
-                            </div>
-                            <!-- Product Card 3 -->
-                            <div
-                                class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-4 rounded-xl hover:border-zinc-300 dark:hover:bg-zinc-800/40 cursor-pointer transition-all group shadow-sm dark:shadow-none">
-                                <div
-                                    class="h-32 bg-zinc-100 dark:bg-zinc-800 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
-                                    <div
-                                        class="absolute inset-0 bg-gradient-to-tr from-green-500/10 dark:from-green-900/20 to-transparent">
-                                    </div>
-                                    <span class="text-4xl drop-shadow-sm">🧇</span>
-                                </div>
-                                <h4 class="text-sm font-medium text-zinc-900 dark:text-zinc-200">Srikaya Pandan</h4>
-                                <div class="flex justify-between items-center mt-2">
-                                    <span class="text-xs text-zinc-500">Stok: 8</span>
-                                    <span class="text-sm font-semibold text-orange-600 dark:text-orange-400">Rp
-                                        20k</span>
-                                </div>
-                            </div>
-                            <!-- Product Card 4 -->
-                            <div
-                                class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-4 rounded-xl hover:border-zinc-300 dark:hover:bg-zinc-800/40 cursor-pointer transition-all group shadow-sm dark:shadow-none">
-                                <div
-                                    class="h-32 bg-zinc-100 dark:bg-zinc-800 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
-                                    <div
-                                        class="absolute inset-0 bg-gradient-to-tr from-red-500/10 dark:from-red-900/20 to-transparent">
-                                    </div>
-                                    <span class="text-4xl drop-shadow-sm">🥩</span>
-                                </div>
-                                <h4 class="text-sm font-medium text-zinc-900 dark:text-zinc-200">Daging Telur</h4>
-                                <div class="flex justify-between items-center mt-2">
-                                    <span class="text-xs text-zinc-500">Stok: 15</span>
-                                    <span class="text-sm font-semibold text-orange-600 dark:text-orange-400">Rp
-                                        28k</span>
-                                </div>
-                            </div>
+                            <h4 class="text-sm font-medium text-zinc-900 dark:text-zinc-200 line-clamp-2">{{
+                                product.nama }}</h4>
+                            <p class="text-xs text-zinc-500 mt-1">{{ product.category?.nama }}</p>
+                        </div>
+                        <div
+                            class="flex justify-between items-center mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                            <span class="text-xs text-zinc-500">Stok: {{ product.stok }}</span>
+                            <span class="text-sm font-semibold text-orange-600 dark:text-orange-400">{{
+                                formatRupiah(product.harga) }}</span>
                         </div>
                     </div>
 
-                    <!-- Cart Panel -->
-                    <div
-                        class="w-full md:w-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl flex flex-col h-[calc(100vh-10rem)] shadow-sm dark:shadow-none">
-                        <div class="p-4 border-b border-zinc-200 dark:border-zinc-800">
-                            <h3 class="font-medium text-zinc-900 dark:text-zinc-200">Pesanan Baru</h3>
-                            <span class="text-xs text-zinc-500">Order #2940</span>
-                        </div>
-                        <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-                            <!-- Cart Item 1 -->
-                            <div class="flex justify-between items-start group">
-                                <div class="flex gap-3">
-                                    <div
-                                        class="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded flex items-center justify-center text-lg">
-                                        🍞</div>
-                                    <div>
-                                        <p class="text-sm text-zinc-900 dark:text-zinc-200 font-medium">Coklat Keju</p>
-                                        <p class="text-xs text-zinc-500">1 x Rp 22.000</p>
-                                    </div>
-                                </div>
-                                <p class="text-sm font-medium text-zinc-900 dark:text-white">Rp 22k</p>
-                            </div>
-                            <!-- Cart Item 2 -->
-                            <div class="flex justify-between items-start group">
-                                <div class="flex gap-3">
-                                    <div
-                                        class="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded flex items-center justify-center text-lg">
-                                        🥤</div>
-                                    <div>
-                                        <p class="text-sm text-zinc-900 dark:text-zinc-200 font-medium">Es Teh Manis</p>
-                                        <p class="text-xs text-zinc-500">2 x Rp 5.000</p>
-                                    </div>
-                                </div>
-                                <p class="text-sm font-medium text-zinc-900 dark:text-white">Rp 10k</p>
-                            </div>
-                        </div>
+                    <!-- Empty State -->
+                    <div v-if="filteredPosProducts.length === 0"
+                        class="col-span-full flex flex-col items-center justify-center py-16">
                         <div
-                            class="p-4 bg-zinc-50 dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 rounded-b-xl">
-                            <div class="flex justify-between mb-2 text-sm text-zinc-500 dark:text-zinc-400">
-                                <span>Subtotal</span>
-                                <span>Rp 32.000</span>
-                            </div>
-                            <div class="flex justify-between mb-4 text-sm text-zinc-500 dark:text-zinc-400">
-                                <span>Pajak (10%)</span>
-                                <span>Rp 3.200</span>
-                            </div>
+                            class="h-16 w-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
+                            <Search class="h-8 w-8 text-zinc-400" />
+                        </div>
+                        <p class="text-zinc-500">Tidak ada menu yang ditemukan</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cart Panel -->
+            <div
+                class="w-full md:w-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl flex flex-col h-[calc(100vh-10rem)] shadow-sm dark:shadow-none">
+                <!-- Cart Header -->
+                <div class="p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                    <div>
+                        <h3 class="font-medium text-zinc-900 dark:text-zinc-200">Pesanan Baru</h3>
+                        <span class="text-xs text-zinc-500">Order #{{ orderNumber }}</span>
+                    </div>
+                    <button v-if="cart.length > 0" @click="resetCart"
+                        class="text-red-500 hover:text-red-700 text-xs font-medium">
+                        Reset
+                    </button>
+                </div>
+
+                <!-- Cart Items -->
+                <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                    <!-- Empty State -->
+                    <div v-if="cart.length === 0"
+                        class="h-full flex flex-col items-center justify-center text-zinc-400">
+                        <ShoppingCart class="h-8 w-8 mb-2 opacity-50" />
+                        <span class="text-xs">Keranjang kosong</span>
+                        <span class="text-xs mt-1">Klik menu untuk menambahkan</span>
+                    </div>
+
+                    <!-- Cart Item -->
+                    <div v-for="(item, index) in cart" :key="`${item.id}-${item.is_custom}`"
+                        class="flex justify-between items-start group bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg">
+                        <div class="flex gap-3 flex-1 min-w-0">
                             <div
-                                class="flex justify-between mb-6 text-base font-semibold text-zinc-900 dark:text-white">
-                                <span>Total</span>
-                                <span>Rp 35.200</span>
+                                class="h-10 w-10 bg-white dark:bg-zinc-800 rounded flex items-center justify-center text-lg border border-zinc-200 dark:border-zinc-700 flex-shrink-0">
+                                {{ item.icon }}
                             </div>
-                            <button
-                                class="w-full bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-950 font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm">
-                                <i data-lucide="printer" class="h-4 w-4"></i> Proses &amp; Cetak
-                            </button>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm text-zinc-900 dark:text-zinc-200 font-medium line-clamp-1">
+                                    {{ item.name }}
+                                    <span v-if="item.is_custom" class="text-xs text-orange-500 ml-1">(Custom)</span>
+                                </p>
+                                <p class="text-xs text-zinc-500">{{ formatRupiah(item.price) }}</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end gap-2 flex-shrink-0">
+                            <p class="text-sm font-medium text-zinc-900 dark:text-white">{{ formatRupiah(item.price *
+                                item.qty) }}</p>
+                            <div class="flex items-center gap-1">
+                                <button @click.stop="updateQty(index, -1)"
+                                    class="h-6 w-6 rounded bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 flex items-center justify-center transition-colors">
+                                    <Minus class="h-3 w-3" />
+                                </button>
+                                <span class="w-6 text-center text-sm font-medium">{{ item.qty }}</span>
+                                <button @click.stop="updateQty(index, 1)"
+                                    class="h-6 w-6 rounded bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 flex items-center justify-center transition-colors">
+                                    <Plus class="h-3 w-3" />
+                                </button>
+                                <button @click.stop="removeFromCart(index)"
+                                    class="h-6 w-6 rounded bg-red-100 dark:bg-red-500/20 hover:bg-red-200 dark:hover:bg-red-500/30 flex items-center justify-center ml-1 transition-colors">
+                                    <Trash2 class="h-3 w-3 text-red-500" />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- VIEW: INVENTORY -->
-                <div v-if="activeTab === 'inventory'" id="view-inventory"
-                    class="h-full space-y-6 fade-in flex flex-col">
-                    <div class="flex justify-between items-center">
-                        <div class="flex gap-2">
-                            <input type="text" placeholder="Cari bahan baku..."
-                                class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 w-64 shadow-sm dark:shadow-none placeholder:text-zinc-400">
-                            <button
-                                class="bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 px-4 py-2 rounded-lg text-sm border border-zinc-200 dark:border-zinc-700 shadow-sm dark:shadow-none"><i
-                                    data-lucide="filter" class="h-4 w-4"></i></button>
-                        </div>
-                        <button
-                            class="bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
-                            <i data-lucide="plus" class="h-4 w-4"></i> Tambah Stok
-                        </button>
+                <!-- Cart Footer -->
+                <div class="p-4 bg-zinc-50 dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 rounded-b-xl">
+                    <!-- Add Custom Order Button -->
+                    <button @click="openCustomOrderModal"
+                        class="w-full mb-4 bg-white dark:bg-zinc-800 border border-dashed border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-300 text-xs font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <PlusCircle class="h-3 w-3" /> Tambah Custom Order
+                    </button>
+
+                    <!-- Totals -->
+                    <div class="flex justify-between mb-2 text-sm text-zinc-500 dark:text-zinc-400">
+                        <span>Subtotal</span>
+                        <span>{{ formatRupiah(subtotal) }}</span>
+                    </div>
+                    <div class="flex justify-between mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+                        <span>Pajak (10%)</span>
+                        <span>{{ formatRupiah(tax) }}</span>
+                    </div>
+                    <div class="flex justify-between mb-6 text-base font-semibold text-zinc-900 dark:text-white">
+                        <span>Total</span>
+                        <span class="text-orange-600 dark:text-orange-400">{{ formatRupiah(grandTotal) }}</span>
                     </div>
 
-                    <div
-                        class="bg-white dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/60 rounded-xl overflow-hidden shadow-sm dark:shadow-none">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
-                                <tr class="text-xs text-zinc-500 uppercase tracking-wider">
-                                    <th class="py-3 px-6 font-medium">Nama Bahan</th>
-                                    <th class="py-3 px-6 font-medium">Kategori</th>
-                                    <th class="py-3 px-6 font-medium">Stok Saat Ini</th>
-                                    <th class="py-3 px-6 font-medium">Unit</th>
-                                    <th class="py-3 px-6 font-medium text-center">Status</th>
-                                    <th class="py-3 px-6 font-medium text-right">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800/50">
-                                <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors">
-                                    <td class="py-4 px-6 text-zinc-900 dark:text-zinc-200 font-medium">Roti Tawar
-                                        Premium</td>
-                                    <td class="py-4 px-6 text-zinc-500">Bahan Utama</td>
-                                    <td class="py-4 px-6 text-zinc-700 dark:text-zinc-300">45</td>
-                                    <td class="py-4 px-6 text-zinc-500">Pack</td>
-                                    <td class="py-4 px-6 text-center"><span
-                                            class="bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-500 px-2 py-1 rounded text-xs font-medium border border-green-200 dark:border-green-500/20">Aman</span>
-                                    </td>
-                                    <td class="py-4 px-6 text-right"><i data-lucide="more-horizontal"
-                                            class="h-4 w-4 text-zinc-400 dark:text-zinc-500 inline cursor-pointer hover:text-zinc-900 dark:hover:text-zinc-300"></i>
-                                    </td>
-                                </tr>
-                                <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors">
-                                    <td class="py-4 px-6 text-zinc-900 dark:text-zinc-200 font-medium">Selai Coklat</td>
-                                    <td class="py-4 px-6 text-zinc-500">Topping</td>
-                                    <td class="py-4 px-6 text-red-600 dark:text-red-400 font-medium">2.1</td>
-                                    <td class="py-4 px-6 text-zinc-500">Kg</td>
-                                    <td class="py-4 px-6 text-center"><span
-                                            class="bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-500 px-2 py-1 rounded text-xs font-medium border border-red-200 dark:border-red-500/20">Kritis</span>
-                                    </td>
-                                    <td class="py-4 px-6 text-right"><i data-lucide="more-horizontal"
-                                            class="h-4 w-4 text-zinc-400 dark:text-zinc-500 inline cursor-pointer hover:text-zinc-900 dark:hover:text-zinc-300"></i>
-                                    </td>
-                                </tr>
-                                <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors">
-                                    <td class="py-4 px-6 text-zinc-900 dark:text-zinc-200 font-medium">Keju Mozzarella
-                                    </td>
-                                    <td class="py-4 px-6 text-zinc-500">Topping</td>
-                                    <td class="py-4 px-6 text-orange-600 dark:text-orange-400 font-medium">4.5</td>
-                                    <td class="py-4 px-6 text-zinc-500">Kg</td>
-                                    <td class="py-4 px-6 text-center"><span
-                                            class="bg-orange-100 dark:bg-orange-500/10 text-orange-700 dark:text-orange-500 px-2 py-1 rounded text-xs font-medium border border-orange-200 dark:border-orange-500/20">Warning</span>
-                                    </td>
-                                    <td class="py-4 px-6 text-right"><i data-lucide="more-horizontal"
-                                            class="h-4 w-4 text-zinc-400 dark:text-zinc-500 inline cursor-pointer hover:text-zinc-900 dark:hover:text-zinc-300"></i>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <!-- Process Button -->
+                    <button @click="processAndPrint" :disabled="cart.length === 0 || isProcessing"
+                        :class="cart.length === 0 || isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-zinc-800 dark:hover:bg-zinc-200'"
+                        class="w-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm">
+                        <Spinner v-if="isProcessing" class="h-4 w-4" />
+                        <Printer v-else class="h-4 w-4" />
+                        {{ isProcessing ? 'Memproses...' : 'Proses & Cetak' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Order Modal -->
+        <Dialog :open="showCustomOrderModal" @update:open="showCustomOrderModal = $event">
+            <DialogContent class="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Custom Order</DialogTitle>
+                    <DialogDescription>
+                        Tambahkan item custom ke pesanan
+                    </DialogDescription>
+                </DialogHeader>
+                <div class="space-y-4 py-4">
+                    <div class="space-y-2">
+                        <Label for="custom-name">Nama Item</Label>
+                        <Input id="custom-name" v-model="customOrderName" type="text"
+                            placeholder="Contoh: Roti Bakar Spesial" />
+                    </div>
+                    <div class="space-y-2">
+                        <Label for="custom-price">Harga (Rp)</Label>
+                        <Input id="custom-price" v-model.number="customOrderPrice" type="number" min="0"
+                            placeholder="25000" />
                     </div>
                 </div>
-
-            </div>
-        </main>
+                <DialogFooter>
+                    <Button type="button" variant="outline" @click="closeCustomOrderModal">
+                        Batal
+                    </Button>
+                    <Button type="button" @click="addCustomOrder">
+                        <Plus class="h-4 w-4 mr-2" />
+                        Tambah ke Keranjang
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </AppLayout>
 </template>
+
+<style scoped>
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #d4d4d8;
+    border-radius: 2px;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #3f3f46;
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>

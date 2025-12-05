@@ -19,7 +19,11 @@ Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('/pos', [AdminController::class, 'index'])->name('index');
+// POS Routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/pos', [AdminController::class, 'index'])->name('pos.index');
+    Route::post('/pos/order', [AdminController::class, 'storeOrder'])->name('pos.order.store');
+});
 
 // Karyawan CRUD Routes (using modals)
 Route::middleware(['auth', 'verified'])->group(function () {
