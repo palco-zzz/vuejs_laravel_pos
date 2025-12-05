@@ -1,0 +1,354 @@
+<script setup lang="ts">
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, Link } from '@inertiajs/vue3';
+import { ref } from 'vue';
+import { type BreadcrumbItem } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Printer, Eye, X, Clock, Receipt } from 'lucide-vue-next';
+
+interface TransactionItem {
+    name: string;
+    quantity: number;
+    price: number;
+    subtotal: number;
+    is_custom: boolean;
+}
+
+interface Transaction {
+    id: number;
+    order_number: string;
+    date: string;
+    time: string;
+    total: number;
+    payment_method: string;
+    status: string;
+    branch_name: string;
+    branch_address: string;
+    items: TransactionItem[];
+}
+
+const props = defineProps<{
+    transactions: {
+        data: Transaction[];
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+        links: { url: string | null; label: string; active: boolean }[];
+    };
+}>();
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Dashboard', href: '/dashboard' },
+    { title: 'Riwayat Transaksi', href: '/pos/history' },
+];
+
+// Receipt Modal
+const selectedTransaction = ref<Transaction | null>(null);
+const isReceiptModalOpen = ref(false);
+
+const formatRupiah = (value: number) => {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+    }).format(value);
+};
+
+const getPaymentMethodLabel = (method: string) => {
+    const methods: Record<string, string> = {
+        cash: 'Tunai',
+        bca_va: 'BCA VA',
+        bri_va: 'BRI VA',
+        gopay: 'GoPay',
+        ovo: 'OVO',
+        transfer: 'Transfer',
+        qris: 'QRIS',
+    };
+    return methods[method] || method;
+};
+
+const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+        case 'completed':
+            return 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400';
+        case 'pending':
+            return 'bg-yellow-100 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400';
+        case 'cancelled':
+            return 'bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400';
+        default:
+            return 'bg-zinc-100 dark:bg-zinc-500/10 text-zinc-700 dark:text-zinc-400';
+    }
+};
+
+const openReceiptModal = (transaction: Transaction) => {
+    selectedTransaction.value = transaction;
+    isReceiptModalOpen.value = true;
+};
+
+const closeReceiptModal = () => {
+    isReceiptModalOpen.value = false;
+    selectedTransaction.value = null;
+};
+
+const printReceipt = () => {
+    window.print();
+};
+</script>
+
+<template>
+
+    <Head title="Riwayat Transaksi" />
+
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="p-6 space-y-6">
+            <!-- Header -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="h-10 w-10 bg-orange-100 dark:bg-orange-500/10 rounded-lg flex items-center justify-center">
+                        <Clock class="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Riwayat Transaksi</h1>
+                        <p class="text-sm text-zinc-500 dark:text-zinc-400">Daftar semua transaksi yang telah Anda buat
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions Table -->
+            <div
+                class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 rounded-xl overflow-hidden shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-zinc-50 dark:bg-zinc-900/60 border-b border-zinc-200 dark:border-zinc-800">
+                            <tr>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                    No. Order</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                    Tanggal</th>
+                                <th
+                                    class="px-6 py-4 text-right text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                    Total</th>
+                                <th
+                                    class="px-6 py-4 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                    Pembayaran</th>
+                                <th
+                                    class="px-6 py-4 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                    Status</th>
+                                <th
+                                    class="px-6 py-4 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                    Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                            <tr v-for="transaction in transactions.data" :key="transaction.id"
+                                class="hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center">
+                                            <Receipt class="h-4 w-4 text-zinc-500" />
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-zinc-900 dark:text-white">{{
+                                                transaction.order_number }}</p>
+                                            <p class="text-xs text-zinc-500">{{ transaction.items.length }} item</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="text-sm text-zinc-900 dark:text-white">{{ transaction.date }}</p>
+                                    <p class="text-xs text-zinc-500">{{ transaction.time }}</p>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="text-sm font-semibold text-zinc-900 dark:text-white">{{
+                                        formatRupiah(transaction.total) }}</span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <span
+                                        class="text-xs px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                                        {{ getPaymentMethodLabel(transaction.payment_method) }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <span :class="getStatusBadgeClass(transaction.status)"
+                                        class="text-xs px-2.5 py-1 rounded-full capitalize">
+                                        {{ transaction.status }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <Button variant="ghost" size="sm"
+                                        class="gap-1.5 text-orange-600 dark:text-orange-400 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-500/10"
+                                        @click="openReceiptModal(transaction)">
+                                        <Printer class="h-4 w-4" />
+                                        <span class="hidden sm:inline">Print Struk</span>
+                                    </Button>
+                                </td>
+                            </tr>
+
+                            <!-- Empty State -->
+                            <tr v-if="transactions.data.length === 0">
+                                <td colspan="6" class="px-6 py-16 text-center">
+                                    <div class="flex flex-col items-center">
+                                        <div
+                                            class="h-16 w-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-4">
+                                            <Receipt class="h-8 w-8 text-zinc-400" />
+                                        </div>
+                                        <p class="text-zinc-500 dark:text-zinc-400 mb-2">Belum ada transaksi</p>
+                                        <Link href="/pos">
+                                        <Button variant="outline" size="sm">Buat Transaksi Baru</Button>
+                                        </Link>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div v-if="transactions.last_page > 1"
+                    class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                        Menampilkan {{ (transactions.current_page - 1) * transactions.per_page + 1 }} -
+                        {{ Math.min(transactions.current_page * transactions.per_page, transactions.total) }}
+                        dari {{ transactions.total }} transaksi
+                    </p>
+                    <div class="flex gap-1">
+                        <template v-for="(link, index) in transactions.links" :key="index">
+                            <Link v-if="link.url" :href="link.url" preserve-state preserve-scroll :class="[
+                                'px-3 py-1.5 text-sm rounded-md transition-colors',
+                                link.active
+                                    ? 'bg-orange-600 text-white'
+                                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                            ]" v-html="link.label" />
+                            <span v-else
+                                class="px-3 py-1.5 text-sm rounded-md bg-zinc-50 dark:bg-zinc-900 text-zinc-400 cursor-not-allowed"
+                                v-html="link.label" />
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Receipt Modal -->
+        <transition name="fade">
+            <div v-if="isReceiptModalOpen"
+                class="fixed inset-0 z-50 flex items-center justify-center print:block print:relative print:inset-auto print:z-auto">
+                <div class="absolute inset-0 bg-black/60 backdrop-blur-sm print:hidden" @click="closeReceiptModal">
+                </div>
+
+                <div
+                    class="relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[90vh] overflow-hidden flex flex-col print:max-w-none print:rounded-none print:shadow-none print:max-h-none print:overflow-visible">
+                    <!-- Modal Header (hidden on print) -->
+                    <div
+                        class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center print:hidden">
+                        <h3 class="text-lg font-bold text-zinc-900 dark:text-white">Struk Transaksi</h3>
+                        <button @click="closeReceiptModal"
+                            class="h-10 w-10 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                            <X class="h-5 w-5" />
+                        </button>
+                    </div>
+
+                    <!-- Receipt Content -->
+                    <div class="p-6 overflow-y-auto flex-1 print:overflow-visible">
+                        <!-- Store Header -->
+                        <div class="text-center mb-6 pb-4 border-b border-dashed border-zinc-300 dark:border-zinc-700">
+                            <h2 class="text-xl font-bold text-zinc-900 dark:text-white">{{
+                                selectedTransaction?.branch_name ||
+                                'Cabang' }}</h2>
+                            <p v-if="selectedTransaction?.branch_address" class="text-xs text-zinc-500 mt-1">{{
+                                selectedTransaction.branch_address }}</p>
+                            <p class="text-xs text-zinc-400 mt-0.5">Struk Pembayaran</p>
+                        </div>
+
+                        <!-- Order Info -->
+                        <div class="mb-4 space-y-1 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-zinc-500">No. Order:</span>
+                                <span class="font-medium text-zinc-900 dark:text-white">{{
+                                    selectedTransaction?.order_number
+                                }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-zinc-500">Tanggal:</span>
+                                <span class="text-zinc-900 dark:text-white">{{ selectedTransaction?.date }} {{
+                                    selectedTransaction?.time }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-zinc-500">Pembayaran:</span>
+                                <span class="text-zinc-900 dark:text-white">{{
+                                    getPaymentMethodLabel(selectedTransaction?.payment_method || '') }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Items -->
+                        <div class="border-t border-b border-dashed border-zinc-300 dark:border-zinc-700 py-4 mb-4">
+                            <div v-for="(item, index) in selectedTransaction?.items" :key="index"
+                                class="flex justify-between py-1.5 text-sm">
+                                <div class="flex-1">
+                                    <p class="text-zinc-900 dark:text-white">
+                                        {{ item.name }}
+                                        <span v-if="item.is_custom" class="text-xs text-orange-500">(Custom)</span>
+                                    </p>
+                                    <p class="text-xs text-zinc-500">{{ item.quantity }} x {{ formatRupiah(item.price)
+                                    }}</p>
+                                </div>
+                                <span class="text-zinc-900 dark:text-white font-medium">{{ formatRupiah(item.subtotal)
+                                }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Total -->
+                        <div class="flex justify-between items-center text-lg font-bold">
+                            <span class="text-zinc-900 dark:text-white">TOTAL</span>
+                            <span class="text-orange-600 dark:text-orange-400">{{
+                                formatRupiah(selectedTransaction?.total || 0)
+                            }}</span>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="text-center mt-6 pt-4 border-t border-dashed border-zinc-300 dark:border-zinc-700">
+                            <p class="text-xs text-zinc-500">Terima kasih atas kunjungan Anda!</p>
+                            <p class="text-xs text-zinc-400 mt-1">Simpan struk ini sebagai bukti pembayaran</p>
+                        </div>
+                    </div>
+
+                    <!-- Modal Actions (hidden on print) -->
+                    <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 print:hidden">
+                        <Button class="w-full gap-2" @click="printReceipt">
+                            <Printer class="h-4 w-4" />
+                            Cetak Struk
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+    </AppLayout>
+</template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    .print\:block,
+    .print\:block * {
+        visibility: visible;
+    }
+}
+</style>

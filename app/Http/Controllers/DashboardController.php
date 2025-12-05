@@ -153,6 +153,7 @@ class DashboardController extends Controller
             'latestTransactions' => $latestTransactions,
             'chartLabels' => $chartLabels,
             'chartData' => $chartData,
+            'isCashier' => $isCashier,
         ]);
     }
 }

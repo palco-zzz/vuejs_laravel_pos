@@ -99,4 +99,50 @@ class AdminController extends Controller
             ], 500);
         }
     }
+
+    public function history()
+    {
+        $user = Auth::user();
+        
+        // Build query based on user role
+        $query = Order::with(['items.menu', 'branch'])
+            ->orderBy('created_at', 'desc');
+        
+        // Cashiers see only their own transactions
+        if ($user->role === 'cashier') {
+            $query->where('user_id', $user->id);
+        }
+        // Admins with branch see their branch transactions
+        elseif ($user->branch_id) {
+            $query->where('branch_id', $user->branch_id);
+        }
+        // Super admins (branch_id = null) see all transactions
+        
+        $transactions = $query->paginate(10)->through(function ($order) {
+            return [
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'date' => $order->created_at->format('d/m/Y'),
+                'time' => $order->created_at->format('H:i'),
+                'total' => (float) $order->total,
+                'payment_method' => $order->payment_method,
+                'status' => $order->status,
+                'branch_name' => $order->branch->nama ?? '-',
+                'branch_address' => $order->branch->address ?? '',
+                'items' => $order->items->map(function ($item) {
+                    return [
+                        'name' => $item->item_name,
+                        'quantity' => $item->quantity,
+                        'price' => (float) $item->price,
+                        'subtotal' => (float) $item->subtotal,
+                        'is_custom' => $item->is_custom,
+                    ];
+                }),
+            ];
+        });
+
+        return Inertia::render('admin/History/Index', [
+            'transactions' => $transactions,
+        ]);
+    }
 }

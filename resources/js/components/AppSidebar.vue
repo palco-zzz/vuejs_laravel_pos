@@ -14,7 +14,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BarChart3, BookOpen, Folder, LayoutGrid, Package, Package2, Package2Icon, ShoppingBag, Store, User } from 'lucide-vue-next';
+import { BarChart3, BookOpen, Clock, Folder, LayoutGrid, Package, Package2, Package2Icon, ShoppingBag, Store, User } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -34,6 +34,12 @@ const allNavItems: NavItem[] = [
         href: '/pos',
         icon: ShoppingBag,
         permission: 'manage_pos',
+    },
+    {
+        title: 'Riwayat Transaksi',
+        href: '/pos/history',
+        icon: Clock,
+        permission: 'manage_pos', // Cashiers can access
     },
     {
         title: 'Manajemen Cabang',

@@ -25,10 +25,11 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 });
 
 
-// POS Routes
+// POS Routes (accessible by both admin and cashier)
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pos', [AdminController::class, 'index'])->name('pos.index');
     Route::post('/pos/order', [AdminController::class, 'storeOrder'])->name('pos.order.store');
+    Route::get('/pos/history', [AdminController::class, 'history'])->name('pos.history');
 });
 
 // Karyawan CRUD Routes (using modals) - Admin Only
