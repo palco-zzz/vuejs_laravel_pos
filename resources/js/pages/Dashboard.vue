@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 
@@ -37,6 +37,14 @@ const props = defineProps<{
     isCashier: boolean;
 }>();
 
+// Debug: Log chart data on mount
+onMounted(() => {
+    console.log('Chart Labels:', props.chartLabels);
+    console.log('Chart Data:', props.chartData);
+    console.log('Chart Data Length:', props.chartData?.length);
+    console.log('Max Chart Value:', Math.max(...(props.chartData || [0]), 1));
+});
+
 const performanceTab = ref<'omset' | 'transaksi'>('omset');
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -64,7 +72,7 @@ const formatRupiahShort = (value: number) => {
 };
 
 // Calculate max value for chart height percentages
-const maxChartValue = Math.max(...props.chartData, 1);
+const maxChartValue = Math.max(...(props.chartData || [0]), 1);
 </script>
 
 <template>
@@ -115,7 +123,7 @@ const maxChartValue = Math.max(...props.chartData, 1);
                 <div class="flex flex-col">
                     <span class="text-zinc-500 text-xs font-medium mb-1">Total Transaksi</span>
                     <h3 class="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">{{ totalTransactions
-                        }} <span class="text-sm font-normal text-zinc-500">Nota</span></h3>
+                    }} <span class="text-sm font-normal text-zinc-500">Nota</span></h3>
                 </div>
                 </Link>
 
@@ -263,22 +271,36 @@ const maxChartValue = Math.max(...props.chartData, 1);
                     <div
                         class="bg-white dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/60 rounded-xl p-6 shadow-sm dark:shadow-none">
                         <h3 class="text-sm font-medium text-zinc-900 dark:text-zinc-200 mb-6">Tren Penjualan
-                            Mingguan</h3>
-                        <div class="h-48 flex items-end justify-between gap-2">
+                            Mingguan (7 Hari Terakhir)</h3>
+
+                        <!-- Chart Container with Safety Check -->
+                        <div v-if="chartData && chartData.length > 0" class="h-48 flex items-end justify-between gap-2">
                             <div v-for="(value, index) in chartData" :key="index"
-                                :style="{ height: (value / maxChartValue * 100) + '%' }" :class="[
-                                    'w-full rounded-sm relative group transition-colors min-h-[10%]',
-                                    index === 6 ? 'bg-zinc-200 dark:bg-zinc-700/50 border-t-2 border-dashed border-zinc-400 dark:border-zinc-500' :
-                                        index === 5 && value === Math.max(...chartData) ? 'bg-orange-500 dark:bg-orange-600 hover:bg-orange-600 dark:hover:bg-orange-500 shadow-[0_0_15px_rgba(234,88,12,0.3)]' :
-                                            'bg-zinc-100 dark:bg-zinc-800/50 hover:bg-zinc-200 dark:hover:bg-zinc-800'
+                                :style="{ height: Math.max((value / maxChartValue * 100), 2) + '%' }" :class="[
+                                    'w-full rounded-sm relative group transition-colors',
+                                    value === 0 ? 'bg-zinc-100 dark:bg-zinc-800/30 min-h-[8px]' :
+                                        index === chartData.length - 1 ? 'bg-orange-500 dark:bg-orange-600 hover:bg-orange-600 dark:hover:bg-orange-500 shadow-[0_0_15px_rgba(234,88,12,0.3)]' :
+                                            value === Math.max(...chartData) ? 'bg-orange-500 dark:bg-orange-600 hover:bg-orange-600 dark:hover:bg-orange-500 shadow-[0_0_15px_rgba(234,88,12,0.3)]' :
+                                                'bg-zinc-200 dark:bg-zinc-700/50 hover:bg-zinc-300 dark:hover:bg-zinc-700'
                                 ]">
                                 <div
                                     class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-zinc-900 dark:bg-zinc-800 text-white text-[10px] py-1 px-2 rounded border border-zinc-700 whitespace-nowrap z-10">
-                                    {{ formatRupiahShort(value) }}
+                                    {{ value === 0 ? 'Tidak ada penjualan' : formatRupiahShort(value) }}
                                 </div>
                             </div>
                         </div>
-                        <div class="flex justify-between mt-2 text-xs text-zinc-500 font-mono">
+
+                        <!-- Empty State -->
+                        <div v-else class="h-48 flex items-center justify-center">
+                            <div class="text-center text-zinc-500">
+                                <p class="text-sm">Belum ada data grafik</p>
+                                <p class="text-xs mt-1">Data akan muncul setelah ada transaksi</p>
+                            </div>
+                        </div>
+
+                        <!-- Chart Labels -->
+                        <div v-if="chartLabels && chartLabels.length > 0"
+                            class="flex justify-between mt-2 text-xs text-zinc-500 font-mono">
                             <span v-for="(label, index) in chartLabels" :key="index">{{ label }}</span>
                         </div>
                     </div>

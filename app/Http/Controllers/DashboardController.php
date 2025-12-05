@@ -48,7 +48,7 @@ class DashboardController extends Controller
                     $query->where('branch_id', $branchId);
                 }
             });
-        
+
         $topSellingMenus = $topSellingQuery
             ->groupBy('menu_id')
             ->orderByDesc('total_sold')
@@ -70,10 +70,10 @@ class DashboardController extends Controller
         if ($isCashier && $branchId) {
             $branchQuery->where('id', $branchId);
         }
-        
+
         $branchPerformance = $branchQuery->withCount(['orders as transaction_count' => function ($query) use ($today) {
-                $query->whereDate('created_at', $today);
-            }])
+            $query->whereDate('created_at', $today);
+        }])
             ->withSum(['orders as total_income' => function ($query) use ($today) {
                 $query->whereDate('created_at', $today);
             }], 'total')
@@ -99,16 +99,16 @@ class DashboardController extends Controller
         if ($isCashier && $branchId) {
             $latestTransactionsQuery->where('branch_id', $branchId);
         }
-        
+
         $latestTransactions = $latestTransactionsQuery
             ->latest()
             ->take(5)
             ->get()
             ->map(function ($order) {
-                $itemNames = $order->items->map(fn($item) => 
-                    ($item->quantity > 1 ? $item->quantity . 'x ' : '') . ($item->menu->nama ?? 'Item')
+                $itemNames = $order->items->map(
+                    fn($item) => ($item->quantity > 1 ? $item->quantity . 'x ' : '') . ($item->menu->nama ?? 'Item')
                 )->join(', ');
-                
+
                 return [
                     'id' => $order->id,
                     'order_number' => $order->order_number,
@@ -120,27 +120,39 @@ class DashboardController extends Controller
                 ];
             });
 
-        // 7. Weekly Sales Chart Data (Last 7 days: Monday to Sunday) - Scoped by branch for cashiers
-        $startOfWeek = Carbon::now()->startOfWeek(); // Monday
-        $endOfWeek = Carbon::now()->endOfWeek(); // Sunday
-        
+        // 7. Weekly Sales Chart Data (Last 7 days including today) - Scoped by branch for cashiers
+        // Set timezone to Asia/Jakarta
+        Carbon::setLocale('id');
+
+        // Define date range: 6 days ago + today = 7 days total
+        $startDate = Carbon::now('Asia/Jakarta')->subDays(6)->startOfDay();
+        $endDate = Carbon::now('Asia/Jakarta')->endOfDay();
+
+        // Query ALL orders for testing (status filter temporarily disabled)
         $weeklySalesQuery = Order::selectRaw('DATE(created_at) as date, SUM(total) as total')
-            ->whereBetween('created_at', [$startOfWeek, $endOfWeek]);
+            ->whereBetween('created_at', [$startDate, $endDate]);
+        // ->where('status', 'success'); // Temporarily disabled for testing
+
         if ($isCashier && $branchId) {
             $weeklySalesQuery->where('branch_id', $branchId);
         }
-        
+
         $weeklySales = $weeklySalesQuery->groupBy('date')->pluck('total', 'date');
 
-        // Fill in all 7 days (Monday to Sunday) with 0 if no sales
+        // Initialize arrays for all 7 days with 0 values using CarbonPeriod
         $chartLabels = [];
         $chartData = [];
-        
-        for ($i = 0; $i < 7; $i++) {
-            $currentDay = $startOfWeek->copy()->addDays($i);
-            $dateKey = $currentDay->format('Y-m-d');
-            
-            $chartLabels[] = $currentDay->locale('id')->isoFormat('ddd'); // Mon, Tue, etc in Indonesian
+
+        // Use CarbonPeriod to guarantee exactly 7 items
+        $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
+
+        foreach ($period as $date) {
+            $dateKey = $date->format('Y-m-d');
+
+            // Generate label (Sen, Sel, Rab, etc. in Indonesian)
+            $chartLabels[] = $date->locale('id')->isoFormat('ddd');
+
+            // Map actual sales data or 0 if no sales that day
             $chartData[] = (float) ($weeklySales[$dateKey] ?? 0);
         }
 
