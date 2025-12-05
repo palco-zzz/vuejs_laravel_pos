@@ -41,7 +41,9 @@ class AdminController extends Controller
             'subtotal' => ['required', 'numeric', 'min:0'],
             'tax' => ['required', 'numeric', 'min:0'],
             'total' => ['required', 'numeric', 'min:0'],
-            'payment_method' => ['nullable', 'string', 'in:cash,transfer,qris'],
+            'payment_method' => ['nullable', 'string', 'in:cash,bca_va,bri_va,gopay,ovo,transfer,qris'],
+            'cash_amount' => ['nullable', 'numeric', 'min:0'],
+            'change_amount' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         try {
@@ -57,6 +59,8 @@ class AdminController extends Controller
                 'total' => $validated['total'],
                 'status' => 'completed',
                 'payment_method' => $validated['payment_method'] ?? 'cash',
+                'cash_amount' => $validated['cash_amount'] ?? null,
+                'change_amount' => $validated['change_amount'] ?? null,
             ]);
 
             // Create order items and update stock

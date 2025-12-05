@@ -3,6 +3,15 @@ import type { LucideIcon } from 'lucide-vue-next';
 
 export interface Auth {
     user: User;
+    role: 'admin' | 'cashier' | null;
+    permissions: {
+        view_all_branches?: boolean;
+        manage_branches?: boolean;
+        manage_menu?: boolean;
+        manage_employees?: boolean;
+        view_reports?: boolean;
+        manage_pos?: boolean;
+    };
 }
 
 export interface BreadcrumbItem {
@@ -15,6 +24,7 @@ export interface NavItem {
     href: NonNullable<InertiaLinkProps['href']>;
     icon?: LucideIcon;
     isActive?: boolean;
+    permission?: string | null;
 }
 
 export type AppPageProps<

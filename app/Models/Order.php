@@ -17,6 +17,8 @@ class Order extends Model
         'total',
         'status',
         'payment_method',
+        'cash_amount',
+        'change_amount',
         'notes',
     ];
 
@@ -24,6 +26,8 @@ class Order extends Model
         'subtotal' => 'decimal:2',
         'tax' => 'decimal:2',
         'total' => 'decimal:2',
+        'cash_amount' => 'decimal:2',
+        'change_amount' => 'decimal:2',
     ];
 
     public function user(): BelongsTo
