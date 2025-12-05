@@ -34,7 +34,6 @@ interface MenuData {
     category_id: number;
     nama: string;
     harga: number;
-    stok: number;
     icon: string | null;
     category: CategoryData;
     created_at: string;
@@ -106,7 +105,6 @@ const menuCreateForm = useForm({
     category_id: '',
     nama: '',
     harga: 0,
-    stok: 0,
     icon: '🍞',
 });
 
@@ -114,7 +112,6 @@ const menuEditForm = useForm({
     category_id: '',
     nama: '',
     harga: 0,
-    stok: 0,
     icon: '',
 });
 
@@ -150,7 +147,6 @@ const openMenuEditModal = (menu: MenuData) => {
     menuEditForm.category_id = menu.category_id.toString();
     menuEditForm.nama = menu.nama;
     menuEditForm.harga = menu.harga;
-    menuEditForm.stok = menu.stok;
     menuEditForm.icon = menu.icon || '🍞';
     menuEditForm.clearErrors();
     showMenuEditModal.value = true;
@@ -316,22 +312,28 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
             <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h1 class="text-xl font-semibold text-zinc-900 dark:text-white">Manajemen Menu</h1>
-                        <p class="text-sm text-zinc-500 dark:text-zinc-400">Kelola menu dan kategori produk</p>
+                        <h1 class="text-xl font-semibold text-zinc-900 dark:text-white">
+                            Manajemen Menu
+                        </h1>
+                        <p class="text-sm text-zinc-500 dark:text-zinc-400">
+                            Kelola menu dan kategori produk
+                        </p>
                     </div>
                 </div>
 
                 <!-- Tabs -->
                 <div class="flex gap-4 border-b border-zinc-200 dark:border-zinc-800 mt-4 -mb-4">
-                    <button @click="activeTab = 'items'"
-                        :class="activeTab === 'items' ? 'text-orange-600 dark:text-orange-500 border-orange-500' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 border-transparent'"
-                        class="pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2">
+                    <button @click="activeTab = 'items'" :class="activeTab === 'items'
+                            ? 'text-orange-600 dark:text-orange-500 border-orange-500'
+                            : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 border-transparent'
+                        " class="pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2">
                         <UtensilsCrossed class="h-4 w-4" />
                         Daftar Menu
                     </button>
-                    <button @click="activeTab = 'categories'"
-                        :class="activeTab === 'categories' ? 'text-orange-600 dark:text-orange-500 border-orange-500' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 border-transparent'"
-                        class="pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2">
+                    <button @click="activeTab = 'categories'" :class="activeTab === 'categories'
+                            ? 'text-orange-600 dark:text-orange-500 border-orange-500'
+                            : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 border-transparent'
+                        " class="pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2">
                         <Tag class="h-4 w-4" />
                         Kategori Menu
                     </button>
@@ -374,7 +376,6 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                                     <th class="py-3 px-6 font-medium">Nama Menu</th>
                                     <th class="py-3 px-6 font-medium">Kategori</th>
                                     <th class="py-3 px-6 font-medium text-right">Harga</th>
-                                    <th class="py-3 px-6 font-medium text-center">Stok Harian</th>
                                     <th class="py-3 px-6 font-medium text-right">Aksi</th>
                                 </tr>
                             </thead>
@@ -384,12 +385,13 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                                     <td class="py-3 px-6">
                                         <div
                                             class="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center text-lg shadow-sm border border-zinc-200 dark:border-zinc-700">
-                                            {{ menu.icon || '🍞' }}
+                                            {{ menu.icon || "🍞" }}
                                         </div>
                                     </td>
                                     <td class="py-3 px-6">
                                         <div class="flex flex-col">
-                                            <span class="text-zinc-900 dark:text-zinc-200 font-medium">{{ menu.nama
+                                            <span class="text-zinc-900 dark:text-zinc-200 font-medium">{{
+                                                menu.nama
                                                 }}</span>
                                             <span class="text-xs text-zinc-500">ID: #MENU-{{ menu.id }}</span>
                                         </div>
@@ -402,11 +404,6 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                                     </td>
                                     <td class="py-3 px-6 text-right font-medium text-zinc-900 dark:text-zinc-200">
                                         {{ formatRupiah(menu.harga) }}
-                                    </td>
-                                    <td class="py-3 px-6 text-center">
-                                        <span :class="menu.stok < 10 ? 'text-red-500 font-medium' : 'text-zinc-500'">
-                                            {{ menu.stok }} Porsi
-                                        </span>
                                     </td>
                                     <td class="py-3 px-6 text-right">
                                         <div class="flex justify-end gap-2">
@@ -422,7 +419,7 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                                     </td>
                                 </tr>
                                 <tr v-if="filteredMenus.length === 0">
-                                    <td colspan="6" class="py-12 text-center">
+                                    <td colspan="5" class="py-12 text-center">
                                         <div class="flex flex-col items-center">
                                             <div
                                                 class="h-12 w-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-3">
@@ -449,10 +446,12 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                                 <div class="flex gap-3">
                                     <div
                                         class="h-12 w-12 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center text-2xl shrink-0 border border-zinc-200 dark:border-zinc-700">
-                                        {{ menu.icon || '🍞' }}
+                                        {{ menu.icon || "🍞" }}
                                     </div>
                                     <div>
-                                        <h3 class="font-medium text-zinc-900 dark:text-white">{{ menu.nama }}</h3>
+                                        <h3 class="font-medium text-zinc-900 dark:text-white">
+                                            {{ menu.nama }}
+                                        </h3>
                                         <p class="text-xs text-zinc-500 mb-1">ID: #MENU-{{ menu.id }}</p>
                                         <span
                                             class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
@@ -467,14 +466,8 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                                 <div class="flex flex-col">
                                     <span class="text-xs text-zinc-500">Harga</span>
                                     <span class="font-medium text-zinc-900 dark:text-zinc-200">{{
-                                        formatRupiah(menu.harga) }}</span>
-                                </div>
-                                <div class="flex flex-col items-end">
-                                    <span class="text-xs text-zinc-500">Stok</span>
-                                    <span
-                                        :class="menu.stok < 10 ? 'text-red-500 font-medium' : 'text-zinc-900 dark:text-zinc-200'">
-                                        {{ menu.stok }} Porsi
-                                    </span>
+                                        formatRupiah(menu.harga)
+                                        }}</span>
                                 </div>
                             </div>
 
@@ -514,8 +507,12 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                     <!-- Header & Actions -->
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                            <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100">Kategori Menu</h3>
-                            <p class="text-sm text-zinc-500">Kelola kategori untuk pengelompokan produk.</p>
+                            <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100">
+                                Kategori Menu
+                            </h3>
+                            <p class="text-sm text-zinc-500">
+                                Kelola kategori untuk pengelompokan produk.
+                            </p>
                         </div>
                         <Button class="w-full sm:w-auto gap-2" @click="openCategoryCreateModal">
                             <Plus class="h-4 w-4" />
@@ -541,7 +538,7 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                                     <td class="py-3 px-6">
                                         <div
                                             class="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center text-lg">
-                                            {{ category.icon || '🍞' }}
+                                            {{ category.icon || "🍞" }}
                                         </div>
                                     </td>
                                     <td class="py-3 px-6 font-medium text-zinc-900 dark:text-zinc-200">
@@ -594,10 +591,12 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                                 <div class="flex items-center gap-3">
                                     <div
                                         class="h-12 w-12 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center text-2xl shrink-0 border border-zinc-200 dark:border-zinc-700">
-                                        {{ category.icon || '🍞' }}
+                                        {{ category.icon || "🍞" }}
                                     </div>
                                     <div>
-                                        <h3 class="font-medium text-zinc-900 dark:text-white">{{ category.nama }}</h3>
+                                        <h3 class="font-medium text-zinc-900 dark:text-white">
+                                            {{ category.nama }}
+                                        </h3>
                                         <span
                                             class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 mt-1">
                                             {{ category.menus_count }} menu
@@ -669,29 +668,21 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                             <InputError :message="menuCreateForm.errors.nama" />
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-2">
-                                <Label for="menu-harga">Harga (Rp)</Label>
-                                <Input id="menu-harga" v-model.number="menuCreateForm.harga" type="number" min="0"
-                                    placeholder="25000" required />
-                                <InputError :message="menuCreateForm.errors.harga" />
-                            </div>
-
-                            <div class="space-y-2">
-                                <Label for="menu-stok">Stok Harian</Label>
-                                <Input id="menu-stok" v-model.number="menuCreateForm.stok" type="number" min="0"
-                                    placeholder="50" required />
-                                <InputError :message="menuCreateForm.errors.stok" />
-                            </div>
+                        <div class="space-y-2">
+                            <Label for="menu-harga">Harga (Rp)</Label>
+                            <Input id="menu-harga" v-model.number="menuCreateForm.harga" type="number" min="0"
+                                placeholder="25000" required />
+                            <InputError :message="menuCreateForm.errors.harga" />
                         </div>
 
                         <div class="space-y-2">
                             <Label>Ikon</Label>
                             <div class="flex flex-wrap gap-2">
                                 <button v-for="emoji in foodEmojis" :key="emoji" type="button"
-                                    @click="menuCreateForm.icon = emoji"
-                                    :class="menuCreateForm.icon === emoji ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                                    class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
+                                    @click="menuCreateForm.icon = emoji" :class="menuCreateForm.icon === emoji
+                                            ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10'
+                                            : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                        " class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
                                     {{ emoji }}
                                 </button>
                             </div>
@@ -737,19 +728,23 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                             <InputError :message="menuEditForm.errors.nama" />
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-2">
-                                <Label for="edit-menu-harga">Harga (Rp)</Label>
-                                <Input id="edit-menu-harga" v-model.number="menuEditForm.harga" type="number" min="0"
-                                    placeholder="25000" required />
-                                <InputError :message="menuEditForm.errors.harga" />
-                            </div>
+                        <div class="space-y-2">
+                            <Label for="edit-menu-harga">Harga (Rp)</Label>
+                            <Input id="edit-menu-harga" v-model.number="menuEditForm.harga" type="number" min="0"
+                                placeholder="25000" required />
+                            <InputError :message="menuEditForm.errors.harga" />
+                        </div>
 
-                            <div class="space-y-2">
-                                <Label for="edit-menu-stok">Stok Harian</Label>
-                                <Input id="edit-menu-stok" v-model.number="menuEditForm.stok" type="number" min="0"
-                                    placeholder="50" required />
-                                <InputError :message="menuEditForm.errors.stok" />
+                        <div class="space-y-2">
+                            <Label>Ikon</Label>
+                            <div class="flex flex-wrap gap-2">
+                                <button v-for="emoji in foodEmojis" :key="emoji" type="button"
+                                    @click="menuEditForm.icon = emoji" :class="menuEditForm.icon === emoji
+                                            ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10'
+                                            : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                        " class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
+                                    {{ emoji }}
+                                </button>
                             </div>
                         </div>
 
@@ -757,9 +752,10 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                             <Label>Ikon</Label>
                             <div class="flex flex-wrap gap-2">
                                 <button v-for="emoji in foodEmojis" :key="emoji" type="button"
-                                    @click="menuEditForm.icon = emoji"
-                                    :class="menuEditForm.icon === emoji ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                                    class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
+                                    @click="menuEditForm.icon = emoji" :class="menuEditForm.icon === emoji
+                                            ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10'
+                                            : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                        " class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
                                     {{ emoji }}
                                 </button>
                             </div>
@@ -769,7 +765,7 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                             <Button type="button" variant="outline" @click="closeMenuEditModal">Batal</Button>
                             <Button type="submit" :disabled="menuEditForm.processing">
                                 <Spinner v-if="menuEditForm.processing" class="mr-2" />
-                                Simpan Perubahan
+                                Simpan
                             </Button>
                         </DialogFooter>
                     </form>
@@ -782,8 +778,8 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                     <DialogHeader>
                         <DialogTitle>Hapus Menu</DialogTitle>
                         <DialogDescription>
-                            Apakah Anda yakin ingin menghapus menu <strong>{{ menuToDelete?.nama }}</strong>? Tindakan
-                            ini tidak dapat dibatalkan.
+                            Apakah Anda yakin ingin menghapus menu
+                            <strong>{{ menuToDelete?.nama }}</strong>? Tindakan ini tidak dapat dibatalkan.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
@@ -816,9 +812,10 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                             <Label>Ikon</Label>
                             <div class="flex flex-wrap gap-2">
                                 <button v-for="emoji in foodEmojis" :key="emoji" type="button"
-                                    @click="categoryCreateForm.icon = emoji"
-                                    :class="categoryCreateForm.icon === emoji ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                                    class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
+                                    @click="categoryCreateForm.icon = emoji" :class="categoryCreateForm.icon === emoji
+                                            ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10'
+                                            : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                        " class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
                                     {{ emoji }}
                                 </button>
                             </div>
@@ -856,9 +853,10 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                             <Label>Ikon</Label>
                             <div class="flex flex-wrap gap-2">
                                 <button v-for="emoji in foodEmojis" :key="emoji" type="button"
-                                    @click="categoryEditForm.icon = emoji"
-                                    :class="categoryEditForm.icon === emoji ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                                    class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
+                                    @click="categoryEditForm.icon = emoji" :class="categoryEditForm.icon === emoji
+                                            ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10'
+                                            : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                        " class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
                                     {{ emoji }}
                                 </button>
                             </div>
@@ -881,11 +879,12 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                     <DialogHeader>
                         <DialogTitle>Hapus Kategori</DialogTitle>
                         <DialogDescription>
-                            Apakah Anda yakin ingin menghapus kategori <strong>{{ categoryToDelete?.nama }}</strong>?
+                            Apakah Anda yakin ingin menghapus kategori
+                            <strong>{{ categoryToDelete?.nama }}</strong>?
                             <span v-if="categoryToDelete && categoryToDelete.menus_count > 0"
                                 class="block mt-2 text-red-500">
-                                Peringatan: Kategori ini memiliki {{ categoryToDelete.menus_count }} menu yang
-                                terdaftar.
+                                Peringatan: Kategori ini memiliki {{ categoryToDelete.menus_count }} menu
+                                yang terdaftar.
                             </span>
                         </DialogDescription>
                     </DialogHeader>

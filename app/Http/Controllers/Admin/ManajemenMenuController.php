@@ -38,9 +38,11 @@ class ManajemenMenuController extends Controller
             'category_id' => ['required', 'exists:categories,id'],
             'nama' => ['required', 'string', 'max:255'],
             'harga' => ['required', 'numeric', 'min:0'],
-            'stok' => ['required', 'integer', 'min:0'],
             'icon' => ['nullable', 'string', 'max:10'],
         ]);
+
+        // Set default stock value since we're not tracking inventory
+        $validated['stok'] = 9999;
 
         Menu::create($validated);
 
@@ -56,9 +58,11 @@ class ManajemenMenuController extends Controller
             'category_id' => ['required', 'exists:categories,id'],
             'nama' => ['required', 'string', 'max:255'],
             'harga' => ['required', 'numeric', 'min:0'],
-            'stok' => ['required', 'integer', 'min:0'],
             'icon' => ['nullable', 'string', 'max:10'],
         ]);
+
+        // Set default stock value since we're not tracking inventory
+        $validated['stok'] = 9999;
 
         $menu->update($validated);
 
