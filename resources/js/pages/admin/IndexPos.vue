@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
-import { ShoppingCart, CreditCard, PlusCircle, Edit3, Trash2, Plus, Minus, Search, Menu as MenuIcon, X, CheckCircle, Printer } from 'lucide-vue-next';
+import { ShoppingCart, CreditCard, PlusCircle, Edit3, Trash2, Plus, Minus, Search, Menu as MenuIcon, X, CheckCircle, Printer, Building2 } from 'lucide-vue-next';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +22,11 @@ interface MenuData {
     stok: number;
     icon: string | null;
     category: CategoryData;
+}
+
+interface BranchData {
+    id: number;
+    nama: string;
 }
 
 interface CartItem {
@@ -43,6 +48,7 @@ interface PaymentMethod {
 const props = defineProps<{
     menus: MenuData[];
     categories: CategoryData[];
+    branches: BranchData[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -63,6 +69,20 @@ const isCustomOrderModalOpen = ref(false);
 const customOrderForm = ref({
   itemName: '',
   itemPrice: 0,
+});
+
+// Branch selection (Admin only)
+const selectedBranchId = ref<number | null>(null);
+
+// Get current user
+const page = usePage();
+const currentUser = computed(() => page.props.auth.user);
+
+// Get selected branch name for display
+const selectedBranchName = computed(() => {
+    if (!selectedBranchId.value) return null;
+    const branch = props.branches.find(b => b.id === selectedBranchId.value);
+    return branch?.nama || null;
 });
 
 const paymentMethods: PaymentMethod[] = [
@@ -262,9 +282,15 @@ const selectPaymentMethod = (methodId: string) => {
 const confirmPayment = async () => {
   if (cart.value.length === 0) return;
   
+  // Admin must select a branch
+  if (currentUser.value.role === 'admin' && !selectedBranchId.value) {
+    alert('Admin harus memilih cabang terlebih dahulu');
+    return;
+  }
+  
   try {
     // Prepare order data
-    const orderData = {
+    const orderData: any = {
       items: cart.value.map(item => ({
         id: item.id,
         name: item.name,
@@ -277,6 +303,12 @@ const confirmPayment = async () => {
       total: grandTotal.value,
       payment_method: selectedPaymentMethod.value,
     };
+    
+    // Include branch_id for admin
+    if (currentUser.value.role === 'admin' && selectedBranchId.value) {
+      orderData.branch_id = Number(selectedBranchId.value);
+      console.log('Admin branch selected:', orderData.branch_id);
+    }
 
     // Send to backend
     const response = await fetch('/pos/order', {
@@ -328,6 +360,41 @@ const closeSuccess = () => {
             placeholder="Cari menu..."
             class="pl-9 w-full bg-white dark:bg-zinc-900"
           />
+        </div>
+
+        <!-- Branch Selector (Admin Only) -->
+        <div v-if="currentUser.role === 'admin'" class="mb-4">
+          <div class="bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-xl p-4">
+            <div class="flex items-start gap-3 mb-3">
+              <div class="h-10 w-10 bg-orange-100 dark:bg-orange-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Building2 class="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              </div>
+              <div class="flex-1 min-w-0">
+                <label for="branchSelect" class="block text-sm font-medium text-orange-900 dark:text-orange-200 mb-1">
+                  Pilih Cabang
+                </label>
+                <select
+                  id="branchSelect"
+                  v-model="selectedBranchId"
+                  class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-orange-300 dark:border-orange-500/30 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-zinc-900 dark:text-white"
+                  :class="!selectedBranchId ? 'text-zinc-400' : ''"
+                >
+                  <option :value="null" disabled>-- Pilih Cabang --</option>
+                  <option v-for="branch in branches" :key="branch.id" :value="branch.id">
+                    {{ branch.nama }}
+                  </option>
+                </select>
+              </div>
+            </div>
+            <div v-if="selectedBranchName" class="flex items-center gap-2 pl-13">
+              <Badge class="bg-orange-600 text-white hover:bg-orange-700">
+                Mode: {{ selectedBranchName }}
+              </Badge>
+            </div>
+            <p v-else class="text-xs text-orange-700 dark:text-orange-300 pl-13">
+              ⚠️ Wajib pilih cabang sebelum checkout
+            </p>
+          </div>
         </div>
 
         <!-- Category Filters -->

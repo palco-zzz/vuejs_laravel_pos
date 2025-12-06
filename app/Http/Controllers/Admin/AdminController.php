@@ -22,38 +22,87 @@ class AdminController extends Controller
             ->get();
 
         $categories = Category::orderBy('nama')->get();
+        
+        // Fetch all branches for admin branch selection
+        $branches = \App\Models\Branch::select('id', 'nama')->orderBy('nama')->get();
 
         return Inertia::render('admin/IndexPos', [
             'menus' => $menus,
             'categories' => $categories,
+            'branches' => $branches,
         ]);
     }
 
     public function storeOrder(Request $request)
     {
-        $validated = $request->validate([
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.id' => ['nullable', 'integer'],
-            'items.*.name' => ['required', 'string', 'max:255'],
-            'items.*.price' => ['required', 'numeric', 'min:0'],
-            'items.*.qty' => ['required', 'integer', 'min:1'],
-            'items.*.is_custom' => ['boolean'],
-            'subtotal' => ['required', 'numeric', 'min:0'],
-            'tax' => ['required', 'numeric', 'min:0'],
-            'total' => ['required', 'numeric', 'min:0'],
-            'payment_method' => ['nullable', 'string', 'in:cash,bca_va,bri_va,gopay,ovo,transfer,qris'],
-            'cash_amount' => ['nullable', 'numeric', 'min:0'],
-            'change_amount' => ['nullable', 'numeric', 'min:0'],
-        ]);
-
         try {
+            $user = Auth::user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated',
+                ], 401);
+            }
+            
+            // ========================================
+            // STEP 1: Determine Target Branch ID FIRST
+            // ========================================
+            // Priority: If Admin, use Request Input. If Cashier, use User Attribute.
+            $targetBranchId = $user->role === 'admin' 
+                ? $request->input('branch_id') 
+                : $user->branch_id;
+            
+            // Safety Check - Branch ID is REQUIRED
+            if (!$targetBranchId) {
+                $errorMessage = $user->role === 'admin' 
+                    ? 'Admin harus memilih cabang terlebih dahulu' 
+                    : 'Kasir belum ditugaskan ke cabang manapun';
+                    
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage,
+                ], 422);
+            }
+            
+            // Log for debugging
+            \Log::info('POS Checkout', [
+                'user_id' => $user->id, 
+                'role' => $user->role, 
+                'target_branch_id' => $targetBranchId,
+                'branch_id_from_request' => $request->input('branch_id'),
+                'branch_id_from_user' => $user->branch_id,
+            ]);
+            
+            // ========================================
+            // STEP 2: Validate Request Data
+            // ========================================
+            $validated = $request->validate([
+                'items' => ['required', 'array', 'min:1'],
+                'items.*.id' => ['nullable', 'integer'],
+                'items.*.name' => ['required', 'string', 'max:255'],
+                'items.*.price' => ['required', 'numeric', 'min:0'],
+                'items.*.qty' => ['required', 'integer', 'min:1'],
+                'items.*.is_custom' => ['boolean'],
+                'subtotal' => ['required', 'numeric', 'min:0'],
+                'tax' => ['required', 'numeric', 'min:0'],
+                'total' => ['required', 'numeric', 'min:0'],
+                'payment_method' => ['nullable', 'string', 'in:cash,bca_va,bri_va,gopay,ovo,transfer,qris'],
+                'cash_amount' => ['nullable', 'numeric', 'min:0'],
+                'change_amount' => ['nullable', 'numeric', 'min:0'],
+                'branch_id' => ['nullable', 'integer', 'exists:branch,id'],
+            ]);
+
+            // ========================================
+            // STEP 3: Create Order with Transaction
+            // ========================================
             DB::beginTransaction();
 
-            // Create order
+            // Create order - USE $targetBranchId here!
             $order = Order::create([
                 'order_number' => Order::generateOrderNumber(),
-                'user_id' => Auth::id(),
-                'branch_id' => Auth::user()->branch_id ?? null,
+                'user_id' => $user->id,
+                'branch_id' => $targetBranchId,  // <-- FIXED: Uses determined branch
                 'subtotal' => $validated['subtotal'],
                 'tax' => $validated['tax'],
                 'total' => $validated['total'],
@@ -85,14 +134,35 @@ class AdminController extends Controller
 
             DB::commit();
 
+            \Log::info('POS Checkout Success', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'branch_id' => $targetBranchId,
+            ]);
+
             // Return order data for receipt printing
             return response()->json([
                 'success' => true,
                 'message' => 'Pesanan berhasil disimpan',
                 'order' => $order->load('items'),
             ]);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation errors specifically
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors(),
+            ], 422);
+            
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('POS Checkout Error', [
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+                'user_id' => $user->id ?? null,
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal menyimpan pesanan: ' . $e->getMessage(),
