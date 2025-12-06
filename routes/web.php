@@ -37,6 +37,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/pos/order/{order}/items', [AdminController::class, 'updateItems'])
         ->middleware('role:admin')
         ->name('pos.order.updateItems');
+    
+    // Admin-only: Void (soft delete) transaction
+    Route::delete('/pos/order/{order}/void', [AdminController::class, 'voidTransaction'])
+        ->middleware('role:admin')
+        ->name('pos.order.void');
 });
 
 // Karyawan CRUD Routes (using modals) - Admin Only

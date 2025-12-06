@@ -5,9 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Order extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'order_number',
         'user_id',
@@ -23,6 +26,8 @@ class Order extends Model
         'edited_by',
         'edited_at',
         'edit_reason',
+        'deleted_by',
+        'delete_reason',
     ];
 
     protected $casts = [
@@ -32,6 +37,7 @@ class Order extends Model
         'cash_amount' => 'decimal:2',
         'change_amount' => 'decimal:2',
         'edited_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -54,6 +60,11 @@ class Order extends Model
         return $this->belongsTo(User::class, 'edited_by');
     }
 
+    public function deleter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
+    }
+
     public static function generateOrderNumber(): string
     {
         $date = now()->format('Ymd');
@@ -62,3 +73,4 @@ class Order extends Model
         return 'ORD-' . $date . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
     }
 }
+

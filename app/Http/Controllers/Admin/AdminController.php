@@ -174,13 +174,24 @@ class AdminController extends Controller
     {
         $user = Auth::user();
         
-        // Build query based on user role
-        $query = Order::with(['items.menu', 'branch', 'editor'])
+        // Build query - Include soft deleted (voided) transactions
+        $query = Order::with(['items.menu', 'branch', 'editor', 'user', 'deleter'])
+            ->withTrashed()  // Show voided transactions too
             ->orderBy('created_at', 'desc');
         
-        // Cashiers see only their own transactions
+        // Cashiers see ALL transactions FOR THEIR BRANCH (not just their own)
         if ($user->role === 'cashier') {
-            $query->where('user_id', $user->id);
+            if (!$user->branch_id) {
+                // Safety check: cashier without branch sees nothing
+                $query->whereRaw('1 = 0');
+            } else {
+                // Show all transactions for the cashier's branch
+                $query->where('branch_id', $user->branch_id);
+                
+                // Optional: Show only today's transactions by default
+                // Comment this line if you want to show all historical transactions
+                $query->whereDate('created_at', \Carbon\Carbon::today());
+            }
         }
         // Admins with branch see their branch transactions
         elseif ($user->branch_id) {
@@ -203,6 +214,14 @@ class AdminController extends Controller
                 'edited_at' => $order->edited_at ? $order->edited_at->format('d/m/Y H:i') : null,
                 'edit_reason' => $order->edit_reason,
                 'editor_name' => $order->editor->name ?? null,
+                // Creator info for "BANTUAN ADMIN" badge
+                'creator_name' => $order->user->name ?? null,
+                'creator_role' => $order->user->role ?? null,
+                // Void info for soft deletes
+                'deleted_at' => $order->deleted_at ? $order->deleted_at->format('d/m/Y H:i') : null,
+                'deleted_by' => $order->deleted_by,
+                'delete_reason' => $order->delete_reason,
+                'deleter_name' => $order->deleter->name ?? null,
                 'items' => $order->items->map(function ($item) {
                     return [
                         'id' => $item->id,
@@ -326,6 +345,62 @@ class AdminController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Gagal memperbarui order: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Void (Soft Delete) a transaction with audit trail
+     */
+    public function voidTransaction(Request $request, Order $order)
+    {
+        // Only allow non-deleted orders to be voided
+        if ($order->trashed()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaksi sudah dibatalkan sebelumnya',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'delete_reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Stock reversal: Return items back to inventory
+            foreach ($order->items as $item) {
+                if (!$item->is_custom && $item->menu_id) {
+                    Menu::where('id', $item->menu_id)
+                        ->increment('stok', $item->quantity);
+                }
+            }
+
+            // Set audit trail before deleting
+            $order->deleted_by = Auth::id();
+            $order->delete_reason = $validated['delete_reason'];
+            $order->save();
+
+            // Soft delete the order
+            $order->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaksi berhasil dibatalkan',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Void Transaction Error', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal membatalkan transaksi: ' . $e->getMessage(),
+            ], 500);
         }
     }
 }

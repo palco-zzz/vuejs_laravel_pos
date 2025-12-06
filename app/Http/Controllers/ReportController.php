@@ -18,8 +18,9 @@ class ReportController extends Controller
         $branchId = $request->input('branch_id');
         $paymentMethod = $request->input('payment_method');
 
-        // Build query
-        $query = Order::with(['branch', 'user', 'items.menu'])
+        // Build query - Include voidded transactions
+        $query = Order::with(['branch', 'user', 'items.menu', 'deleter'])
+            ->withTrashed()  // Show voided transactions too
             ->whereBetween('created_at', [
                 Carbon::parse($startDate)->startOfDay(),
                 Carbon::parse($endDate)->endOfDay()
@@ -41,6 +42,12 @@ class ReportController extends Controller
                 'date_time' => $order->created_at->format('d/m/Y H:i'),
                 'branch_name' => $order->branch->nama ?? '-',
                 'cashier_name' => $order->user->name ?? '-',
+                'creator_role' => $order->user->role ?? null,  // For "BANTUAN ADMIN" badge
+                // Void info for soft deletes
+                'deleted_at' => $order->deleted_at ? $order->deleted_at->format('d/m/Y H:i') : null,
+                'deleted_by' => $order->deleted_by,
+                'delete_reason' => $order->delete_reason,
+                'deleter_name' => $order->deleter->name ?? null,
                 'total' => (float) $order->total,
                 'payment_method' => $order->payment_method,
                 'status' => $order->status,

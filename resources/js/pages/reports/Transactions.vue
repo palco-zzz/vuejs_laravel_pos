@@ -5,7 +5,7 @@ import { ref, computed } from 'vue';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Calendar, Download, Filter, X, Eye, Pencil } from 'lucide-vue-next';
+import { Calendar, Download, Filter, X, Eye, Pencil, Trash2, AlertCircle } from 'lucide-vue-next';
 
 interface TransactionItem {
     name: string;
@@ -21,6 +21,11 @@ interface Transaction {
     date_time: string;
     branch_name: string;
     cashier_name: string;
+    creator_role?: string | null;  // For "BANTUAN ADMIN" badge
+    deleted_at?: string | null;    // For void functionality
+    deleted_by?: number | null;    // For void functionality
+    delete_reason?: string | null; // For void functionality
+    deleter_name?: string | null;  // For void functionality
     total: number;
     payment_method: string;
     status: string;
@@ -82,6 +87,10 @@ const editForm = ref({
     status: '',
     notes: '',
 });
+
+// Void modal state
+const isVoidModalOpen = ref(false);
+const voidReason = ref('');
 
 // Get current user from page props
 const page = usePage();
@@ -168,12 +177,12 @@ const saveTransaction = () => {
     if (!selectedTransaction.value) return;
 
     // Show warning for void/cancellation
-    if ((editForm.value.status === 'cancelled' || editForm.value.status === 'refunded') && 
+    if ((editForm.value.status === 'cancelled' || editForm.value.status === 'refunded') &&
         selectedTransaction.value.status !== editForm.value.status) {
         const confirmed = confirm(
             `Apakah Anda yakin ingin mengubah status transaksi menjadi "${editForm.value.status}"? Tindakan ini akan membatalkan transaksi.`
         );
-        
+
         if (!confirmed) return;
     }
 
@@ -189,9 +198,58 @@ const saveTransaction = () => {
         }
     );
 };
+
+// Void Transaction Functions
+const openVoidModal = (transaction: Transaction) => {
+    selectedTransaction.value = transaction;
+    voidReason.value = '';
+    isVoidModalOpen.value = true;
+};
+
+const closeVoidModal = () => {
+    isVoidModalOpen.value = false;
+    selectedTransaction.value = null;
+    voidReason.value = '';
+};
+
+const confirmVoid = async () => {
+    if (!selectedTransaction.value) return;
+
+    if (!voidReason.value.trim()) {
+        alert('Alasan pembatalan wajib diisi');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/pos/order/${selectedTransaction.value.id}/void`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            },
+            body: JSON.stringify({
+                delete_reason: voidReason.value
+            }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('Transaksi berhasil dibatalkan');
+            closeVoidModal();
+            router.reload({ only: ['transactions'] });
+        } else {
+            alert('Gagal: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Error voiding transaction:', error);
+        alert('Terjadi kesalahan saat membatalkan transaksi');
+    }
+};
 </script>
 
 <template>
+
     <Head title="Laporan Transaksi" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
@@ -212,11 +270,13 @@ const saveTransaction = () => {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-6 rounded-xl">
                     <p class="text-sm text-zinc-500 dark:text-zinc-400 mb-1">Total Pendapatan</p>
-                    <h3 class="text-3xl font-bold text-zinc-900 dark:text-white">{{ formatRupiah(summary.total_revenue) }}</h3>
+                    <h3 class="text-3xl font-bold text-zinc-900 dark:text-white">{{ formatRupiah(summary.total_revenue)
+                    }}</h3>
                 </div>
                 <div class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-6 rounded-xl">
                     <p class="text-sm text-zinc-500 dark:text-zinc-400 mb-1">Total Transaksi</p>
-                    <h3 class="text-3xl font-bold text-zinc-900 dark:text-white">{{ summary.total_count }} <span class="text-base font-normal text-zinc-500">Transaksi</span></h3>
+                    <h3 class="text-3xl font-bold text-zinc-900 dark:text-white">{{ summary.total_count }} <span
+                            class="text-base font-normal text-zinc-500">Transaksi</span></h3>
                 </div>
             </div>
 
@@ -228,25 +288,32 @@ const saveTransaction = () => {
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Tanggal Mulai</label>
+                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Tanggal
+                            Mulai</label>
                         <Input v-model="startDate" type="date" />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Tanggal Akhir</label>
+                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Tanggal
+                            Akhir</label>
                         <Input v-model="endDate" type="date" />
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Cabang</label>
-                        <select v-model="selectedBranch" class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm">
+                        <select v-model="selectedBranch"
+                            class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm">
                             <option :value="null">Semua Cabang</option>
-                            <option v-for="branch in branches" :key="branch.id" :value="branch.id">{{ branch.nama }}</option>
+                            <option v-for="branch in branches" :key="branch.id" :value="branch.id">{{ branch.nama }}
+                            </option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Metode Pembayaran</label>
-                        <select v-model="selectedPaymentMethod" class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm">
+                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Metode
+                            Pembayaran</label>
+                        <select v-model="selectedPaymentMethod"
+                            class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm">
                             <option :value="null">Semua Metode</option>
-                            <option v-for="method in paymentMethods" :key="method.value" :value="method.value">{{ method.label }}</option>
+                            <option v-for="method in paymentMethods" :key="method.value" :value="method.value">{{
+                                method.label }}</option>
                         </select>
                     </div>
                 </div>
@@ -263,45 +330,101 @@ const saveTransaction = () => {
             </div>
 
             <!-- Transactions Table -->
-            <div class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 rounded-xl overflow-hidden">
+            <div
+                class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 rounded-xl overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead class="bg-zinc-50 dark:bg-zinc-900/60 border-b border-zinc-200 dark:border-zinc-800">
                             <tr>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">No. Transaksi</th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Tanggal & Waktu</th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Cabang</th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Kasir</th>
-                                <th class="px-6 py-4 text-right text-xs font-medium text-zinc-500 uppercase tracking-wider">Total</th>
-                                <th class="px-6 py-4 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider">Pembayaran</th>
-                                <th class="px-6 py-4 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-4 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider">Aksi</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                    No. Transaksi</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                    Tanggal & Waktu</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                    Cabang</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                    Kasir</th>
+                                <th
+                                    class="px-6 py-4 text-right text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                    Total</th>
+                                <th
+                                    class="px-6 py-4 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                    Pembayaran</th>
+                                <th
+                                    class="px-6 py-4 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                    Status</th>
+                                <th
+                                    class="px-6 py-4 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                    Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
-                            <tr v-for="transaction in transactions.data" :key="transaction.id" class="hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors">
-                                <td class="px-6 py-4 text-sm font-medium text-zinc-900 dark:text-white">{{ transaction.order_number }}</td>
-                                <td class="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">{{ transaction.date_time }}</td>
-                                <td class="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">{{ transaction.branch_name }}</td>
-                                <td class="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">{{ transaction.cashier_name }}</td>
-                                <td class="px-6 py-4 text-sm text-right font-semibold text-zinc-900 dark:text-white">{{ formatRupiah(transaction.total) }}</td>
+                            <tr v-for="transaction in transactions.data" :key="transaction.id" :class="[
+                                'transition-colors',
+                                transaction.deleted_at
+                                    ? 'opacity-50 bg-red-50 dark:bg-red-500/5'
+                                    : 'hover:bg-zinc-50 dark:hover:bg-zinc-900/40'
+                            ]">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <span :class="[
+                                            'text-sm font-medium text-zinc-900 dark:text-white',
+                                            transaction.deleted_at ? 'line-through' : ''
+                                        ]">{{ transaction.order_number }}</span>
+                                        <!-- VOID Badge -->
+                                        <span v-if="transaction.deleted_at"
+                                            class="text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 font-medium">
+                                            VOID
+                                        </span>
+                                        <!-- Admin Created Badge -->
+                                        <span v-if="transaction.creator_role === 'admin' && !transaction.deleted_at"
+                                            class="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 font-medium">
+                                            PUSAT
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">{{ transaction.date_time
+                                }}</td>
+                                <td class="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">{{
+                                    transaction.branch_name }}</td>
+                                <td class="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">{{
+                                    transaction.cashier_name }}</td>
+                                <td class="px-6 py-4 text-sm text-right font-semibold text-zinc-900 dark:text-white">{{
+                                    formatRupiah(transaction.total) }}</td>
                                 <td class="px-6 py-4 text-center">
-                                    <span class="text-xs px-2 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                                    <span
+                                        class="text-xs px-2 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
                                         {{ getPaymentMethodLabel(transaction.payment_method) }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-center">
-                                    <span :class="getStatusBadgeClass(transaction.status)" class="text-xs px-2 py-1 rounded-full border capitalize">
+                                    <span :class="getStatusBadgeClass(transaction.status)"
+                                        class="text-xs px-2 py-1 rounded-full border capitalize">
                                         {{ transaction.status }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <button @click="openDetailModal(transaction)" class="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300" title="View Details">
+                                        <button @click="openDetailModal(transaction)"
+                                            class="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300"
+                                            title="View Details">
                                             <Eye class="h-4 w-4" />
                                         </button>
-                                        <button v-if="currentUser.role === 'admin'" @click="openEditModal(transaction)" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300" title="Edit Transaction">
+                                        <button v-if="currentUser.role === 'admin' && !transaction.deleted_at"
+                                            @click="openEditModal(transaction)"
+                                            class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                                            title="Edit Transaction">
                                             <Pencil class="h-4 w-4" />
+                                        </button>
+                                        <button v-if="currentUser.role === 'admin' && !transaction.deleted_at"
+                                            @click="openVoidModal(transaction)"
+                                            class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                                            title="Void Transaction">
+                                            <Trash2 class="h-4 w-4" />
                                         </button>
                                     </div>
                                 </td>
@@ -316,15 +439,20 @@ const saveTransaction = () => {
                 </div>
 
                 <!-- Pagination -->
-                <div v-if="transactions.last_page > 1" class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                <div v-if="transactions.last_page > 1"
+                    class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
                     <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                        Menampilkan {{ (transactions.current_page - 1) * transactions.per_page + 1 }} - {{ Math.min(transactions.current_page * transactions.per_page, transactions.total) }} dari {{ transactions.total }} transaksi
+                        Menampilkan {{ (transactions.current_page - 1) * transactions.per_page + 1 }} - {{
+                            Math.min(transactions.current_page * transactions.per_page, transactions.total) }} dari {{
+                            transactions.total }} transaksi
                     </p>
                     <div class="flex gap-2">
-                        <Link :href="`/reports/transactions?page=${transactions.current_page - 1}`" v-if="transactions.current_page > 1" preserve-state preserve-scroll>
+                        <Link :href="`/reports/transactions?page=${transactions.current_page - 1}`"
+                            v-if="transactions.current_page > 1" preserve-state preserve-scroll>
                             <Button variant="outline" size="sm">Previous</Button>
                         </Link>
-                        <Link :href="`/reports/transactions?page=${transactions.current_page + 1}`" v-if="transactions.current_page < transactions.last_page" preserve-state preserve-scroll>
+                        <Link :href="`/reports/transactions?page=${transactions.current_page + 1}`"
+                            v-if="transactions.current_page < transactions.last_page" preserve-state preserve-scroll>
                             <Button variant="outline" size="sm">Next</Button>
                         </Link>
                     </div>
@@ -336,14 +464,18 @@ const saveTransaction = () => {
         <transition name="fade">
             <div v-if="isDetailModalOpen" class="fixed inset-0 z-50 flex items-center justify-center">
                 <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeDetailModal"></div>
-                <div class="relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+                <div
+                    class="relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
                     <!-- Modal Header -->
-                    <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                    <div
+                        class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
                         <div>
                             <h3 class="text-xl font-bold text-zinc-900 dark:text-white">Detail Transaksi</h3>
-                            <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{{ selectedTransaction?.order_number }}</p>
+                            <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{{
+                                selectedTransaction?.order_number }}</p>
                         </div>
-                        <button @click="closeDetailModal" class="h-10 w-10 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                        <button @click="closeDetailModal"
+                            class="h-10 w-10 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
                             <X class="h-5 w-5" />
                         </button>
                     </div>
@@ -354,19 +486,23 @@ const saveTransaction = () => {
                         <div class="grid grid-cols-2 gap-4 mb-6">
                             <div>
                                 <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Tanggal & Waktu</p>
-                                <p class="text-sm font-medium text-zinc-900 dark:text-white">{{ selectedTransaction?.date_time }}</p>
+                                <p class="text-sm font-medium text-zinc-900 dark:text-white">{{
+                                    selectedTransaction?.date_time }}</p>
                             </div>
                             <div>
                                 <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Cabang</p>
-                                <p class="text-sm font-medium text-zinc-900 dark:text-white">{{ selectedTransaction?.branch_name }}</p>
+                                <p class="text-sm font-medium text-zinc-900 dark:text-white">{{
+                                    selectedTransaction?.branch_name }}</p>
                             </div>
                             <div>
                                 <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Kasir</p>
-                                <p class="text-sm font-medium text-zinc-900 dark:text-white">{{ selectedTransaction?.cashier_name }}</p>
+                                <p class="text-sm font-medium text-zinc-900 dark:text-white">{{
+                                    selectedTransaction?.cashier_name }}</p>
                             </div>
                             <div>
                                 <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Metode Pembayaran</p>
-                                <p class="text-sm font-medium text-zinc-900 dark:text-white">{{ getPaymentMethodLabel(selectedTransaction?.payment_method || '') }}</p>
+                                <p class="text-sm font-medium text-zinc-900 dark:text-white">{{
+                                    getPaymentMethodLabel(selectedTransaction?.payment_method || '') }}</p>
                             </div>
                         </div>
 
@@ -374,15 +510,19 @@ const saveTransaction = () => {
                         <div class="border-t border-zinc-200 dark:border-zinc-800 pt-6">
                             <h4 class="font-medium text-zinc-900 dark:text-white mb-4">Item Pesanan</h4>
                             <div class="space-y-3">
-                                <div v-for="(item, index) in selectedTransaction?.items" :key="index" class="flex justify-between items-start py-3 border-b border-zinc-100 dark:border-zinc-800/50 last:border-0">
+                                <div v-for="(item, index) in selectedTransaction?.items" :key="index"
+                                    class="flex justify-between items-start py-3 border-b border-zinc-100 dark:border-zinc-800/50 last:border-0">
                                     <div class="flex-1">
                                         <p class="text-sm font-medium text-zinc-900 dark:text-white">
                                             {{ item.name }}
-                                            <span v-if="item.is_custom" class="ml-2 text-xs px-2 py-0.5 rounded bg-orange-100 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400">Custom</span>
+                                            <span v-if="item.is_custom"
+                                                class="ml-2 text-xs px-2 py-0.5 rounded bg-orange-100 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400">Custom</span>
                                         </p>
-                                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{{ item.quantity }} x {{ formatRupiah(item.price) }}</p>
+                                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{{ item.quantity }} x
+                                            {{ formatRupiah(item.price) }}</p>
                                     </div>
-                                    <p class="text-sm font-semibold text-zinc-900 dark:text-white">{{ formatRupiah(item.subtotal) }}</p>
+                                    <p class="text-sm font-semibold text-zinc-900 dark:text-white">{{
+                                        formatRupiah(item.subtotal) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -391,7 +531,8 @@ const saveTransaction = () => {
                         <div class="mt-6 pt-6 border-t-2 border-zinc-200 dark:border-zinc-800">
                             <div class="flex justify-between items-center">
                                 <p class="text-base font-medium text-zinc-900 dark:text-white">Total Pembayaran</p>
-                                <p class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ formatRupiah(selectedTransaction?.total || 0) }}</p>
+                                <p class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{
+                                    formatRupiah(selectedTransaction?.total || 0) }}</p>
                             </div>
                         </div>
                     </div>
@@ -403,14 +544,18 @@ const saveTransaction = () => {
         <transition name="fade">
             <div v-if="isEditModalOpen" class="fixed inset-0 z-50 flex items-center justify-center">
                 <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeEditModal"></div>
-                <div class="relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+                <div
+                    class="relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
                     <!-- Modal Header -->
-                    <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                    <div
+                        class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
                         <div>
                             <h3 class="text-xl font-bold text-zinc-900 dark:text-white">Edit Transaksi</h3>
-                            <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{{ selectedTransaction?.order_number }}</p>
+                            <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{{
+                                selectedTransaction?.order_number }}</p>
                         </div>
-                        <button @click="closeEditModal" class="h-10 w-10 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                        <button @click="closeEditModal"
+                            class="h-10 w-10 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
                             <X class="h-5 w-5" />
                         </button>
                     </div>
@@ -423,8 +568,10 @@ const saveTransaction = () => {
                                 <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                                     Metode Pembayaran
                                 </label>
-                                <select v-model="editForm.payment_method" class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
-                                    <option v-for="method in paymentMethods" :key="method.value" :value="method.value">{{ method.label }}</option>
+                                <select v-model="editForm.payment_method"
+                                    class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                                    <option v-for="method in paymentMethods" :key="method.value" :value="method.value">
+                                        {{ method.label }}</option>
                                 </select>
                             </div>
 
@@ -433,13 +580,15 @@ const saveTransaction = () => {
                                 <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                                     Status
                                 </label>
-                                <select v-model="editForm.status" class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                                <select v-model="editForm.status"
+                                    class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
                                     <option value="completed">Completed</option>
                                     <option value="pending">Pending</option>
                                     <option value="cancelled">Cancelled</option>
                                     <option value="refunded">Refunded</option>
                                 </select>
-                                <p v-if="editForm.status === 'cancelled' || editForm.status === 'refunded'" class="mt-2 text-sm text-red-600 dark:text-red-400">
+                                <p v-if="editForm.status === 'cancelled' || editForm.status === 'refunded'"
+                                    class="mt-2 text-sm text-red-600 dark:text-red-400">
                                     ⚠️ Peringatan: Status ini akan membatalkan/void transaksi!
                                 </p>
                             </div>
@@ -449,21 +598,23 @@ const saveTransaction = () => {
                                 <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                                     Catatan Koreksi (Opsional)
                                 </label>
-                                <textarea 
-                                    v-model="editForm.notes" 
-                                    rows="3" 
+                                <textarea v-model="editForm.notes" rows="3"
                                     class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                                    placeholder="Alasan koreksi transaksi..."
-                                ></textarea>
+                                    placeholder="Alasan koreksi transaksi..."></textarea>
                             </div>
 
                             <!-- Current Transaction Info -->
-                            <div class="bg-zinc-50 dark:bg-zinc-900/60 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                                <h4 class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">Informasi Transaksi</h4>
+                            <div
+                                class="bg-zinc-50 dark:bg-zinc-900/60 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                                <h4 class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">Informasi
+                                    Transaksi</h4>
                                 <div class="text-sm space-y-1">
-                                    <p class="text-zinc-700 dark:text-zinc-300"><span class="font-medium">Total:</span> {{ formatRupiah(selectedTransaction?.total || 0) }}</p>
-                                    <p class="text-zinc-700 dark:text-zinc-300"><span class="font-medium">Kasir:</span> {{ selectedTransaction?.cashier_name }}</p>
-                                    <p class="text-zinc-700 dark:text-zinc-300"><span class="font-medium">Tanggal:</span> {{ selectedTransaction?.date_time }}</p>
+                                    <p class="text-zinc-700 dark:text-zinc-300"><span class="font-medium">Total:</span>
+                                        {{ formatRupiah(selectedTransaction?.total || 0) }}</p>
+                                    <p class="text-zinc-700 dark:text-zinc-300"><span class="font-medium">Kasir:</span>
+                                        {{ selectedTransaction?.cashier_name }}</p>
+                                    <p class="text-zinc-700 dark:text-zinc-300"><span
+                                            class="font-medium">Tanggal:</span> {{ selectedTransaction?.date_time }}</p>
                                 </div>
                             </div>
                         </div>
@@ -476,6 +627,68 @@ const saveTransaction = () => {
                         </Button>
                         <Button @click="saveTransaction" class="bg-orange-600 hover:bg-orange-700 text-white">
                             Simpan Perubahan
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- Void Transaction Modal (Admin Only) -->
+        <transition name="fade">
+            <div v-if="isVoidModalOpen" class="fixed inset-0 z-50 flex items-center justify-center">
+                <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeVoidModal"></div>
+
+                <div class="relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full mx-4">
+                    <!-- Modal Header -->
+                    <div
+                        class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg font-bold text-zinc-900 dark:text-white">Batalkan Transaksi</h3>
+                            <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{{
+                                selectedTransaction?.order_number }}</p>
+                        </div>
+                        <button @click="closeVoidModal"
+                            class="h-10 w-10 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                            <X class="h-5 w-5" />
+                        </button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="p-6">
+                        <!-- Warning -->
+                        <div
+                            class="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg p-4 mb-6">
+                            <div class="flex gap-3">
+                                <AlertCircle class="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                                <div>
+                                    <h4 class="font-medium text-red-900 dark:text-red-200 text-sm mb-1">Peringatan</h4>
+                                    <p class="text-xs text-red-700 dark:text-red-300">
+                                        Tindakan ini akan membatalkan transaksi dan mengembalikan stok.
+                                        Transaksi yang sudah dibatalkan tidak dapat dikembalikan.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reason Input -->
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                Alasan Pembatalan <span class="text-red-500">*</span>
+                            </label>
+                            <textarea v-model="voidReason" rows="4"
+                                class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                placeholder="Contoh: Kesalahan input, pelanggan membatalkan, duplikat transaksi, dll."
+                                required></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-end gap-3">
+                        <Button @click="closeVoidModal" variant="outline">
+                            Batal
+                        </Button>
+                        <Button @click="confirmVoid" class="bg-red-600 hover:bg-red-700 text-white">
+                            Batalkan Transaksi
                         </Button>
                     </div>
                 </div>
