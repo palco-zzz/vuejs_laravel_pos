@@ -5,7 +5,8 @@ import { ref, computed } from 'vue';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Printer, Eye, X, Clock, Receipt, Pencil, AlertCircle } from 'lucide-vue-next';
+import { Printer, Eye, X, Clock, Receipt, Pencil, AlertCircle, Trash2, Plus } from 'lucide-vue-next';
+import { useToast } from '@/composables/useToast';
 
 interface TransactionItem {
     id: number;
@@ -63,12 +64,15 @@ const isReceiptModalOpen = ref(false);
 
 // Edit Modal
 const isEditModalOpen = ref(false);
-const editItems = ref<Array<{order_item_id: number, menu_id: number | null, quantity: number, price: number}>>([]);
+const editItems = ref<Array<{id: number | null, menu_id: number | null, quantity: number, price: number}>>([]);
 const editReason = ref('');
 
 // Get current user
 const page = usePage();
 const currentUser = computed(() => page.props.auth.user);
+
+// Initialize toast
+const toast = useToast();
 
 const formatRupiah = (value: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -121,7 +125,7 @@ const printReceipt = () => {
 const openEditModal = (transaction: Transaction) => {
     selectedTransaction.value = transaction;
     editItems.value = transaction.items.map(item => ({
-        order_item_id: item.id,
+        id: item.id,
         menu_id: props.menus.find(m => m.nama === item.name)?.id || null,
         quantity: item.quantity,
         price: item.price,
@@ -159,6 +163,34 @@ const handleMenuChange = (index: number, menuId: number) => {
     }
 };
 
+const deleteItem = (index: number) => {
+    if (editItems.value.length <= 1) {
+        alert('Order harus memiliki minimal 1 item');
+        return;
+    }
+    
+    const confirmed = confirm('Apakah Anda yakin ingin menghapus item ini?');
+    if (confirmed) {
+        editItems.value.splice(index, 1);
+    }
+};
+
+const addNewItem = () => {
+    if (props.menus.length === 0) {
+        alert('Tidak ada menu tersedia');
+        return;
+    }
+    
+    // Add new item with first menu as default
+    const firstMenu = props.menus[0];
+    editItems.value.push({
+        id: null,  // null means new item
+        menu_id: firstMenu.id,
+        quantity: 1,
+        price: firstMenu.harga,
+    });
+};
+
 const saveEditedItems = () => {
     if (!selectedTransaction.value) return;
     if (!editReason.value.trim()) {
@@ -177,6 +209,10 @@ const saveEditedItems = () => {
             preserveScroll: true,
             onSuccess: () => {
                 closeEditModal();
+                toast.success('Berhasil!', 'Transaksi berhasil diperbarui');
+            },
+            onError: (errors) => {
+                toast.error('Gagal!', 'Terjadi kesalahan saat memperbarui transaksi');
             },
         }
     );
@@ -357,6 +393,23 @@ const saveEditedItems = () => {
 
                     <!-- Receipt Content -->
                     <div class="p-6 overflow-y-auto flex-1 print:overflow-visible">
+                        <!-- Edit Warning Alert (Show only if edited) -->
+                        <div v-if="selectedTransaction?.edited_at" class="mb-6 bg-yellow-50 dark:bg-yellow-500/10 border-l-4 border-yellow-400 dark:border-yellow-500 p-4 rounded-r-lg print:hidden">
+                            <div class="flex items-start gap-3">
+                                <AlertCircle class="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-yellow-900 dark:text-yellow-200 mb-1">⚠️ Transaksi Telah Diedit</h4>
+                                    <p class="text-sm text-yellow-800 dark:text-yellow-300 mb-1">
+                                        Diedit oleh <span class="font-semibold">{{ selectedTransaction?.editor_name || 'Admin' }}</span> 
+                                        pada {{ selectedTransaction?.edited_at }}.
+                                    </p>
+                                    <p class="text-sm text-yellow-800 dark:text-yellow-300">
+                                        <span class="font-bold">Alasan:</span> {{ selectedTransaction?.edit_reason || '-' }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Store Header -->
                         <div class="text-center mb-6 pb-4 border-b border-dashed border-zinc-300 dark:border-zinc-700">
                             <h2 class="text-xl font-bold text-zinc-900 dark:text-white">{{
@@ -461,14 +514,25 @@ const saveEditedItems = () => {
 
                         <!-- Items List -->
                         <div class="space-y-3 mb-6">
-                            <h4 class="font-medium text-zinc-900 dark:text-white mb-3">Daftar Item</h4>
-                            <div v-for="(item, index) in selectedTransaction?.items" :key="item.id" class="bg-zinc-50 dark:bg-zinc-900/60 rounded-lg p-4 border border-zinc-200 dark:border-zinc-800">
-                                <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-medium text-zinc-900 dark:text-white">Daftar Item</h4>
+                                <Button 
+                                    @click="addNewItem" 
+                                    variant="outline" 
+                                    size="sm"
+                                    class="gap-2 text-orange-600 dark:text-orange-400 hover:text-orange-700 border-orange-300 hover:bg-orange-50 dark:hover:bg-orange-500/10"
+                                >
+                                    <Plus class="h-4 w-4" />
+                                    Tambah Item
+                                </Button>
+                            </div>
+                            <div v-for="(editItem, index) in editItems" :key="index" class="bg-zinc-50 dark:bg-zinc-900/60 rounded-lg p-4 border border-zinc-200 dark:border-zinc-800">
+                                <div class="flex items-start justify-between mb-3">
                                     <div class="flex-1">
                                         <p class="text-xs text-zinc-500 mb-1">Produk</p>
                                         <select 
-                                            v-model="editItems[index].menu_id" 
-                                            @change="handleMenuChange(index, editItems[index].menu_id!)"
+                                            v-model="editItem.menu_id" 
+                                            @change="handleMenuChange(index, editItem.menu_id!)"
                                             class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                         >
                                             <option v-for="menu in menus" :key="menu.id" :value="menu.id">
@@ -476,32 +540,43 @@ const saveEditedItems = () => {
                                             </option>
                                         </select>
                                     </div>
-                                    <div class="text-right ml-4">
-                                        <p class="text-xs text-zinc-500 mb-1">Subtotal</p>
-                                        <p class="text-sm font-semibold text-zinc-900 dark:text-white">
-                                            {{ formatRupiah(editItems[index].price * editItems[index].quantity) }}
-                                        </p>
-                                    </div>
+                                    <button 
+                                        v-if="editItems.length > 1"
+                                        @click="deleteItem(index)"
+                                        class="ml-3 mt-5 h-9 w-9 flex items-center justify-center rounded-lg bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
+                                        title="Hapus Item"
+                                    >
+                                        <Trash2 class="h-4 w-4" />
+                                    </button>
                                 </div>
-                                <div class="grid grid-cols-2 gap-3">
+                                <div class="grid grid-cols-3 gap-3">
                                     <div>
                                         <label class="text-xs text-zinc-600 dark:text-zinc-400 block mb-1">Harga Satuan</label>
                                         <div class="px-3 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-sm font-medium text-zinc-900 dark:text-white">
-                                            {{ formatRupiah(editItems[index].price) }}
+                                            {{ formatRupiah(editItem.price) }}
                                         </div>
                                     </div>
                                     <div>
                                         <label class="text-xs text-zinc-600 dark:text-zinc-400 block mb-1">Kuantitas</label>
                                         <Input 
-                                            v-model.number="editItems[index].quantity" 
+                                            v-model.number="editItem.quantity" 
                                             type="number" 
                                             min="1" 
                                             class="w-full"
                                         />
                                     </div>
+                                    <div>
+                                        <label class="text-xs text-zinc-600 dark:text-zinc-400 block mb-1">Subtotal</label>
+                                        <div class="px-3 py-2 bg-orange-50 dark:bg-orange-500/10 rounded-lg text-sm font-semibold text-orange-600 dark:text-orange-400">
+                                            {{ formatRupiah(editItem.price * editItem.quantity) }}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="mt-2 text-xs text-zinc-500">
-                                    Sebelumnya: {{ item.name }} × {{ item.quantity }} = {{ formatRupiah(item.subtotal) }}
+                                <div v-if="editItem.id" class="mt-2 text-xs text-zinc-500">
+                                    Item asli: {{ selectedTransaction?.items.find(i => i.id === editItem.id)?.name }} × {{ selectedTransaction?.items.find(i => i.id === editItem.id)?.quantity }}
+                                </div>
+                                <div v-else class="mt-2 text-xs text-green-600 dark:text-green-400 font-medium">
+                                    ✨ Item Baru
                                 </div>
                             </div>
                         </div>

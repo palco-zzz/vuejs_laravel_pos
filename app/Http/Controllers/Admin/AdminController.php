@@ -167,8 +167,8 @@ class AdminController extends Controller
     {
         $validated = $request->validate([
             'items' => ['required', 'array', 'min:1'],
-            'items.*.order_item_id' => ['required', 'integer', 'exists:order_items,id'],
-            'items.*.menu_id' => ['nullable', 'integer', 'exists:menus,id'],
+            'items.*.id' => ['nullable', 'integer', 'exists:order_items,id'],
+            'items.*.menu_id' => ['required', 'integer', 'exists:menus,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'edit_reason' => ['required', 'string', 'max:500'],
         ]);
@@ -176,50 +176,71 @@ class AdminController extends Controller
         try {
             DB::beginTransaction();
 
-            $newSubtotal = 0;
+            // Get current order item IDs
+            $currentItemIds = $order->items->pluck('id')->toArray();
+            
+            // Get request item IDs (only non-null)
+            $requestItemIds = collect($validated['items'])
+                ->pluck('id')
+                ->filter()
+                ->toArray();
 
-            // Update each item and recalculate subtotals
-            foreach ($validated['items'] as $itemData) {
-                $orderItem = OrderItem::findOrFail($itemData['order_item_id']);
-                
-                // Ensure this item belongs to this order
-                if ($orderItem->order_id !== $order->id) {
-                    throw new \Exception('Item does not belong to this order');
-                }
-                
-                $newPrice = $orderItem->price;
-                $newItemName = $orderItem->item_name;
-                $newMenuId = $orderItem->menu_id;
-                
-                // If menu_id is provided and different from current, fetch fresh price and name
-                if (isset($itemData['menu_id']) && $itemData['menu_id'] !== $orderItem->menu_id) {
-                    $menu = Menu::findOrFail($itemData['menu_id']);
-                    $newPrice = $menu->harga;
-                    $newItemName = $menu->nama;
-                    $newMenuId = $menu->id;
-                }
-                
-                // Calculate new subtotal for this item
-                $newItemSubtotal = $newPrice * $itemData['quantity'];
-                
-                // Update the order item with potentially new menu, price, name, quantity
-                $orderItem->update([
-                    'menu_id' => $newMenuId,
-                    'item_name' => $newItemName,
-                    'price' => $newPrice,
-                    'quantity' => $itemData['quantity'],
-                    'subtotal' => $newItemSubtotal,
-                ]);
-                
-                $newSubtotal += $newItemSubtotal;
+            // STEP 1: Delete items that are not in the request (DELETION)
+            $itemsToDelete = array_diff($currentItemIds, $requestItemIds);
+            if (!empty($itemsToDelete)) {
+                OrderItem::whereIn('id', $itemsToDelete)
+                    ->where('order_id', $order->id)
+                    ->delete();
             }
 
-            // Recalculate order totals (assuming 10% tax as per typical setup)
+            $newSubtotal = 0;
+
+            // STEP 2: Update existing items or create new ones (UPDATE & CREATE)
+            foreach ($validated['items'] as $itemData) {
+                $menu = Menu::findOrFail($itemData['menu_id']);
+                
+                // Always fetch fresh price from database (security)
+                $freshPrice = $menu->harga;
+                $itemName = $menu->nama;
+                $quantity = $itemData['quantity'];
+                $subtotal = $freshPrice * $quantity;
+
+                if (isset($itemData['id']) && $itemData['id']) {
+                    // UPDATE existing item
+                    $orderItem = OrderItem::where('id', $itemData['id'])
+                        ->where('order_id', $order->id)
+                        ->firstOrFail();
+                    
+                    $orderItem->update([
+                        'menu_id' => $menu->id,
+                        'item_name' => $itemName,
+                        'price' => $freshPrice,
+                        'quantity' => $quantity,
+                        'subtotal' => $subtotal,
+                        'is_custom' => false,
+                    ]);
+                } else {
+                    // CREATE new item
+                    OrderItem::create([
+                        'order_id' => $order->id,
+                        'menu_id' => $menu->id,
+                        'item_name' => $itemName,
+                        'price' => $freshPrice,
+                        'quantity' => $quantity,
+                        'subtotal' => $subtotal,
+                        'is_custom' => false,
+                    ]);
+                }
+
+                $newSubtotal += $subtotal;
+            }
+
+            // STEP 3: Recalculate order totals
             $taxRate = 0.10;
             $newTax = $newSubtotal * $taxRate;
             $newTotal = $newSubtotal + $newTax;
 
-            // Update order with new totals and audit info
+            // STEP 4: Update order with new totals and audit info
             $order->update([
                 'subtotal' => $newSubtotal,
                 'tax' => $newTax,
@@ -231,10 +252,10 @@ class AdminController extends Controller
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Item order berhasil diperbarui');
+            return redirect()->back()->with('success', 'Order berhasil diperbarui');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Gagal memperbarui item: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal memperbarui order: ' . $e->getMessage());
         }
     }
 }
