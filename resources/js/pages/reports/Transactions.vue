@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Calendar, Download, Filter, X, Eye } from 'lucide-vue-next';
+import { Calendar, Download, Filter, X, Eye, Pencil } from 'lucide-vue-next';
 
 interface TransactionItem {
     name: string;
@@ -24,6 +24,7 @@ interface Transaction {
     total: number;
     payment_method: string;
     status: string;
+    notes?: string;
     items: TransactionItem[];
 }
 
@@ -73,6 +74,18 @@ const selectedPaymentMethod = ref(props.filters.payment_method);
 // Modal state
 const selectedTransaction = ref<Transaction | null>(null);
 const isDetailModalOpen = ref(false);
+const isEditModalOpen = ref(false);
+
+// Edit form state
+const editForm = ref({
+    payment_method: '',
+    status: '',
+    notes: '',
+});
+
+// Get current user from page props
+const page = usePage();
+const currentUser = computed(() => page.props.auth.user);
 
 const formatRupiah = (value: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -129,6 +142,52 @@ const openDetailModal = (transaction: Transaction) => {
 const closeDetailModal = () => {
     isDetailModalOpen.value = false;
     selectedTransaction.value = null;
+};
+
+const openEditModal = (transaction: Transaction) => {
+    selectedTransaction.value = transaction;
+    editForm.value = {
+        payment_method: transaction.payment_method,
+        status: transaction.status,
+        notes: transaction.notes || '',
+    };
+    isEditModalOpen.value = true;
+};
+
+const closeEditModal = () => {
+    isEditModalOpen.value = false;
+    selectedTransaction.value = null;
+    editForm.value = {
+        payment_method: '',
+        status: '',
+        notes: '',
+    };
+};
+
+const saveTransaction = () => {
+    if (!selectedTransaction.value) return;
+
+    // Show warning for void/cancellation
+    if ((editForm.value.status === 'cancelled' || editForm.value.status === 'refunded') && 
+        selectedTransaction.value.status !== editForm.value.status) {
+        const confirmed = confirm(
+            `Apakah Anda yakin ingin mengubah status transaksi menjadi "${editForm.value.status}"? Tindakan ini akan membatalkan transaksi.`
+        );
+        
+        if (!confirmed) return;
+    }
+
+    router.put(
+        `/reports/transactions/${selectedTransaction.value.id}`,
+        editForm.value,
+        {
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                closeEditModal();
+            },
+        }
+    );
 };
 </script>
 
@@ -237,9 +296,14 @@ const closeDetailModal = () => {
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-center">
-                                    <button @click="openDetailModal(transaction)" class="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300">
-                                        <Eye class="h-4 w-4" />
-                                    </button>
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button @click="openDetailModal(transaction)" class="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300" title="View Details">
+                                            <Eye class="h-4 w-4" />
+                                        </button>
+                                        <button v-if="currentUser.role === 'admin'" @click="openEditModal(transaction)" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300" title="Edit Transaction">
+                                            <Pencil class="h-4 w-4" />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             <tr v-if="transactions.data.length === 0">
@@ -330,6 +394,89 @@ const closeDetailModal = () => {
                                 <p class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ formatRupiah(selectedTransaction?.total || 0) }}</p>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- Edit Transaction Modal (Admin Only) -->
+        <transition name="fade">
+            <div v-if="isEditModalOpen" class="fixed inset-0 z-50 flex items-center justify-center">
+                <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeEditModal"></div>
+                <div class="relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+                    <!-- Modal Header -->
+                    <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-xl font-bold text-zinc-900 dark:text-white">Edit Transaksi</h3>
+                            <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{{ selectedTransaction?.order_number }}</p>
+                        </div>
+                        <button @click="closeEditModal" class="h-10 w-10 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                            <X class="h-5 w-5" />
+                        </button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="p-6 overflow-y-auto flex-1">
+                        <div class="space-y-4">
+                            <!-- Payment Method -->
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                    Metode Pembayaran
+                                </label>
+                                <select v-model="editForm.payment_method" class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                                    <option v-for="method in paymentMethods" :key="method.value" :value="method.value">{{ method.label }}</option>
+                                </select>
+                            </div>
+
+                            <!-- Status -->
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                    Status
+                                </label>
+                                <select v-model="editForm.status" class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                                    <option value="completed">Completed</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="cancelled">Cancelled</option>
+                                    <option value="refunded">Refunded</option>
+                                </select>
+                                <p v-if="editForm.status === 'cancelled' || editForm.status === 'refunded'" class="mt-2 text-sm text-red-600 dark:text-red-400">
+                                    ⚠️ Peringatan: Status ini akan membatalkan/void transaksi!
+                                </p>
+                            </div>
+
+                            <!-- Notes -->
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                    Catatan Koreksi (Opsional)
+                                </label>
+                                <textarea 
+                                    v-model="editForm.notes" 
+                                    rows="3" 
+                                    class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                    placeholder="Alasan koreksi transaksi..."
+                                ></textarea>
+                            </div>
+
+                            <!-- Current Transaction Info -->
+                            <div class="bg-zinc-50 dark:bg-zinc-900/60 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                                <h4 class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">Informasi Transaksi</h4>
+                                <div class="text-sm space-y-1">
+                                    <p class="text-zinc-700 dark:text-zinc-300"><span class="font-medium">Total:</span> {{ formatRupiah(selectedTransaction?.total || 0) }}</p>
+                                    <p class="text-zinc-700 dark:text-zinc-300"><span class="font-medium">Kasir:</span> {{ selectedTransaction?.cashier_name }}</p>
+                                    <p class="text-zinc-700 dark:text-zinc-300"><span class="font-medium">Tanggal:</span> {{ selectedTransaction?.date_time }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-end gap-3">
+                        <Button @click="closeEditModal" variant="outline">
+                            Batal
+                        </Button>
+                        <Button @click="saveTransaction" class="bg-orange-600 hover:bg-orange-700 text-white">
+                            Simpan Perubahan
+                        </Button>
                     </div>
                 </div>
             </div>

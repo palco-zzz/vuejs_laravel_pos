@@ -44,6 +44,7 @@ class ReportController extends Controller
                 'total' => (float) $order->total,
                 'payment_method' => $order->payment_method,
                 'status' => $order->status,
+                'notes' => $order->notes,
                 'items' => $order->items->map(function ($item) {
                     return [
                         'name' => $item->item_name,
@@ -218,6 +219,25 @@ class ReportController extends Controller
                 'branch_id' => $branchId,
             ],
         ]);
+    }
+    
+    public function updateTransaction(Request $request, Order $order)
+    {
+        // Validate the request
+        $validated = $request->validate([
+            'payment_method' => 'required|in:cash,bca_va,bri_va,gopay,ovo,transfer,qris',
+            'status' => 'required|in:completed,pending,cancelled,refunded',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        // Update the order
+        $order->update([
+            'payment_method' => $validated['payment_method'],
+            'status' => $validated['status'],
+            'notes' => $validated['notes'] ?? $order->notes,
+        ]);
+
+        return redirect()->back()->with('success', 'Transaksi berhasil diperbarui');
     }
     
     private function getDateRange($dateRange)
