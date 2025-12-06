@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Printer, Eye, X, Clock, Receipt } from 'lucide-vue-next';
+import { Input } from '@/components/ui/input';
+import { Printer, Eye, X, Clock, Receipt, Pencil, AlertCircle } from 'lucide-vue-next';
 
 interface TransactionItem {
+    id: number;
     name: string;
     quantity: number;
     price: number;
@@ -24,7 +26,18 @@ interface Transaction {
     status: string;
     branch_name: string;
     branch_address: string;
+    edited_by?: number | null;
+    edited_at?: string | null;
+    edit_reason?: string | null;
+    editor_name?: string | null;
     items: TransactionItem[];
+}
+
+interface Menu {
+    id: number;
+    nama: string;
+    harga: number;
+    category_name: string;
 }
 
 const props = defineProps<{
@@ -36,6 +49,7 @@ const props = defineProps<{
         total: number;
         links: { url: string | null; label: string; active: boolean }[];
     };
+    menus: Menu[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -46,6 +60,15 @@ const breadcrumbs: BreadcrumbItem[] = [
 // Receipt Modal
 const selectedTransaction = ref<Transaction | null>(null);
 const isReceiptModalOpen = ref(false);
+
+// Edit Modal
+const isEditModalOpen = ref(false);
+const editItems = ref<Array<{order_item_id: number, menu_id: number | null, quantity: number, price: number}>>([]);
+const editReason = ref('');
+
+// Get current user
+const page = usePage();
+const currentUser = computed(() => page.props.auth.user);
 
 const formatRupiah = (value: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -93,6 +116,70 @@ const closeReceiptModal = () => {
 
 const printReceipt = () => {
     window.print();
+};
+
+const openEditModal = (transaction: Transaction) => {
+    selectedTransaction.value = transaction;
+    editItems.value = transaction.items.map(item => ({
+        order_item_id: item.id,
+        menu_id: props.menus.find(m => m.nama === item.name)?.id || null,
+        quantity: item.quantity,
+        price: item.price,
+    }));
+    editReason.value = '';
+    isEditModalOpen.value = true;
+};
+
+const closeEditModal = () => {
+    isEditModalOpen.value = false;
+    selectedTransaction.value = null;
+    editItems.value = [];
+    editReason.value = '';
+};
+
+const calculateNewTotal = computed(() => {
+    if (!selectedTransaction.value) return 0;
+    
+    let subtotal = 0;
+    editItems.value.forEach((editItem) => {
+        const price = editItem.price;
+        const qty = editItem.quantity;
+        subtotal += price * qty;
+    });
+    
+    const tax = subtotal * 0.10; // 10% tax
+    return subtotal + tax;
+});
+
+const handleMenuChange = (index: number, menuId: number) => {
+    const menu = props.menus.find(m => m.id === menuId);
+    if (menu) {
+        editItems.value[index].menu_id = menu.id;
+        editItems.value[index].price = menu.harga;
+    }
+};
+
+const saveEditedItems = () => {
+    if (!selectedTransaction.value) return;
+    if (!editReason.value.trim()) {
+        alert('Mohon isi alasan perubahan');
+        return;
+    }
+
+    router.put(
+        `/pos/order/${selectedTransaction.value.id}/items`,
+        {
+            items: editItems.value,
+            edit_reason: editReason.value,
+        },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                closeEditModal();
+            },
+        }
+    );
 };
 </script>
 
@@ -175,18 +262,33 @@ const printReceipt = () => {
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-center">
-                                    <span :class="getStatusBadgeClass(transaction.status)"
-                                        class="text-xs px-2.5 py-1 rounded-full capitalize">
-                                        {{ transaction.status }}
-                                    </span>
+                                    <div class="flex items-center justify-center gap-2">
+                                        <span :class="getStatusBadgeClass(transaction.status)"
+                                            class="text-xs px-2.5 py-1 rounded-full capitalize">
+                                            {{ transaction.status }}
+                                        </span>
+                                        <span v-if="transaction.edited_at" 
+                                            :title="`Diedit oleh ${transaction.editor_name} pada ${transaction.edited_at}\nAlasan: ${transaction.edit_reason}`"
+                                            class="text-xs px-2.5 py-1 rounded-full bg-yellow-100 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 cursor-help">
+                                            DIEDIT
+                                        </span>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 text-center">
-                                    <Button variant="ghost" size="sm"
-                                        class="gap-1.5 text-orange-600 dark:text-orange-400 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-500/10"
-                                        @click="openReceiptModal(transaction)">
-                                        <Printer class="h-4 w-4" />
-                                        <span class="hidden sm:inline">Print Struk</span>
-                                    </Button>
+                                    <div class="flex items-center justify-center gap-2">
+                                        <Button variant="ghost" size="sm"
+                                            class="gap-1.5 text-orange-600 dark:text-orange-400 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-500/10"
+                                            @click="openReceiptModal(transaction)">
+                                            <Printer class="h-4 w-4" />
+                                            <span class="hidden sm:inline">Print Struk</span>
+                                        </Button>
+                                        <Button v-if="currentUser.role === 'admin'" variant="ghost" size="sm"
+                                            class="gap-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-500/10"
+                                            @click="openEditModal(transaction)">
+                                            <Pencil class="h-4 w-4" />
+                                            <span class="hidden sm:inline">Edit Items</span>
+                                        </Button>
+                                    </div>
                                 </td>
                             </tr>
 
@@ -322,6 +424,124 @@ const printReceipt = () => {
                         <Button class="w-full gap-2" @click="printReceipt">
                             <Printer class="h-4 w-4" />
                             Cetak Struk
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- Edit Items Modal (Admin Only) -->
+        <transition name="fade">
+            <div v-if="isEditModalOpen" class="fixed inset-0 z-50 flex items-center justify-center">
+                <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeEditModal"></div>
+                <div class="relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+                    <!-- Modal Header -->
+                    <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-xl font-bold text-zinc-900 dark:text-white">Edit Item Order</h3>
+                            <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{{ selectedTransaction?.order_number }}</p>
+                        </div>
+                        <button @click="closeEditModal" class="h-10 w-10 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                            <X class="h-5 w-5" />
+                        </button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="p-6 overflow-y-auto flex-1">
+                        <!-- Warning Notice -->
+                        <div class="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-lg p-4 mb-6">
+                            <div class="flex gap-3">
+                                <AlertCircle class="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                                <div>
+                                    <h4 class="font-medium text-yellow-900 dark:text-yellow-200 text-sm mb-1">Peringatan</h4>
+                                    <p class="text-xs text-yellow-700 dark:text-yellow-300">Mengubah kuantitas item akan mengubah total transaksi. Pastikan perubahan ini benar dan berikan alasan yang jelas.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Items List -->
+                        <div class="space-y-3 mb-6">
+                            <h4 class="font-medium text-zinc-900 dark:text-white mb-3">Daftar Item</h4>
+                            <div v-for="(item, index) in selectedTransaction?.items" :key="item.id" class="bg-zinc-50 dark:bg-zinc-900/60 rounded-lg p-4 border border-zinc-200 dark:border-zinc-800">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex-1">
+                                        <p class="text-xs text-zinc-500 mb-1">Produk</p>
+                                        <select 
+                                            v-model="editItems[index].menu_id" 
+                                            @change="handleMenuChange(index, editItems[index].menu_id!)"
+                                            class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                        >
+                                            <option v-for="menu in menus" :key="menu.id" :value="menu.id">
+                                                {{ menu.nama }} - {{ formatRupiah(menu.harga) }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="text-right ml-4">
+                                        <p class="text-xs text-zinc-500 mb-1">Subtotal</p>
+                                        <p class="text-sm font-semibold text-zinc-900 dark:text-white">
+                                            {{ formatRupiah(editItems[index].price * editItems[index].quantity) }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="text-xs text-zinc-600 dark:text-zinc-400 block mb-1">Harga Satuan</label>
+                                        <div class="px-3 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-sm font-medium text-zinc-900 dark:text-white">
+                                            {{ formatRupiah(editItems[index].price) }}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-zinc-600 dark:text-zinc-400 block mb-1">Kuantitas</label>
+                                        <Input 
+                                            v-model.number="editItems[index].quantity" 
+                                            type="number" 
+                                            min="1" 
+                                            class="w-full"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-xs text-zinc-500">
+                                    Sebelumnya: {{ item.name }} × {{ item.quantity }} = {{ formatRupiah(item.subtotal) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Total Preview -->
+                        <div class="bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-lg p-4 mb-6">
+                            <div class="space-y-2">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-zinc-600 dark:text-zinc-400">Total Sebelumnya:</span>
+                                    <span class="font-medium text-zinc-900 dark:text-white">{{ formatRupiah(selectedTransaction?.total || 0) }}</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-zinc-600 dark:text-zinc-400">Total Baru:</span>
+                                    <span class="font-bold text-orange-600 dark:text-orange-400">{{ formatRupiah(calculateNewTotal) }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Edit Reason -->
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                Alasan Perubahan <span class="text-red-500">*</span>
+                            </label>
+                            <textarea 
+                                v-model="editReason" 
+                                rows="3" 
+                                class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                placeholder="Contoh: Koreksi pesanan - pelanggan salah memesan jumlah"
+                                required
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-end gap-3">
+                        <Button @click="closeEditModal" variant="outline">
+                            Batal
+                        </Button>
+                        <Button @click="saveEditedItems" class="bg-orange-600 hover:bg-orange-700 text-white">
+                            Simpan Perubahan
                         </Button>
                     </div>
                 </div>

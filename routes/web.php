@@ -32,6 +32,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pos', [AdminController::class, 'index'])->name('pos.index');
     Route::post('/pos/order', [AdminController::class, 'storeOrder'])->name('pos.order.store');
     Route::get('/pos/history', [AdminController::class, 'history'])->name('pos.history');
+    
+    // Admin-only: Edit order items
+    Route::put('/pos/order/{order}/items', [AdminController::class, 'updateItems'])
+        ->middleware('role:admin')
+        ->name('pos.order.updateItems');
 });
 
 // Karyawan CRUD Routes (using modals) - Admin Only

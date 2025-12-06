@@ -20,6 +20,9 @@ class Order extends Model
         'cash_amount',
         'change_amount',
         'notes',
+        'edited_by',
+        'edited_at',
+        'edit_reason',
     ];
 
     protected $casts = [
@@ -28,6 +31,7 @@ class Order extends Model
         'total' => 'decimal:2',
         'cash_amount' => 'decimal:2',
         'change_amount' => 'decimal:2',
+        'edited_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -43,6 +47,11 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function editor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'edited_by');
     }
 
     public static function generateOrderNumber(): string
