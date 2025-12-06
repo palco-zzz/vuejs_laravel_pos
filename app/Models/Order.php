@@ -68,9 +68,12 @@ class Order extends Model
     public static function generateOrderNumber(): string
     {
         $date = now()->format('Ymd');
-        $lastOrder = self::whereDate('created_at', now())->latest()->first();
+        // Include soft-deleted records to get the true last sequence number
+        $lastOrder = self::withTrashed()
+            ->whereDate('created_at', now())
+            ->latest('id')
+            ->first();
         $sequence = $lastOrder ? (int)substr($lastOrder->order_number, -4) + 1 : 1;
         return 'ORD-' . $date . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
     }
 }
-

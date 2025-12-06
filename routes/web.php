@@ -7,6 +7,7 @@ use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\ManajemenMenuController;
 use App\Http\Controllers\Admin\ManajemenCabangController;
+use App\Http\Controllers\TransactionController;
 
 
 Route::get('/', function () {
@@ -32,16 +33,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pos', [AdminController::class, 'index'])->name('pos.index');
     Route::post('/pos/order', [AdminController::class, 'storeOrder'])->name('pos.order.store');
     Route::get('/pos/history', [AdminController::class, 'history'])->name('pos.history');
-    
+
     // Admin-only: Edit order items
     Route::put('/pos/order/{order}/items', [AdminController::class, 'updateItems'])
         ->middleware('role:admin')
         ->name('pos.order.updateItems');
-    
-    // Admin-only: Void (soft delete) transaction
-    Route::delete('/pos/order/{order}/void', [AdminController::class, 'voidTransaction'])
-        ->middleware('role:admin')
-        ->name('pos.order.void');
+
+    // Transaction Management Routes
+    Route::delete('/transactions/{order}/pending', [TransactionController::class, 'destroyPending'])
+        ->name('transactions.destroyPending');
+    Route::put('/transactions/{order}/void', [TransactionController::class, 'voidTransaction'])
+        ->name('transactions.void');
 });
 
 // Karyawan CRUD Routes (using modals) - Admin Only

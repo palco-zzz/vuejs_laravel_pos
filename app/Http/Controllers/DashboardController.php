@@ -23,14 +23,16 @@ class DashboardController extends Controller
         $branchId = $user->branch_id;
 
         // 1. Total Income Today
-        $totalIncomeQuery = Order::whereDate('created_at', $today);
+        $totalIncomeQuery = Order::whereDate('created_at', $today)
+            ->where('status', 'success');
         if ($isCashier && $branchId) {
             $totalIncomeQuery->where('branch_id', $branchId);
         }
         $totalIncome = $totalIncomeQuery->sum('total');
 
         // 2. Total Transactions Today
-        $totalTransactionsQuery = Order::whereDate('created_at', $today);
+        $totalTransactionsQuery = Order::whereDate('created_at', $today)
+            ->where('status', 'success');
         if ($isCashier && $branchId) {
             $totalTransactionsQuery->where('branch_id', $branchId);
         }
@@ -43,7 +45,8 @@ class DashboardController extends Controller
         $topSellingQuery = OrderItem::select('menu_id', DB::raw('SUM(quantity) as total_sold'))
             ->whereNotNull('menu_id')
             ->whereHas('order', function ($query) use ($isCashier, $branchId, $today) {
-                $query->whereDate('created_at', $today);
+                $query->whereDate('created_at', $today)
+                    ->where('status', 'success');
                 if ($isCashier && $branchId) {
                     $query->where('branch_id', $branchId);
                 }
@@ -72,10 +75,12 @@ class DashboardController extends Controller
         }
 
         $branchPerformance = $branchQuery->withCount(['orders as transaction_count' => function ($query) use ($today) {
-            $query->whereDate('created_at', $today);
+            $query->whereDate('created_at', $today)
+                ->where('status', 'success');
         }])
             ->withSum(['orders as total_income' => function ($query) use ($today) {
-                $query->whereDate('created_at', $today);
+                $query->whereDate('created_at', $today)
+                    ->where('status', 'success');
             }], 'total')
             ->with(['orders' => function ($query) {
                 $query->latest()->take(1);
@@ -130,8 +135,8 @@ class DashboardController extends Controller
 
         // Query ALL orders for testing (status filter temporarily disabled)
         $weeklySalesQuery = Order::selectRaw('DATE(created_at) as date, SUM(total) as total')
-            ->whereBetween('created_at', [$startDate, $endDate]);
-        // ->where('status', 'success'); // Temporarily disabled for testing
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'success'); // Only count successful transactions
 
         if ($isCashier && $branchId) {
             $weeklySalesQuery->where('branch_id', $branchId);
