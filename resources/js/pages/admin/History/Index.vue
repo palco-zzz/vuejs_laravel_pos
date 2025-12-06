@@ -119,7 +119,85 @@ const closeReceiptModal = () => {
 };
 
 const printReceipt = () => {
-    window.print();
+    if (!selectedTransaction.value) return;
+    
+    const receiptId = `receipt-${selectedTransaction.value.id}`;
+    const receiptElement = document.getElementById(receiptId);
+    
+    if (!receiptElement) {
+        console.error('Receipt element not found');
+        return;
+    }
+    
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    
+    if (!printWindow) {
+        alert('Popup blocker is preventing the print window. Please allow popups for this site.');
+        return;
+    }
+    
+    // Get all stylesheets from the current document
+    const styles = Array.from(document.styleSheets)
+        .map(styleSheet => {
+            try {
+                return Array.from(styleSheet.cssRules)
+                    .map(rule => rule.cssText)
+                    .join('\n');
+            } catch (e) {
+                // Some stylesheets may not be accessible due to CORS
+                return '';
+            }
+        })
+        .join('\n');
+    
+    // Write the HTML content to the new window
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Struk Pembayaran - ${selectedTransaction.value.order_number}</title>
+            <meta charset="utf-8">
+            <style>
+                ${styles}
+                
+                /* Additional print-specific styles */
+                @media print {
+                    @page {
+                        margin: 0;
+                        size: 80mm auto; /* Thermal printer width */
+                    }
+                    body {
+                        margin: 0;
+                        padding: 10mm;
+                        font-family: 'Courier New', monospace;
+                    }
+                }
+                
+                body {
+                    font-family: 'Courier New', monospace;
+                    max-width: 80mm;
+                    margin: 0 auto;
+                    padding: 10px;
+                }
+            </style>
+        </head>
+        <body>
+            ${receiptElement.innerHTML}
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+    
+    // Wait for content to load, then print
+    printWindow.onload = () => {
+        setTimeout(() => {
+            printWindow.focus();
+            printWindow.print();
+            printWindow.close();
+        }, 250);
+    };
 };
 
 const openEditModal = (transaction: Transaction) => {
@@ -374,16 +452,12 @@ const saveEditedItems = () => {
 
         <!-- Receipt Modal -->
         <transition name="fade">
-            <div v-if="isReceiptModalOpen"
-                class="fixed inset-0 z-50 flex items-center justify-center print:block print:relative print:inset-auto print:z-auto">
-                <div class="absolute inset-0 bg-black/60 backdrop-blur-sm print:hidden" @click="closeReceiptModal">
-                </div>
+            <div v-if="isReceiptModalOpen" class="fixed inset-0 z-50 flex items-center justify-center">
+                <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeReceiptModal"></div>
 
-                <div
-                    class="relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[90vh] overflow-hidden flex flex-col print:max-w-none print:rounded-none print:shadow-none print:max-h-none print:overflow-visible">
-                    <!-- Modal Header (hidden on print) -->
-                    <div
-                        class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center print:hidden">
+                <div class="relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+                    <!-- Modal Header -->
+                    <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
                         <h3 class="text-lg font-bold text-zinc-900 dark:text-white">Struk Transaksi</h3>
                         <button @click="closeReceiptModal"
                             class="h-10 w-10 rounded-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
@@ -392,7 +466,7 @@ const saveEditedItems = () => {
                     </div>
 
                     <!-- Receipt Content -->
-                    <div class="p-6 overflow-y-auto flex-1 print:overflow-visible">
+                    <div :id="`receipt-${selectedTransaction?.id}`" class="p-6 overflow-y-auto flex-1 print:overflow-visible">
                         <!-- Edit Warning Alert (Show only if edited) -->
                         <div v-if="selectedTransaction?.edited_at" class="mb-6 bg-yellow-50 dark:bg-yellow-500/10 border-l-4 border-yellow-400 dark:border-yellow-500 p-4 rounded-r-lg print:hidden">
                             <div class="flex items-start gap-3">
@@ -634,16 +708,5 @@ const saveEditedItems = () => {
 .fade-enter-from,
 .fade-leave-to {
     opacity: 0;
-}
-
-@media print {
-    body * {
-        visibility: hidden;
-    }
-
-    .print\:block,
-    .print\:block * {
-        visibility: visible;
-    }
 }
 </style>
