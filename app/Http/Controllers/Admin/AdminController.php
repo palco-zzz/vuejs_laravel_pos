@@ -176,7 +176,9 @@ class AdminController extends Controller
         $user = Auth::user();
 
         // Build query with all necessary relationships
-        $query = Order::with(['items.menu', 'branch', 'user', 'editor', 'deleter'])
+        // Include soft-deleted (voided) transactions with withTrashed()
+        $query = Order::withTrashed()
+            ->with(['items.menu', 'branch', 'user', 'editor', 'deleter'])
             ->orderBy('created_at', 'desc');
 
         // Cashiers see all transactions from their branch (including admin's)

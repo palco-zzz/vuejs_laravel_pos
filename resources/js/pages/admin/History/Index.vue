@@ -510,16 +510,33 @@ const filteredTransactions = computed(() => {
                         </thead>
                         <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
                             <tr v-for="transaction in filteredTransactions" :key="transaction.id"
-                                class="hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors">
+                                :class="[
+                                    'transition-colors',
+                                    transaction.deleted_at
+                                        ? 'opacity-60 bg-red-50 dark:bg-red-500/5'
+                                        : 'hover:bg-zinc-50 dark:hover:bg-zinc-900/40'
+                                ]">
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-3">
                                         <div
-                                            class="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center">
-                                            <Receipt class="h-4 w-4 text-zinc-500" />
+                                            :class="[
+                                                'h-10 w-10 rounded-lg flex items-center justify-center',
+                                                transaction.deleted_at
+                                                    ? 'bg-red-100 dark:bg-red-500/20'
+                                                    : 'bg-zinc-100 dark:bg-zinc-800'
+                                            ]">
+                                            <Receipt :class="[
+                                                'h-4 w-4',
+                                                transaction.deleted_at ? 'text-red-500' : 'text-zinc-500'
+                                            ]" />
                                         </div>
                                         <div>
-                                            <p class="text-sm font-medium text-zinc-900 dark:text-white">{{
-                                                transaction.order_number }}</p>
+                                            <p :class="[
+                                                'text-sm font-medium',
+                                                transaction.deleted_at
+                                                    ? 'text-red-700 dark:text-red-400 line-through'
+                                                    : 'text-zinc-900 dark:text-white'
+                                            ]">{{ transaction.order_number }}</p>
                                             <p class="text-xs text-zinc-500">{{ transaction.items.length }} item</p>
                                         </div>
                                     </div>
@@ -529,8 +546,12 @@ const filteredTransactions = computed(() => {
                                     <p class="text-xs text-zinc-500">{{ transaction.time }}</p>
                                 </td>
                                 <td class="px-6 py-4 text-right">
-                                    <span class="text-sm font-semibold text-zinc-900 dark:text-white">{{
-                                        formatRupiah(transaction.total) }}</span>
+                                    <span :class="[
+                                        'text-sm font-semibold',
+                                        transaction.deleted_at
+                                            ? 'text-red-600 dark:text-red-400 line-through'
+                                            : 'text-zinc-900 dark:text-white'
+                                    ]">{{ formatRupiah(transaction.total) }}</span>
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <span
@@ -539,19 +560,26 @@ const filteredTransactions = computed(() => {
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-center">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <span :class="getStatusBadgeClass(transaction.status)"
+                                    <div class="flex items-center justify-center gap-2 flex-wrap">
+                                        <!-- VOIDED/DIBATALKAN badge - highest priority -->
+                                        <span v-if="transaction.deleted_at"
+                                            :title="`Dibatalkan oleh ${transaction.deleter_name || 'Admin'} pada ${transaction.deleted_at}\nAlasan: ${transaction.delete_reason || '-'}`"
+                                            class="text-xs px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 font-medium cursor-help">
+                                            DIBATALKAN
+                                        </span>
+                                        <!-- Normal status if not deleted -->
+                                        <span v-else :class="getStatusBadgeClass(transaction.status)"
                                             class="text-xs px-2.5 py-1 rounded-full">
                                             {{ getStatusLabel(transaction.status) }}
                                         </span>
-                                        <!-- "BANTUAN PUSAT" badge if created by admin -->
-                                        <span v-if="transaction.user.role === 'admin'"
+                                        <!-- "BANTUAN PUSAT" badge if created by admin (only show if not deleted) -->
+                                        <span v-if="transaction.user.role === 'admin' && !transaction.deleted_at"
                                             title="Transaksi ini dibuat oleh Admin"
                                             class="text-xs px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 cursor-help">
                                             BANTUAN PUSAT
                                         </span>
-                                        <!-- "DIEDIT" badge if edited -->
-                                        <span v-if="transaction.edited_at"
+                                        <!-- "DIEDIT" badge if edited (only show if not deleted) -->
+                                        <span v-if="transaction.edited_at && !transaction.deleted_at"
                                             :title="`Diedit oleh ${transaction.editor_name} pada ${transaction.edited_at}\nAlasan: ${transaction.edit_reason}`"
                                             class="text-xs px-2.5 py-1 rounded-full bg-yellow-100 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 cursor-help">
                                             DIEDIT
@@ -567,9 +595,9 @@ const filteredTransactions = computed(() => {
                                             <span class="hidden sm:inline">Print Struk</span>
                                         </Button>
 
-                                        <!-- Admin-only: Edit Items -->
+                                        <!-- Admin-only: Edit Items (hide for deleted transactions) -->
                                         <Button
-                                            v-if="currentUser.role === 'admin' && (transaction.status === 'success' || transaction.status === 'completed')"
+                                            v-if="currentUser.role === 'admin' && !transaction.deleted_at && (transaction.status === 'success' || transaction.status === 'completed')"
                                             variant="ghost" size="sm"
                                             class="gap-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-500/10"
                                             @click="openEditModal(transaction)">
@@ -577,16 +605,16 @@ const filteredTransactions = computed(() => {
                                             <span class="hidden sm:inline">Edit Items</span>
                                         </Button>
 
-                                        <!-- Delete Pending Order -->
-                                        <Button v-if="transaction.status === 'pending'" variant="ghost" size="sm"
+                                        <!-- Delete Pending Order (hide for deleted transactions) -->
+                                        <Button v-if="transaction.status === 'pending' && !transaction.deleted_at" variant="ghost" size="sm"
                                             class="gap-1.5 text-red-600 dark:text-red-400 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-500/10"
                                             @click="deletePendingOrder(transaction)">
                                             <Trash2 class="h-4 w-4" />
                                             <span class="hidden sm:inline">Hapus</span>
                                         </Button>
 
-                                        <!-- Void/Cancel Transaction (Success only, today for cashiers) -->
-                                        <Button v-if="canVoidTransaction(transaction)" variant="ghost" size="sm"
+                                        <!-- Void/Cancel Transaction (hide for already deleted) -->
+                                        <Button v-if="canVoidTransaction(transaction) && !transaction.deleted_at" variant="ghost" size="sm"
                                             class="gap-1.5 text-red-600 dark:text-red-400 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-500/10"
                                             @click="openVoidModal(transaction)">
                                             <Ban class="h-4 w-4" />
