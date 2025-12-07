@@ -173,13 +173,13 @@ class AdminController extends Controller
     {
         $user = Auth::user();
 
-        // Build query based on user role
-        $query = Order::with(['items.menu', 'branch', 'editor'])
+        // Build query with all necessary relationships
+        $query = Order::with(['items.menu', 'branch', 'user', 'editor', 'deleter'])
             ->orderBy('created_at', 'desc');
 
-        // Cashiers see only their own transactions
+        // Cashiers see all transactions from their branch (including admin's)
         if ($user->role === 'cashier') {
-            $query->where('user_id', $user->id);
+            $query->where('branch_id', $user->branch_id);
         }
         // Admins with branch see their branch transactions
         elseif ($user->branch_id) {
@@ -198,10 +198,23 @@ class AdminController extends Controller
                 'status' => $order->status,
                 'branch_name' => $order->branch->nama ?? '-',
                 'branch_address' => $order->branch->address ?? '',
+                // User/Creator info (for "BANTUAN PUSAT" badge)
+                'user' => [
+                    'id' => $order->user->id,
+                    'name' => $order->user->name,
+                    'role' => $order->user->role,
+                ],
+                // Editor info (for "DIEDIT" badge)
                 'edited_by' => $order->edited_by,
                 'edited_at' => $order->edited_at ? $order->edited_at->format('d/m/Y H:i') : null,
                 'edit_reason' => $order->edit_reason,
                 'editor_name' => $order->editor->name ?? null,
+                // Deleter info (for void tracking)
+                'deleted_at' => $order->deleted_at ? $order->deleted_at->format('d/m/Y H:i') : null,
+                'deleted_by' => $order->deleted_by,
+                'delete_reason' => $order->delete_reason,
+                'deleter_name' => $order->deleter->name ?? null,
+                // Items
                 'items' => $order->items->map(function ($item) {
                     return [
                         'id' => $item->id,

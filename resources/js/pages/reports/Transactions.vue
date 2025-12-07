@@ -5,7 +5,7 @@ import { ref, computed } from 'vue';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Calendar, Download, Filter, X, Eye, Pencil, Trash2, AlertCircle } from 'lucide-vue-next';
+import { Calendar, Download, Filter, X, Eye, AlertCircle } from 'lucide-vue-next';
 
 interface TransactionItem {
     name: string;
@@ -357,9 +357,6 @@ const confirmVoid = async () => {
                                 <th
                                     class="px-6 py-4 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider">
                                     Status</th>
-                                <th
-                                    class="px-6 py-4 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                                    Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -407,30 +404,9 @@ const confirmVoid = async () => {
                                         {{ transaction.status }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-center">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <button @click="openDetailModal(transaction)"
-                                            class="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300"
-                                            title="View Details">
-                                            <Eye class="h-4 w-4" />
-                                        </button>
-                                        <button v-if="currentUser.role === 'admin' && !transaction.deleted_at"
-                                            @click="openEditModal(transaction)"
-                                            class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
-                                            title="Edit Transaction">
-                                            <Pencil class="h-4 w-4" />
-                                        </button>
-                                        <button v-if="currentUser.role === 'admin' && !transaction.deleted_at"
-                                            @click="openVoidModal(transaction)"
-                                            class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-                                            title="Void Transaction">
-                                            <Trash2 class="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                </td>
                             </tr>
                             <tr v-if="transactions.data.length === 0">
-                                <td colspan="8" class="px-6 py-12 text-center text-zinc-500">
+                                <td colspan="7" class="px-6 py-12 text-center text-zinc-500">
                                     Tidak ada transaksi ditemukan
                                 </td>
                             </tr>

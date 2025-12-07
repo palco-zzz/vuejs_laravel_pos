@@ -86,27 +86,18 @@ class TransactionController extends Controller
 
         // Verify the order status is 'success'
         if ($order->status !== 'success') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Hanya transaksi dengan status success yang dapat dibatalkan.',
-            ], 422);
+            return redirect()->back()->with('error', 'Hanya transaksi dengan status success yang dapat dibatalkan.');
         }
 
         // For cashiers, verify branch access
         if ($user->role === 'cashier') {
             if ($order->branch_id !== $user->branch_id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Anda tidak memiliki akses untuk membatalkan transaksi ini.',
-                ], 403);
+                return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk membatalkan transaksi ini.');
             }
 
             // Verify the order is from today
             if (!$order->created_at->isToday()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Kasir hanya dapat membatalkan transaksi dari hari ini.',
-                ], 403);
+                return redirect()->back()->with('error', 'Kasir hanya dapat membatalkan transaksi dari hari ini.');
             }
         }
 
@@ -142,10 +133,7 @@ class TransactionController extends Controller
                 'reason' => $validated['delete_reason'],
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Transaksi berhasil dibatalkan dan stok telah dikembalikan.',
-            ]);
+            return redirect()->back()->with('success', 'Transaksi berhasil dibatalkan dan stok telah dikembalikan.');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -154,10 +142,7 @@ class TransactionController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal membatalkan transaksi: ' . $e->getMessage(),
-            ], 500);
+            return redirect()->back()->with('error', 'Gagal membatalkan transaksi: ' . $e->getMessage());
         }
     }
 }
