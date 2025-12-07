@@ -509,22 +509,20 @@ const filteredTransactions = computed(() => {
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
-                            <tr v-for="transaction in filteredTransactions" :key="transaction.id"
-                                :class="[
-                                    'transition-colors',
-                                    transaction.deleted_at
-                                        ? 'opacity-60 bg-red-50 dark:bg-red-500/5'
-                                        : 'hover:bg-zinc-50 dark:hover:bg-zinc-900/40'
-                                ]">
+                            <tr v-for="transaction in filteredTransactions" :key="transaction.id" :class="[
+                                'transition-colors',
+                                transaction.deleted_at
+                                    ? 'opacity-60 bg-red-50 dark:bg-red-500/5'
+                                    : 'hover:bg-zinc-50 dark:hover:bg-zinc-900/40'
+                            ]">
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-3">
-                                        <div
-                                            :class="[
-                                                'h-10 w-10 rounded-lg flex items-center justify-center',
-                                                transaction.deleted_at
-                                                    ? 'bg-red-100 dark:bg-red-500/20'
-                                                    : 'bg-zinc-100 dark:bg-zinc-800'
-                                            ]">
+                                        <div :class="[
+                                            'h-10 w-10 rounded-lg flex items-center justify-center',
+                                            transaction.deleted_at
+                                                ? 'bg-red-100 dark:bg-red-500/20'
+                                                : 'bg-zinc-100 dark:bg-zinc-800'
+                                        ]">
                                             <Receipt :class="[
                                                 'h-4 w-4',
                                                 transaction.deleted_at ? 'text-red-500' : 'text-zinc-500'
@@ -588,6 +586,15 @@ const filteredTransactions = computed(() => {
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
+                                        <!-- Detail/View Button -->
+                                        <Button variant="ghost" size="sm"
+                                            class="gap-1.5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                                            @click="openReceiptModal(transaction)">
+                                            <Eye class="h-4 w-4" />
+                                            <span class="hidden sm:inline">Detail</span>
+                                        </Button>
+
+                                        <!-- Print Receipt Button -->
                                         <Button variant="ghost" size="sm"
                                             class="gap-1.5 text-orange-600 dark:text-orange-400 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-500/10"
                                             @click="openReceiptModal(transaction)">
@@ -606,7 +613,8 @@ const filteredTransactions = computed(() => {
                                         </Button>
 
                                         <!-- Delete Pending Order (hide for deleted transactions) -->
-                                        <Button v-if="transaction.status === 'pending' && !transaction.deleted_at" variant="ghost" size="sm"
+                                        <Button v-if="transaction.status === 'pending' && !transaction.deleted_at"
+                                            variant="ghost" size="sm"
                                             class="gap-1.5 text-red-600 dark:text-red-400 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-500/10"
                                             @click="deletePendingOrder(transaction)">
                                             <Trash2 class="h-4 w-4" />
@@ -614,7 +622,8 @@ const filteredTransactions = computed(() => {
                                         </Button>
 
                                         <!-- Void/Cancel Transaction (hide for already deleted) -->
-                                        <Button v-if="canVoidTransaction(transaction) && !transaction.deleted_at" variant="ghost" size="sm"
+                                        <Button v-if="canVoidTransaction(transaction) && !transaction.deleted_at"
+                                            variant="ghost" size="sm"
                                             class="gap-1.5 text-red-600 dark:text-red-400 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-500/10"
                                             @click="openVoidModal(transaction)">
                                             <Ban class="h-4 w-4" />
@@ -688,8 +697,30 @@ const filteredTransactions = computed(() => {
                     <!-- Receipt Content -->
                     <div :id="`receipt-${selectedTransaction?.id}`"
                         class="p-6 overflow-y-auto flex-1 print:overflow-visible">
-                        <!-- Edit Warning Alert (Show only if edited) -->
-                        <div v-if="selectedTransaction?.edited_at"
+                        <!-- Void/Cancellation Alert (Show if deleted) -->
+                        <div v-if="selectedTransaction?.deleted_at"
+                            class="mb-6 bg-red-50 dark:bg-red-500/10 border-l-4 border-red-500 dark:border-red-400 p-4 rounded-r-lg print:hidden">
+                            <div class="flex items-start gap-3">
+                                <AlertCircle class="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-red-900 dark:text-red-200 mb-1">⛔ Transaksi Dibatalkan
+                                    </h4>
+                                    <p class="text-sm text-red-800 dark:text-red-300 mb-1">
+                                        Dibatalkan oleh <span class="font-semibold">{{ selectedTransaction?.deleter_name
+                                            ||
+                                            'Admin' }}</span>
+                                        pada {{ selectedTransaction?.deleted_at }}.
+                                    </p>
+                                    <p class="text-sm text-red-800 dark:text-red-300">
+                                        <span class="font-bold">Alasan:</span> {{ selectedTransaction?.delete_reason ||
+                                        '-' }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Edit Warning Alert (Show only if edited and NOT deleted) -->
+                        <div v-if="selectedTransaction?.edited_at && !selectedTransaction?.deleted_at"
                             class="mb-6 bg-yellow-50 dark:bg-yellow-500/10 border-l-4 border-yellow-400 dark:border-yellow-500 p-4 rounded-r-lg print:hidden">
                             <div class="flex items-start gap-3">
                                 <AlertCircle
@@ -701,7 +732,7 @@ const filteredTransactions = computed(() => {
                                     <p class="text-sm text-yellow-800 dark:text-yellow-300 mb-1">
                                         Diedit oleh <span class="font-semibold">{{ selectedTransaction?.editor_name ||
                                             'Admin'
-                                            }}</span>
+                                        }}</span>
                                         pada {{ selectedTransaction?.edited_at }}.
                                     </p>
                                     <p class="text-sm text-yellow-800 dark:text-yellow-300">
@@ -728,7 +759,7 @@ const filteredTransactions = computed(() => {
                                 <span class="text-zinc-500">No. Order:</span>
                                 <span class="font-medium text-zinc-900 dark:text-white">{{
                                     selectedTransaction?.order_number
-                                    }}</span>
+                                }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-zinc-500">Tanggal:</span>
@@ -752,10 +783,10 @@ const filteredTransactions = computed(() => {
                                         <span v-if="item.is_custom" class="text-xs text-orange-500">(Custom)</span>
                                     </p>
                                     <p class="text-xs text-zinc-500">{{ item.quantity }} x {{ formatRupiah(item.price)
-                                        }}</p>
+                                    }}</p>
                                 </div>
                                 <span class="text-zinc-900 dark:text-white font-medium">{{ formatRupiah(item.subtotal)
-                                    }}</span>
+                                }}</span>
                             </div>
                         </div>
 
@@ -764,7 +795,7 @@ const filteredTransactions = computed(() => {
                             <span class="text-zinc-900 dark:text-white">TOTAL</span>
                             <span class="text-orange-600 dark:text-orange-400">{{
                                 formatRupiah(selectedTransaction?.total || 0)
-                                }}</span>
+                            }}</span>
                         </div>
 
                         <!-- Footer -->
