@@ -13,6 +13,7 @@ interface TransactionItem {
     price: number;
     subtotal: number;
     is_custom: boolean;
+    note?: string | null;
 }
 
 interface Transaction {
@@ -22,10 +23,17 @@ interface Transaction {
     branch_name: string;
     cashier_name: string;
     creator_role?: string | null;  // For "BANTUAN ADMIN" badge
-    deleted_at?: string | null;    // For void functionality
-    deleted_by?: number | null;    // For void functionality
-    delete_reason?: string | null; // For void functionality
-    deleter_name?: string | null;  // For void functionality
+    // Void/Delete info
+    deleted_at?: string | null;
+    deleted_by?: number | null;
+    delete_reason?: string | null;
+    deleter_name?: string | null;
+    // Edit info
+    edited_at?: string | null;
+    edited_by?: number | null;
+    edit_reason?: string | null;
+    edited_by_name?: string | null;
+    // Transaction details
     total: number;
     payment_method: string;
     status: string;
@@ -357,6 +365,9 @@ const confirmVoid = async () => {
                                 <th
                                     class="px-6 py-4 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider">
                                     Status</th>
+                                <th
+                                    class="px-6 py-4 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                    Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -404,9 +415,19 @@ const confirmVoid = async () => {
                                         {{ transaction.status }}
                                     </span>
                                 </td>
+                                <td class="px-6 py-4 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <Button variant="ghost" size="sm"
+                                            class="gap-1.5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                                            @click="openDetailModal(transaction)">
+                                            <Eye class="h-4 w-4" />
+                                            <span class="hidden sm:inline">Detail</span>
+                                        </Button>
+                                    </div>
+                                </td>
                             </tr>
                             <tr v-if="transactions.data.length === 0">
-                                <td colspan="7" class="px-6 py-12 text-center text-zinc-500">
+                                <td colspan="8" class="px-6 py-12 text-center text-zinc-500">
                                     Tidak ada transaksi ditemukan
                                 </td>
                             </tr>
@@ -458,6 +479,42 @@ const confirmVoid = async () => {
 
                     <!-- Modal Body -->
                     <div class="p-6 overflow-y-auto flex-1">
+                        <!-- Void/Cancellation Alert -->
+                        <div v-if="selectedTransaction?.deleted_at"
+                            class="mb-6 bg-red-50 dark:bg-red-500/10 border-l-4 border-red-500 dark:border-red-400 p-4 rounded-r-lg">
+                            <div class="flex items-start gap-3">
+                                <AlertCircle class="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-red-900 dark:text-red-200 mb-1">⛔ Transaksi Dibatalkan</h4>
+                                    <p class="text-sm text-red-800 dark:text-red-300 mb-1">
+                                        Dibatalkan oleh <span class="font-semibold">{{ selectedTransaction?.deleter_name || 'Admin' }}</span>
+                                        pada {{ selectedTransaction?.deleted_at }}.
+                                    </p>
+                                    <p class="text-sm text-red-800 dark:text-red-300">
+                                        <span class="font-bold">Alasan:</span> {{ selectedTransaction?.delete_reason || '-' }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Edit Alert -->
+                        <div v-if="selectedTransaction?.edited_at && !selectedTransaction?.deleted_at"
+                            class="mb-6 bg-yellow-50 dark:bg-yellow-500/10 border-l-4 border-yellow-400 dark:border-yellow-500 p-4 rounded-r-lg">
+                            <div class="flex items-start gap-3">
+                                <AlertCircle class="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-yellow-900 dark:text-yellow-200 mb-1">⚠️ Transaksi Telah Diedit</h4>
+                                    <p class="text-sm text-yellow-800 dark:text-yellow-300 mb-1">
+                                        Diedit oleh <span class="font-semibold">{{ selectedTransaction?.edited_by_name || 'Admin' }}</span>
+                                        pada {{ selectedTransaction?.edited_at }}.
+                                    </p>
+                                    <p class="text-sm text-yellow-800 dark:text-yellow-300">
+                                        <span class="font-bold">Alasan:</span> {{ selectedTransaction?.edit_reason || '-' }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Transaction Info -->
                         <div class="grid grid-cols-2 gap-4 mb-6">
                             <div>

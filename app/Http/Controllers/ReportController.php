@@ -18,9 +18,9 @@ class ReportController extends Controller
         $branchId = $request->input('branch_id');
         $paymentMethod = $request->input('payment_method');
 
-        // Build query - Include voidded transactions
-        $query = Order::with(['branch', 'user', 'items.menu', 'deleter'])
-            ->withTrashed()  // Show voided transactions too
+        // Build query - Include voided transactions
+        $query = Order::withTrashed()
+            ->with(['branch', 'user', 'items.menu', 'editor', 'deleter'])
             ->whereBetween('created_at', [
                 Carbon::parse($startDate)->startOfDay(),
                 Carbon::parse($endDate)->endOfDay()
@@ -43,11 +43,17 @@ class ReportController extends Controller
                 'branch_name' => $order->branch->nama ?? '-',
                 'cashier_name' => $order->user->name ?? '-',
                 'creator_role' => $order->user->role ?? null,  // For "BANTUAN ADMIN" badge
-                // Void info for soft deletes
+                // Void/Delete info for soft deletes
                 'deleted_at' => $order->deleted_at ? $order->deleted_at->format('d/m/Y H:i') : null,
                 'deleted_by' => $order->deleted_by,
                 'delete_reason' => $order->delete_reason,
                 'deleter_name' => $order->deleter->name ?? null,
+                // Edit info for tracking changes
+                'edited_at' => $order->edited_at ? $order->edited_at->format('d/m/Y H:i') : null,
+                'edited_by' => $order->edited_by,
+                'edit_reason' => $order->edit_reason,
+                'edited_by_name' => $order->editor->name ?? null,
+                // Transaction details
                 'total' => (float) $order->total,
                 'payment_method' => $order->payment_method,
                 'status' => $order->status,
@@ -59,6 +65,7 @@ class ReportController extends Controller
                         'price' => (float) $item->price,
                         'subtotal' => (float) $item->subtotal,
                         'is_custom' => $item->is_custom,
+                        'note' => $item->note,
                     ];
                 }),
             ];
