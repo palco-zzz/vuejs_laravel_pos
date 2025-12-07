@@ -85,6 +85,7 @@ class AdminController extends Controller
                 'items.*.price' => ['required', 'numeric', 'min:0'],
                 'items.*.qty' => ['required', 'integer', 'min:1'],
                 'items.*.is_custom' => ['boolean'],
+                'items.*.note' => ['nullable', 'string'],
                 'subtotal' => ['required', 'numeric', 'min:0'],
                 'tax' => ['required', 'numeric', 'min:0'],
                 'total' => ['required', 'numeric', 'min:0'],
@@ -125,6 +126,7 @@ class AdminController extends Controller
                     'quantity' => $item['qty'],
                     'subtotal' => $item['price'] * $item['qty'],
                     'is_custom' => $isCustom,
+                    'note' => $item['note'] ?? null,
                 ]);
 
                 // Decrease stock for non-custom items
@@ -223,6 +225,7 @@ class AdminController extends Controller
                         'price' => (float) $item->price,
                         'subtotal' => (float) $item->subtotal,
                         'is_custom' => $item->is_custom,
+                        'note' => $item->note,
                     ];
                 }),
             ];

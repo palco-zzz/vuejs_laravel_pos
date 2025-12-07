@@ -35,6 +35,8 @@ interface CartItem {
     price: number;
     qty: number;
     icon: string;
+    is_custom?: boolean;
+    note?: string;
 }
 
 interface PaymentMethod {
@@ -69,6 +71,7 @@ const isCustomOrderModalOpen = ref(false);
 const customOrderForm = ref({
   itemName: '',
   itemPrice: 0,
+  itemNote: '',
 });
 
 // Branch selection (Admin only)
@@ -175,6 +178,7 @@ const openCustomOrderModal = () => {
   customOrderForm.value = {
     itemName: '',
     itemPrice: 0,
+    itemNote: '',
   };
   isCustomOrderModalOpen.value = true;
 };
@@ -184,11 +188,13 @@ const closeCustomOrderModal = () => {
   customOrderForm.value = {
     itemName: '',
     itemPrice: 0,
+    itemNote: '',
   };
 };
 
 const addCustomOrderToCart = () => {
-  if (!customOrderForm.value.itemName || customOrderForm.value.itemPrice <= 0) {
+  // Allow price to be 0 or greater (for bonuses)
+  if (!customOrderForm.value.itemName || customOrderForm.value.itemPrice < 0) {
     return;
   }
 
@@ -198,6 +204,8 @@ const addCustomOrderToCart = () => {
     price: customOrderForm.value.itemPrice,
     qty: 1,
     icon: '📝',
+    is_custom: true,
+    note: customOrderForm.value.itemNote || undefined,
   });
 
   closeCustomOrderModal();
@@ -296,7 +304,8 @@ const confirmPayment = async () => {
         name: item.name,
         price: item.price,
         qty: item.qty,
-        is_custom: item.icon === '📝' // Custom orders have this icon
+        is_custom: item.is_custom || item.icon === '📝', // Custom orders have this icon
+        note: item.note || null,
       })),
       subtotal: subtotal.value,
       tax: tax.value,
@@ -558,6 +567,9 @@ const closeSuccess = () => {
                 >
                   {{ item.name }}
                 </p>
+                <p v-if="item.note" class="text-xs text-zinc-500 italic mt-0.5">
+                  Catatan: {{ item.note }}
+                </p>
                 <p class="text-xs text-zinc-500">{{ formatRupiah(item.price) }}</p>
               </div>
             </div>
@@ -812,7 +824,7 @@ const closeSuccess = () => {
                   id="itemPrice"
                   v-model.number="customOrderForm.itemPrice"
                   type="number"
-                  placeholder="Contoh: 25000"
+                  placeholder="Contoh: 25000 (atau 0 untuk bonus)"
                   min="0"
                   step="1000"
                   class="w-full"
@@ -820,12 +832,31 @@ const closeSuccess = () => {
                 <p v-if="customOrderForm.itemPrice > 0" class="mt-2 text-sm text-zinc-500">
                   Preview: <span class="font-semibold text-orange-600 dark:text-orange-400">{{ formatRupiah(customOrderForm.itemPrice) }}</span>
                 </p>
+                <p v-else-if="customOrderForm.itemPrice === 0" class="mt-2 text-sm text-green-600 dark:text-green-400">
+                  🎁 Item Bonus (Gratis)
+                </p>
+              </div>
+
+              <div>
+                <label for="itemNote" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                  Catatan / Alasan <span class="text-xs text-zinc-400">(Opsional)</span>
+                </label>
+                <textarea
+                  id="itemNote"
+                  v-model="customOrderForm.itemNote"
+                  placeholder="Contoh: Bonus Ultah, Pengganti Roti Gosong, dll."
+                  rows="3"
+                  class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-zinc-900 dark:text-white resize-none"
+                ></textarea>
+                <p class="mt-1 text-xs text-zinc-500">
+                  Tambahkan catatan jika diperlukan (misal: alasan bonus atau permintaan khusus)
+                </p>
               </div>
             </div>
 
-            <div v-if="!customOrderForm.itemName || customOrderForm.itemPrice <= 0" class="rounded-xl border border-yellow-200 dark:border-yellow-800/30 bg-yellow-50 dark:bg-yellow-900/10 p-4">
+            <div v-if="!customOrderForm.itemName || customOrderForm.itemPrice < 0" class="rounded-xl border border-yellow-200 dark:border-yellow-800/30 bg-yellow-50 dark:bg-yellow-900/10 p-4">
               <p class="text-sm text-yellow-800 dark:text-yellow-200">
-                ⚠️ Pastikan nama item dan harga sudah terisi dengan benar
+                ⚠️ Pastikan nama item terisi dan harga tidak negatif (harga 0 diperbolehkan untuk bonus)
               </p>
             </div>
           </div>
@@ -833,7 +864,7 @@ const closeSuccess = () => {
           <div class="px-6 pb-6 pt-4 border-t border-zinc-100 dark:border-zinc-800 shrink-0 bg-white dark:bg-zinc-900">
             <Button 
               class="w-full gap-2 h-14 text-lg font-bold shadow-xl shadow-orange-500/20" 
-              :disabled="!customOrderForm.itemName || customOrderForm.itemPrice <= 0"
+              :disabled="!customOrderForm.itemName || customOrderForm.itemPrice < 0"
               @click="addCustomOrderToCart"
             >
               <ShoppingCart class="h-5 w-5" /> Tambah ke Keranjang
