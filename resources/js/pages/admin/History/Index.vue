@@ -990,8 +990,7 @@ const filteredTransactions = computed(() => {
                                 <div>
                                     <h4 class="font-medium text-red-900 dark:text-red-200 text-sm mb-1">Peringatan</h4>
                                     <p class="text-xs text-red-700 dark:text-red-300">Tindakan ini akan membatalkan
-                                        transaksi
-                                        dan mengembalikan stok barang. Pastikan alasan pembatalan valid dan jelas.</p>
+                                        transaksi secara permanen. Pastikan alasan pembatalan valid dan jelas.</p>
                                 </div>
                             </div>
                         </div>

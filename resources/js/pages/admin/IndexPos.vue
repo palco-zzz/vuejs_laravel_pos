@@ -19,7 +19,6 @@ interface MenuData {
   category_id: number;
   nama: string;
   harga: number;
-  stok: number;
   icon: string | null;
   category: CategoryData;
 }
@@ -474,8 +473,7 @@ const closeSuccess = () => {
               </h4>
               <p class="text-xs text-zinc-500 mt-1">{{ product.category?.nama }}</p>
             </div>
-            <div class="flex justify-between items-center mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
-              <span class="text-xs text-zinc-500">Stok: {{ product.stok }}</span>
+            <div class="flex justify-end items-center mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
               <span class="text-sm font-semibold text-orange-600 dark:text-orange-400">{{
                 formatRupiah(product.harga)
                 }}</span>

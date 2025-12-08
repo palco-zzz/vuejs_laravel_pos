@@ -17,8 +17,8 @@ class AdminController extends Controller
 {
     public function index()
     {
+        // Display all menus - stock tracking removed for premium feature pivot
         $menus = Menu::with('category')
-            ->where('stok', '>', 0)
             ->orderBy('nama')
             ->get();
 
@@ -114,7 +114,7 @@ class AdminController extends Controller
                 'change_amount' => $validated['change_amount'] ?? null,
             ]);
 
-            // Create order items and update stock
+            // Create order items (stock tracking removed for premium feature pivot)
             foreach ($validated['items'] as $item) {
                 $isCustom = $item['is_custom'] ?? false;
 
@@ -128,11 +128,6 @@ class AdminController extends Controller
                     'is_custom' => $isCustom,
                     'note' => $item['note'] ?? null,
                 ]);
-
-                // Decrease stock for non-custom items
-                if (!$isCustom && isset($item['id'])) {
-                    Menu::where('id', $item['id'])->decrement('stok', $item['qty']);
-                }
             }
 
             DB::commit();
@@ -235,8 +230,8 @@ class AdminController extends Controller
 
         return Inertia::render('admin/History/Index', [
             'transactions' => $transactions,
+            // Display all menus - stock tracking removed for premium feature pivot
             'menus' => Menu::with('category')
-                ->where('stok', '>', 0)
                 ->orderBy('nama')
                 ->get()
                 ->map(function ($menu) {

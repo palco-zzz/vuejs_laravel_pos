@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
             $table->string('nama');
             $table->decimal('harga', 12, 2);
-            $table->integer('stok')->default(0);
+            // Note: 'stok' column removed - inventory management is a premium feature
             $table->string('icon')->nullable();
             $table->timestamps();
         });

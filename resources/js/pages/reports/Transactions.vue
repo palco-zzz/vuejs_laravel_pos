@@ -696,7 +696,7 @@ const confirmVoid = async () => {
                                 <div>
                                     <h4 class="font-medium text-red-900 dark:text-red-200 text-sm mb-1">Peringatan</h4>
                                     <p class="text-xs text-red-700 dark:text-red-300">
-                                        Tindakan ini akan membatalkan transaksi dan mengembalikan stok.
+                                        Tindakan ini akan membatalkan transaksi secara permanen.
                                         Transaksi yang sudah dibatalkan tidak dapat dikembalikan.
                                     </p>
                                 </div>

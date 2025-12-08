@@ -200,7 +200,6 @@ class ReportController extends Controller
                     'menu_name' => $menu->nama,
                     'category_name' => $menu->category->nama ?? 'Uncategorized',
                     'price' => (float) $menu->harga,
-                    'stock' => $menu->stok,
                 ];
             });
         

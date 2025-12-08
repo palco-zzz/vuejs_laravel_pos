@@ -11,13 +11,11 @@ class Menu extends Model
         'category_id',
         'nama',
         'harga',
-        'stok',
         'icon',
     ];
 
     protected $casts = [
         'harga' => 'decimal:2',
-        'stok' => 'integer',
     ];
 
     public function category(): BelongsTo

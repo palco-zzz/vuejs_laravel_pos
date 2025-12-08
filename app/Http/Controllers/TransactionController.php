@@ -73,7 +73,7 @@ class TransactionController extends Controller
     /**
      * Void/Cancel a successful transaction
      * Only for orders with status 'success' and created today
-     * Performs soft delete and restores stock
+     * Performs soft delete
      */
     public function voidTransaction(Request $request, Order $order)
     {
@@ -104,14 +104,8 @@ class TransactionController extends Controller
         try {
             DB::beginTransaction();
 
-            // Restore stock for all items in the order
-            foreach ($order->items as $item) {
-                // Only restore stock for non-custom items
-                if (!$item->is_custom && $item->menu_id) {
-                    Menu::where('id', $item->menu_id)
-                        ->increment('stok', $item->quantity);
-                }
-            }
+            // Stock restoration removed - inventory tracking is a premium feature
+            // Previous logic restored stock for non-custom items
 
             // Update order status to 'cancelled' and perform soft delete
             $order->update([
@@ -133,7 +127,7 @@ class TransactionController extends Controller
                 'reason' => $validated['delete_reason'],
             ]);
 
-            return redirect()->back()->with('success', 'Transaksi berhasil dibatalkan dan stok telah dikembalikan.');
+            return redirect()->back()->with('success', 'Transaksi berhasil dibatalkan.');
         } catch (\Exception $e) {
             DB::rollBack();
 

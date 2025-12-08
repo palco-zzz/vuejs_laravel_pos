@@ -41,9 +41,6 @@ class ManajemenMenuController extends Controller
             'icon' => ['nullable', 'string', 'max:10'],
         ]);
 
-        // Set default stock value since we're not tracking inventory
-        $validated['stok'] = 9999;
-
         Menu::create($validated);
 
         return redirect()->route('menu.index')->with('success', 'Menu berhasil ditambahkan.');
@@ -60,9 +57,6 @@ class ManajemenMenuController extends Controller
             'harga' => ['required', 'numeric', 'min:0'],
             'icon' => ['nullable', 'string', 'max:10'],
         ]);
-
-        // Set default stock value since we're not tracking inventory
-        $validated['stok'] = 9999;
 
         $menu->update($validated);
 
