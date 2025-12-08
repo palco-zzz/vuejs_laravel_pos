@@ -33,6 +33,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pos', [AdminController::class, 'index'])->name('pos.index');
     Route::post('/pos/order', [AdminController::class, 'storeOrder'])->name('pos.order.store');
     Route::get('/pos/history', [AdminController::class, 'history'])->name('pos.history');
+    Route::get('/pos/top-menus', [App\Http\Controllers\ReportController::class, 'topMenusCashier'])->name('pos.top-menus');
 
     // Admin-only: Edit order items
     Route::put('/pos/order/{order}/items', [AdminController::class, 'updateItems'])

@@ -253,6 +253,75 @@ class ReportController extends Controller
 
         return redirect()->back()->with('success', 'Transaksi berhasil diperbarui');
     }
+
+    /**
+     * Top Menus for Cashier - Shows branch-specific top selling menus
+     */
+    public function topMenusCashier(Request $request)
+    {
+        $user = auth()->user();
+        
+        // If user has no branch, show error
+        if (!$user->branch_id) {
+            return redirect()->route('dashboard')->with('error', 'Anda belum ditugaskan ke cabang manapun.');
+        }
+        
+        // Get date filters
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
+        $endDate = $request->input('end_date', Carbon::today()->toDateString());
+        
+        // Get branch info
+        $branch = Branch::find($user->branch_id);
+        
+        // Query top selling items for this branch
+        $topMenus = \App\Models\OrderItem::with('menu.category')
+            ->select(
+                'menu_id',
+                \DB::raw('SUM(quantity) as total_sold'),
+                \DB::raw('SUM(subtotal) as total_revenue')
+            )
+            ->whereNotNull('menu_id')
+            ->whereHas('order', function ($q) use ($user, $startDate, $endDate) {
+                $q->where('branch_id', $user->branch_id)
+                  ->where('status', 'success')
+                  ->whereBetween('created_at', [
+                      Carbon::parse($startDate)->startOfDay(),
+                      Carbon::parse($endDate)->endOfDay()
+                  ]);
+            })
+            ->groupBy('menu_id')
+            ->orderByDesc('total_sold')
+            ->limit(20)
+            ->get()
+            ->map(function ($item, $index) {
+                return [
+                    'rank' => $index + 1,
+                    'menu_id' => $item->menu_id,
+                    'menu_name' => $item->menu->nama ?? 'Unknown',
+                    'category_name' => $item->menu->category->nama ?? 'Uncategorized',
+                    'icon' => $item->menu->icon ?? '🍽️',
+                    'total_sold' => (int) $item->total_sold,
+                    'total_revenue' => (float) $item->total_revenue,
+                ];
+            });
+        
+        // Calculate summary
+        $summary = [
+            'total_items_sold' => $topMenus->sum('total_sold'),
+            'total_revenue' => $topMenus->sum('total_revenue'),
+            'unique_menus' => $topMenus->count(),
+        ];
+        
+        return Inertia::render('pos/TopMenus', [
+            'topMenus' => $topMenus,
+            'summary' => $summary,
+            'branchName' => $branch->nama ?? 'Cabang',
+            'filters' => [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ],
+        ]);
+    }
     
     private function getDateRange($dateRange)
     {

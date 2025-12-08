@@ -89,85 +89,87 @@ const maxChartValue = Math.max(...(props.chartData || [0]), 1);
                 <!-- Card 1 (Total Income) - Clickable -> Report -->
                 <Link href="/dashboard"
                     class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-5 rounded-xl hover:border-zinc-300 dark:hover:bg-zinc-900/60 transition-colors group shadow-sm dark:shadow-none cursor-pointer block">
-                <div class="flex justify-between items-start mb-4">
-                    <div
-                        class="p-2 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg text-zinc-500 dark:text-zinc-400 group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors">
-                        <i data-lucide="banknote" class="h-5 w-5"></i>
+                    <div class="flex justify-between items-start mb-4">
+                        <div
+                            class="p-2 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg text-zinc-500 dark:text-zinc-400 group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors">
+                            <i data-lucide="banknote" class="h-5 w-5"></i>
+                        </div>
+                        <span
+                            class="text-xs font-medium text-green-600 dark:text-green-500 bg-green-100 dark:bg-green-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            Hari Ini
+                        </span>
                     </div>
-                    <span
-                        class="text-xs font-medium text-green-600 dark:text-green-500 bg-green-100 dark:bg-green-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        Hari Ini
-                    </span>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-zinc-500 text-xs font-medium mb-1">Total Pendapatan (Hari Ini)</span>
-                    <h3 class="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">{{
-                        formatRupiah(totalIncome) }}
-                    </h3>
-                </div>
+                    <div class="flex flex-col">
+                        <span class="text-zinc-500 text-xs font-medium mb-1">Total Pendapatan (Hari Ini)</span>
+                        <h3 class="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">{{
+                            formatRupiah(totalIncome) }}
+                        </h3>
+                    </div>
                 </Link>
 
-                <!-- Card 2 (Transactions) - Clickable -> Report -->
-                <Link href="/reports/transactions"
+                <!-- Card 2 (Transactions) - Clickable -> Report/History -->
+                <Link :href="isCashier ? '/pos/history' : '/reports/transactions'"
                     class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-5 rounded-xl hover:border-zinc-300 dark:hover:bg-zinc-900/60 transition-colors group shadow-sm dark:shadow-none cursor-pointer block">
-                <div class="flex justify-between items-start mb-4">
-                    <div
-                        class="p-2 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg text-zinc-500 dark:text-zinc-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">
-                        <i data-lucide="receipt" class="h-5 w-5"></i>
+                    <div class="flex justify-between items-start mb-4">
+                        <div
+                            class="p-2 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg text-zinc-500 dark:text-zinc-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">
+                            <i data-lucide="receipt" class="h-5 w-5"></i>
+                        </div>
+                        <span
+                            class="text-xs font-medium text-green-600 dark:text-green-500 bg-green-100 dark:bg-green-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            Hari Ini
+                        </span>
                     </div>
-                    <span
-                        class="text-xs font-medium text-green-600 dark:text-green-500 bg-green-100 dark:bg-green-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        Hari Ini
-                    </span>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-zinc-500 text-xs font-medium mb-1">Total Transaksi</span>
-                    <h3 class="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">{{ totalTransactions
-                    }} <span class="text-sm font-normal text-zinc-500">Nota</span></h3>
-                </div>
+                    <div class="flex flex-col">
+                        <span class="text-zinc-500 text-xs font-medium mb-1">Total Transaksi</span>
+                        <h3 class="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">{{
+                            totalTransactions
+                            }} <span class="text-sm font-normal text-zinc-500">Nota</span></h3>
+                    </div>
                 </Link>
 
                 <!-- Card 3 (Active Branches) - ADMIN ONLY -->
                 <Link v-if="!isCashier" href="/branch"
                     class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-5 rounded-xl hover:border-zinc-300 dark:hover:bg-zinc-900/60 transition-colors group shadow-sm dark:shadow-none cursor-pointer block">
-                <div class="flex justify-between items-start mb-4">
-                    <div
-                        class="p-2 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg text-zinc-500 dark:text-zinc-400 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors">
-                        <i data-lucide="store" class="h-5 w-5"></i>
+                    <div class="flex justify-between items-start mb-4">
+                        <div
+                            class="p-2 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg text-zinc-500 dark:text-zinc-400 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors">
+                            <i data-lucide="store" class="h-5 w-5"></i>
+                        </div>
+                        <span class="text-xs font-medium text-zinc-500">Live Status</span>
                     </div>
-                    <span class="text-xs font-medium text-zinc-500">Live Status</span>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-zinc-500 text-xs font-medium mb-1">Cabang Aktif</span>
-                    <h3 class="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">{{ activeBranches }}
-                        <span class="text-sm font-normal text-zinc-500">/ {{ activeBranches }} Buka</span>
-                    </h3>
-                </div>
+                    <div class="flex flex-col">
+                        <span class="text-zinc-500 text-xs font-medium mb-1">Cabang Aktif</span>
+                        <h3 class="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">{{
+                            activeBranches }}
+                            <span class="text-sm font-normal text-zinc-500">/ {{ activeBranches }} Buka</span>
+                        </h3>
+                    </div>
                 </Link>
 
-                <!-- Card 4 (Top Selling) - Clickable -> Menu Analysis -->
-                <Link href="/reports/menu-analysis"
+                <!-- Card 4 (Top Selling) - Clickable -> Menu Analysis/Top Menus -->
+                <Link :href="isCashier ? '/pos/top-menus' : '/reports/menu-analysis'"
                     class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-5 rounded-xl hover:border-zinc-300 dark:hover:bg-zinc-900/60 transition-colors group cursor-pointer relative overflow-hidden shadow-sm dark:shadow-none block">
-                <div
-                    class="absolute inset-0 bg-gradient-to-tr from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                </div>
-                <div class="flex justify-between items-start mb-4 relative z-10">
                     <div
-                        class="p-2 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg text-zinc-500 dark:text-zinc-400 group-hover:text-yellow-500 dark:group-hover:text-yellow-400 transition-colors">
-                        <i data-lucide="star" class="h-5 w-5"></i>
+                        class="absolute inset-0 bg-gradient-to-tr from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                     </div>
-                    <span
-                        class="text-xs font-medium text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-400/10 px-2 py-0.5 rounded-full">Favorit</span>
-                </div>
-                <div class="flex flex-col relative z-10">
-                    <span class="text-zinc-500 text-xs font-medium mb-1">Menu Terlaris</span>
-                    <h3 class="text-lg font-medium tracking-tight text-zinc-900 dark:text-white truncate">
-                        {{ topSellingMenus[0]?.name || 'Belum ada data' }}
-                    </h3>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                        Terjual {{ topSellingMenus[0]?.total_sold || 0 }} Porsi
-                    </span>
-                </div>
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <div
+                            class="p-2 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg text-zinc-500 dark:text-zinc-400 group-hover:text-yellow-500 dark:group-hover:text-yellow-400 transition-colors">
+                            <i data-lucide="star" class="h-5 w-5"></i>
+                        </div>
+                        <span
+                            class="text-xs font-medium text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-400/10 px-2 py-0.5 rounded-full">Favorit</span>
+                    </div>
+                    <div class="flex flex-col relative z-10">
+                        <span class="text-zinc-500 text-xs font-medium mb-1">Menu Terlaris</span>
+                        <h3 class="text-lg font-medium tracking-tight text-zinc-900 dark:text-white truncate">
+                            {{ topSellingMenus[0]?.name || 'Belum ada data' }}
+                        </h3>
+                        <span class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                            Terjual {{ topSellingMenus[0]?.total_sold || 0 }} Porsi
+                        </span>
+                    </div>
                 </Link>
             </div>
 
@@ -258,7 +260,7 @@ const maxChartValue = Math.max(...(props.chartData || [0]), 1);
                                         <td colspan="5" class="pt-4 text-center">
                                             <Link href="/branch"
                                                 class="w-full border border-dashed border-zinc-300 dark:border-zinc-800 rounded-lg py-3 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 hover:border-zinc-400 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-900/30 transition-all flex items-center justify-center gap-2">
-                                            <i data-lucide="plus" class="h-4 w-4"></i> Tambah Cabang Baru
+                                                <i data-lucide="plus" class="h-4 w-4"></i> Tambah Cabang Baru
                                             </Link>
                                         </td>
                                     </tr>
@@ -346,7 +348,7 @@ const maxChartValue = Math.max(...(props.chartData || [0]), 1);
                         <div class="mt-6 flex justify-center">
                             <Link href="/reports/menu-analysis"
                                 class="text-xs text-orange-500 hover:text-orange-600 font-medium cursor-pointer">Lihat
-                            Analisa Menu</Link>
+                                Analisa Menu</Link>
                         </div>
                     </div>
 
@@ -360,7 +362,7 @@ const maxChartValue = Math.max(...(props.chartData || [0]), 1);
                             </h3>
                             <Link v-if="isCashier" href="/pos/history"
                                 class="text-xs text-orange-500 hover:text-orange-600 font-medium">
-                            Lihat Semua →
+                                Lihat Semua →
                             </Link>
                         </div>
                         <div class="space-y-0 relative">
@@ -414,7 +416,7 @@ const maxChartValue = Math.max(...(props.chartData || [0]), 1);
                         </div>
                         <Link href="/pos/history"
                             class="text-sm text-orange-500 hover:text-orange-600 font-medium flex items-center gap-1">
-                        Lihat Semua →
+                            Lihat Semua →
                         </Link>
                     </div>
 
@@ -437,7 +439,7 @@ const maxChartValue = Math.max(...(props.chartData || [0]), 1);
                             <p class="text-zinc-500 dark:text-zinc-400 mb-4">Belum ada pesanan hari ini</p>
                             <Link href="/pos"
                                 class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors">
-                            Buat Transaksi Baru
+                                Buat Transaksi Baru
                             </Link>
                         </div>
 
