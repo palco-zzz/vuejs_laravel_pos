@@ -254,6 +254,29 @@ const confirmVoid = async () => {
         alert('Terjadi kesalahan saat membatalkan transaksi');
     }
 };
+
+// Export to Excel function
+const exportToExcel = () => {
+    // Build the export URL with current filter parameters
+    const params = new URLSearchParams();
+    
+    if (startDate.value) {
+        params.append('start_date', startDate.value);
+    }
+    if (endDate.value) {
+        params.append('end_date', endDate.value);
+    }
+    if (selectedBranch.value) {
+        params.append('branch_id', selectedBranch.value.toString());
+    }
+    if (selectedPaymentMethod.value) {
+        params.append('payment_method', selectedPaymentMethod.value);
+    }
+    
+    // Navigate to the export URL to trigger download
+    const exportUrl = `/reports/transactions/export?${params.toString()}`;
+    window.location.href = exportUrl;
+};
 </script>
 
 <template>
@@ -268,7 +291,7 @@ const confirmVoid = async () => {
                     <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Laporan Transaksi</h1>
                     <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Riwayat dan detail semua transaksi</p>
                 </div>
-                <Button variant="outline" class="gap-2">
+                <Button @click="exportToExcel" variant="outline" class="gap-2">
                     <Download class="h-4 w-4" />
                     Export Excel
                 </Button>

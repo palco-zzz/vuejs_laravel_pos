@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Branch;
+use App\Exports\TransactionsExport;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -115,6 +116,31 @@ class ReportController extends Controller
                 'payment_method' => $paymentMethod,
             ],
         ]);
+    }
+
+    /**
+     * Export transactions to Excel/CSV
+     */
+    public function exportTransactions(Request $request)
+    {
+        // Get filter parameters (same as transactions method)
+        $startDate = $request->input('start_date', Carbon::today()->toDateString());
+        $endDate = $request->input('end_date', Carbon::today()->toDateString());
+        $branchId = $request->input('branch_id') ? (int) $request->input('branch_id') : null;
+        $paymentMethod = $request->input('payment_method');
+
+        // Generate filename with date range
+        $filename = 'Laporan-Transaksi_' . $startDate . '_' . $endDate . '.csv';
+
+        // Create and download the export
+        $export = new TransactionsExport(
+            $startDate,
+            $endDate,
+            $branchId,
+            $paymentMethod
+        );
+
+        return $export->download($filename);
     }
 
     public function menuAnalysis(Request $request)
