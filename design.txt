@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Epok POS Premium</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        slate: {
+                            850: '#151e2e',
+                        }
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'scale-in': 'scaleIn 0.3s ease-out forwards',
+                        'bounce-in': 'bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                        'slide-in-right': 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            'from': { opacity: 0, transform: 'translateY(20px)', filter: 'blur(5px)' },
+                            'to': { opacity: 1, transform: 'translateY(0)', filter: 'blur(0)' }
+                        },
+                        scaleIn: {
+                            'from': { opacity: 0, transform: 'scale(0.9)' },
+                            'to': { opacity: 1, transform: 'scale(1)' }
+                        },
+                        bounceIn: {
+                            '0%': { transform: 'translate(-50%, 100px)', opacity: 0 },
+                            '60%': { transform: 'translate(-50%, -10px)', opacity: 1 },
+                            '100%': { transform: 'translate(-50%, 0)' }
+                        },
+                        slideInRight: {
+                            'from': { transform: 'translateX(100%)' },
+                            'to': { transform: 'translateX(0)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar Hide */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        body {
+            background-color: #F6F8FA;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Glass Card Utility */
+        .glass-card {
+            background-color: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+        }
+    </style>
+</head>
+<body class="text-slate-900 overflow-hidden h-screen flex selection:bg-orange-500/20 selection:text-orange-600">
+
+    <!-- Sidebar (Desktop) -->
+    <aside id="desktop-sidebar" class="hidden lg:flex flex-col transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] h-[96vh] my-[2vh] ml-4 bg-transparent z-50 relative group/sidebar w-[80px]">
+        
+        <!-- Toggle Button -->
+        <button id="sidebar-toggle" class="absolute -right-3 top-9 z-[60] w-7 h-7 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 shadow-sm hover:text-orange-600 hover:scale-110 hover:border-orange-200 transition-all duration-300 rotate-180">
+            <i data-lucide="chevron-left" class="w-3.5 h-3.5 stroke-[3]"></i>
+        </button>
+
+        <!-- Inner Wrapper -->
+        <div class="flex-1 flex flex-col h-full bg-white/80 backdrop-blur-xl border border-white/40 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.05)] rounded-[2.5rem] overflow-hidden">
+            
+            <!-- Logo Area -->
+            <div class="h-24 flex items-center pl-5 gap-4 shrink-0 relative">
+                <div class="w-10 h-10 bg-gradient-to-tr from-orange-500 to-amber-400 rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30 shrink-0">
+                    <span class="font-bold text-xl">E</span>
+                </div>
+                <div class="sidebar-text transition-all duration-300 whitespace-nowrap overflow-hidden w-0 opacity-0">
+                    <h1 class="font-bold text-xl tracking-tight">Epok POS</h1>
+                    <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Premium</p>
+                </div>
+            </div>
+
+            <!-- Menu Items -->
+            <nav id="sidebar-menu" class="flex-1 px-4 py-4 space-y-8 overflow-y-auto scrollbar-hide">
+                <!-- Menu will be injected here via JS -->
+            </nav>
+
+            <!-- User Profile -->
+            <div class="p-4 border-t border-slate-100 mt-auto bg-white/50 backdrop-blur-sm">
+                <div class="flex items-center gap-3 p-2 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer overflow-hidden">
+                    <div class="w-9 h-9 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm shrink-0">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User">
+                    </div>
+                    <div class="sidebar-text transition-all duration-300 whitespace-nowrap overflow-hidden w-0 opacity-0">
+                        <p class="text-sm font-bold text-slate-800">Firmansyah</p>
+                        <p class="text-xs text-slate-400">Owner</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 h-screen overflow-y-auto relative p-4 lg:p-6 lg:pr-8" id="main-scroll">
+        
+        <!-- Mobile Header -->
+        <div class="lg:hidden flex justify-between items-center mb-6 sticky top-0 z-30 bg-[#F6F8FA]/90 backdrop-blur-md py-2">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-gradient-to-tr from-orange-500 to-amber-400 rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
+                    <span class="font-bold">E</span>
+                </div>
+                <span class="font-bold text-lg text-slate-900">Epok POS</span>
+            </div>
+            <button id="mobile-menu-btn" class="p-3 rounded-2xl bg-white/50 text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-md transition-all">
+                <i data-lucide="menu" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Content Injection Area -->
+        <div id="content-area" class="max-w-[1600px] mx-auto h-full">
+            <!-- Dynamic Content Here -->
+        </div>
+    </main>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu-overlay" class="hidden lg:hidden fixed inset-0 z-50 flex justify-end">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-[fade-in_0.2s_ease-out_forwards]" onclick="toggleMobileMenu(false)"></div>
+        <div class="relative w-64 h-full bg-white shadow-2xl animate-slide-in-right flex flex-col p-6">
+            <div class="flex justify-between items-center mb-8">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center text-white font-bold">E</div>
+                    <span class="font-bold text-lg">Menu</span>
+                </div>
+                <button onclick="toggleMobileMenu(false)" class="p-2 bg-slate-100 rounded-full hover:bg-slate-200 text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <nav id="mobile-nav-items" class="flex-1 space-y-6 overflow-y-auto">
+                <!-- Mobile Nav Items Injected Here -->
+            </nav>
+            <div class="pt-6 border-t border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User">
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold">Firmansyah</p>
+                        <button class="text-xs text-red-500 font-medium">Log Out</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button (Mobile Cart) -->
+    <div id="mobile-fab" class="hidden lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-bounce-in w-11/12 max-w-sm">
+        <button onclick="state.showMobileCart = true; render();" class="w-full bg-slate-900/90 backdrop-blur-md text-white p-2 pr-6 rounded-[2rem] shadow-2xl shadow-slate-900/30 flex items-center justify-between border border-white/20">
+            <div class="bg-orange-500 w-12 h-12 rounded-full flex items-center justify-center font-bold shadow-lg shadow-orange-500/40" id="fab-count">0</div>
+            <div class="flex flex-col items-end">
+                <span class="text-[10px] text-slate-300 font-medium uppercase tracking-wider">Total</span>
+                <span class="font-bold text-lg" id="fab-total">Rp 0</span>
+            </div>
+        </button>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- Data & State ---
+        const PRODUCTS = [
+            { id: 1, name: 'Roti Bakar Choco Cheese', category: 'Roti Manis', price: 22000, stock: 45, image: '🍞', desc: 'Coklat Belgia lumer dengan keju parut' },
+            { id: 2, name: 'Roti Bakar Matcha Premium', category: 'Roti Manis', price: 24000, stock: 20, image: '🍵', desc: 'Saus matcha jepang asli' },
+            { id: 3, name: 'Roti Ovomaltine Crunchy', category: 'Premium', price: 28000, stock: 15, image: '🍫', desc: 'Sensasi crunchy di setiap gigitan' },
+            { id: 4, name: 'Roti Telur Kornet Spesial', category: 'Roti Asin', price: 25000, stock: 32, image: '🍳', desc: 'Gurih, padat, dan mengenyangkan' },
+            { id: 5, name: 'Pisang Bakar Keju Susu', category: 'Pisang', price: 18000, stock: 50, image: '🍌', desc: 'Pisang raja pilihan manis legit' },
+            { id: 6, name: 'Cappucino Ice Blend', category: 'Minuman', price: 15000, stock: 100, image: '🥤', desc: 'Kopi robusta blend dingin' },
+            { id: 7, name: 'Lemon Tea Fresh', category: 'Minuman', price: 12000, stock: 85, image: '🍋', desc: 'Teh asli dengan perasan lemon' },
+            { id: 8, name: 'Kopi Susu Gula Aren', category: 'Minuman', price: 18000, stock: 60, image: '☕', desc: 'Creamy dan autentik' },
+        ];
+
+        const TRANSACTIONS = [
+            { id: '#ORD-0882', customer: 'Budi Santoso', date: '06 Des 2025, 10:30', total: 45000, status: 'Selesai', method: 'QRIS', items: 2 },
+            { id: '#ORD-0883', customer: 'Siti Aminah', date: '06 Des 2025, 11:15', total: 62000, status: 'Selesai', method: 'Tunai', items: 3 },
+            { id: '#ORD-0884', customer: 'Joko Widodo', date: '06 Des 2025, 11:45', total: 22000, status: 'Pending', method: 'Tunai', items: 1 },
+            { id: '#ORD-0885', customer: 'Rina Nose', date: '06 Des 2025, 12:10', total: 150000, status: 'Selesai', method: 'Debit', items: 5 },
+            { id: '#ORD-0886', customer: 'Dedi Corbuzier', date: '06 Des 2025, 12:45', total: 88000, status: 'Batal', method: '-', items: 4 },
+        ];
+
+        const BRANCHES = [
+            { id: 1, name: 'Cabang Pusat', address: 'Jl. Merdeka No. 10, Jakarta', manager: 'Andi Wijaya', status: 'Buka', revenue: '15.4jt' },
+            { id: 2, name: 'Cabang Selatan', address: 'Jl. Fatmawati Raya No. 45', manager: 'Budi Darma', status: 'Buka', revenue: '12.2jt' },
+            { id: 3, name: 'Cabang Barat', address: 'Jl. Panjang No. 88', manager: 'Citra Kirana', status: 'Tutup', revenue: '0' },
+        ];
+
+        const EMPLOYEES = [
+            { id: 1, name: 'Firmansyah', role: 'Owner', email: 'owner@epok.com', status: 'Active', avatar: 'Felix' },
+            { id: 2, name: 'Sarah Putri', role: 'Manager', email: 'sarah@epok.com', status: 'Active', avatar: 'Aneka' },
+            { id: 3, name: 'Rudi Tabuti', role: 'Kasir', email: 'rudi@epok.com', status: 'Shift Pagi', avatar: 'Bob' },
+            { id: 4, name: 'Jono', role: 'Chef', email: 'jono@epok.com', status: 'Cuti', avatar: 'Jack' },
+        ];
+
+        const CATEGORIES = ['Semua', 'Roti Manis', 'Roti Asin', 'Premium', 'Pisang', 'Minuman'];
+
+        const MENU_GROUPS = [
+            { title: "Main", items: [
+                { id: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
+                { id: 'pos', icon: 'shopping-bag', label: 'Point of Sales' },
+                { id: 'transactions', icon: 'receipt', label: 'Transactions' },
+            ]},
+            { title: "Manage", items: [
+                { id: 'branches', icon: 'store', label: 'Branches' },
+                { id: 'menu', icon: 'utensils-crossed', label: 'Menu List' },
+                { id: 'employees', icon: 'users', label: 'Employees' },
+            ]},
+            { title: "Report", items: [
+                { id: 'finance', icon: 'wallet', label: 'Finance' },
+                { id: 'analysis', icon: 'pie-chart', label: 'Analytics' },
+            ]},
+        ];
+
+        let state = {
+            activeTab: 'dashboard',
+            cart: [],
+            searchQuery: '',
+            selectedCategory: 'Semua',
+            isSidebarExpanded: false,
+            showMobileCart: false
+        };
+
+        // --- Helpers ---
+        const formatRupiah = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
+
+        const getStatusColor = (status) => {
+            const map = {
+                'Selesai': 'bg-emerald-100 text-emerald-600',
+                'Active': 'bg-emerald-100 text-emerald-600',
+                'Buka': 'bg-emerald-100 text-emerald-600',
+                'Pending': 'bg-amber-100 text-amber-600',
+                'Shift Pagi': 'bg-blue-100 text-blue-600',
+                'Batal': 'bg-rose-100 text-rose-600',
+                'Tutup': 'bg-rose-100 text-rose-600',
+                'Cuti': 'bg-slate-200 text-slate-500',
+            };
+            return map[status] || 'bg-slate-100 text-slate-600';
+        };
+
+        // --- Logic ---
+        function setActiveTab(id) {
+            state.activeTab = id;
+            state.showMobileCart = false; // Reset mobile cart view when switching tabs
+            toggleMobileMenu(false);
+            render();
+        }
+
+        function toggleSidebar() {
+            state.isSidebarExpanded = !state.isSidebarExpanded;
+            updateSidebarUI();
+        }
+
+        function addToCart(productId) {
+            const product = PRODUCTS.find(p => p.id === productId);
+            const existing = state.cart.find(item => item.id === productId);
+            if (existing) {
+                existing.qty++;
+            } else {
+                state.cart.push({ ...product, qty: 1 });
+            }
+            render(); 
+        }
+
+        function updateQty(productId, delta) {
+            const item = state.cart.find(item => item.id === productId);
+            if (item) {
+                item.qty += delta;
+                if (item.qty <= 0) {
+                    state.cart = state.cart.filter(i => i.id !== productId);
+                }
+            }
+            render();
+        }
+
+        function toggleMobileMenu(show) {
+            const el = document.getElementById('mobile-menu-overlay');
+            if (show) el.classList.remove('hidden');
+            else el.classList.add('hidden');
+        }
+
+        // --- Render Functions ---
+
+        function updateSidebarUI() {
+            const sidebar = document.getElementById('desktop-sidebar');
+            const toggleBtn = document.getElementById('sidebar-toggle');
+            const textElements = document.querySelectorAll('.sidebar-text');
+            const titleElements = document.querySelectorAll('.sidebar-title');
+
+            if (state.isSidebarExpanded) {
+                sidebar.classList.remove('w-[80px]');
+                sidebar.classList.add('w-[280px]');
+                toggleBtn.classList.remove('rotate-180');
+                
+                textElements.forEach(el => {
+                    el.classList.remove('w-0', 'opacity-0');
+                    el.classList.add('w-40', 'opacity-100', 'delay-100');
+                });
+                titleElements.forEach(el => {
+                    el.classList.remove('max-h-0', 'opacity-0');
+                    el.classList.add('max-h-10', 'opacity-100', 'delay-100');
+                });
+            } else {
+                sidebar.classList.add('w-[80px]');
+                sidebar.classList.remove('w-[280px]');
+                toggleBtn.classList.add('rotate-180');
+
+                textElements.forEach(el => {
+                    el.classList.remove('w-40', 'opacity-100', 'delay-100');
+                    el.classList.add('w-0', 'opacity-0');
+                });
+                titleElements.forEach(el => {
+                    el.classList.remove('max-h-10', 'opacity-100', 'delay-100');
+                    el.classList.add('max-h-0', 'opacity-0');
+                });
+            }
+        }
+
+        function renderSidebarMenu() {
+            const container = document.getElementById('sidebar-menu');
+            const mobileContainer = document.getElementById('mobile-nav-items');
+            
+            let html = '';
+            let mobileHtml = '';
+
+            MENU_GROUPS.forEach(group => {
+                // Desktop
+                html += `
+                    <div class="space-y-2">
+                        <div class="sidebar-title overflow-hidden transition-all duration-300 ${state.isSidebarExpanded ? 'max-h-10 opacity-100' : 'max-h-0 opacity-0'}">
+                            <p class="px-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">${group.title}</p>
+                        </div>
+                `;
+                // Mobile
+                mobileHtml += `
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">${group.title}</p>
+                        <div class="space-y-1">
+                `;
+
+                group.items.forEach(item => {
+                    const isActive = state.activeTab === item.id;
+                    const activeClass = isActive ? 'text-orange-600 font-bold' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50';
+                    const activeBg = isActive ? '<div class="absolute inset-0 bg-orange-50 rounded-2xl opacity-100"></div><div class="absolute left-0 w-1 h-6 bg-orange-500 rounded-r-full"></div>' : '';
+                    
+                    // Desktop Item
+                    html += `
+                        <button onclick="setActiveTab('${item.id}')" title="${!state.isSidebarExpanded ? item.label : ''}"
+                            class="relative w-full flex items-center gap-4 p-3 rounded-2xl transition-all duration-300 group ${activeClass}">
+                            ${activeBg}
+                            <i data-lucide="${item.icon}" class="relative z-10 w-[22px] h-[22px] stroke-[${isActive ? 2.5 : 2}] shrink-0 transition-transform duration-300 group-hover:scale-110"></i>
+                            <span class="sidebar-text relative z-10 font-medium text-sm whitespace-nowrap transition-all duration-300 overflow-hidden ${state.isSidebarExpanded ? 'w-full opacity-100 delay-75' : 'w-0 opacity-0'}">${item.label}</span>
+                        </button>
+                    `;
+
+                    // Mobile Item
+                    mobileHtml += `
+                        <button onclick="setActiveTab('${item.id}')" class="w-full flex items-center gap-3 p-3 rounded-xl transition-all ${isActive ? 'bg-orange-50 text-orange-600 font-bold' : 'text-slate-500 hover:bg-slate-50'}">
+                            <i data-lucide="${item.icon}" class="w-5 h-5 stroke-[${isActive ? 2.5 : 2}]"></i>
+                            <span class="text-sm">${item.label}</span>
+                        </button>
+                    `;
+                });
+
+                html += `</div>`;
+                mobileHtml += `</div></div>`;
+            });
+
+            container.innerHTML = html;
+            mobileContainer.innerHTML = mobileHtml;
+        }
+
+        // --- View Component Generators ---
+
+        const Components = {
+            StatCard: (title, value, sub, color, icon) => {
+                const colors = {
+                    orange: "from-orange-500 to-amber-500 shadow-orange-200",
+                    blue: "from-blue-500 to-cyan-500 shadow-blue-200",
+                    purple: "from-purple-500 to-pink-500 shadow-purple-200",
+                    emerald: "from-emerald-500 to-teal-500 shadow-emerald-200",
+                };
+                const colorClass = colors[color];
+                const shadowColor = colorClass.split(' ').pop(); // simple extract
+                
+                return `
+                <div class="glass-card rounded-[2rem] p-6 relative overflow-hidden group cursor-pointer hover:-translate-y-1 transition-transform">
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <div class="p-3.5 rounded-2xl bg-gradient-to-br ${colorClass} text-white shadow-lg ${shadowColor}">
+                            <i data-lucide="${icon}" class="w-[22px] h-[22px]"></i>
+                        </div>
+                        <div class="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-slate-100 text-slate-600">
+                            Info
+                        </div>
+                    </div>
+                    <div class="relative z-10">
+                        <p class="text-slate-500 text-sm font-medium mb-1">${title}</p>
+                        <h3 class="text-2xl font-bold text-slate-800 tracking-tight">${value}</h3>
+                        ${sub ? `<p class="text-xs text-slate-400 mt-1">${sub}</p>` : ''}
+                    </div>
+                    <div class="absolute -bottom-8 -right-8 w-32 h-32 bg-gradient-to-br from-slate-100/50 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+                </div>`;
+            },
+            Table: (headers, rows) => {
+                return `
+                <div class="glass-card rounded-[2rem] overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50/50 border-b border-slate-100">
+                                <tr>
+                                    ${headers.map(h => `<th class="p-5 text-xs font-bold text-slate-400 uppercase tracking-wider">${h}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                ${rows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`;
+            }
+        };
+
+        function renderDashboard() {
+            return `
+            <div class="space-y-6 animate-fade-in-up">
+                <div class="flex flex-col md:flex-row justify-between md:items-end gap-4">
+                    <div>
+                        <h1 class="text-4xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
+                        <p class="text-slate-500 mt-1">Ringkasan performa bisnis hari ini.</p>
+                    </div>
+                    <div class="px-4 py-2 bg-white rounded-full text-sm font-medium shadow-sm border border-slate-100 text-slate-600 flex items-center gap-2 cursor-pointer hover:bg-slate-50">
+                        <i data-lucide="calendar" class="w-4 h-4"></i> Hari Ini
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                    ${Components.StatCard("Total Pendapatan", "Rp 182.123", "Hari Ini", "orange", "dollar-sign")}
+                    ${Components.StatCard("Total Transaksi", "2 Nota", "Hari Ini", "blue", "receipt")}
+                    ${Components.StatCard("Cabang Aktif", "2 / 2 Buka", "Live Status", "emerald", "store")}
+                    ${Components.StatCard("Menu Terlaris", "Cappuchino", "Terjual 4 Porsi", "purple", "package")}
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left Col -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- Table -->
+                        <div class="glass-card rounded-[2rem] p-6 flex flex-col">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="font-bold text-lg text-slate-800">Performa Cabang (Real-time)</h3>
+                                <div class="flex gap-1">
+                                    <button class="px-3 py-1 bg-slate-900 text-white text-xs font-bold rounded-lg shadow-sm">Omzet</button>
+                                    <button class="px-3 py-1 bg-white border border-slate-200 text-slate-500 text-xs font-medium rounded-lg hover:bg-slate-50">Transaksi</button>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="text-xs text-slate-400 uppercase font-bold border-b border-slate-100">
+                                        <tr>
+                                            <th class="pb-3 pl-2">Cabang</th>
+                                            <th class="pb-3 text-center">Status</th>
+                                            <th class="pb-3 text-right">Omzet Hari Ini</th>
+                                            <th class="pb-3 text-right">Total Transaksi</th>
+                                            <th class="pb-3 text-right">Aktivitas Terakhir</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-50">
+                                        <tr class="group hover:bg-slate-50/50 transition-colors">
+                                            <td class="py-4 pl-2"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">01</div><div><p class="font-bold text-slate-800 text-sm">Kutoarjo</p><p class="text-[10px] text-slate-400">Jl.Kutoarjo Lor</p></div></div></td>
+                                            <td class="py-4 text-center"><div class="w-2.5 h-2.5 rounded-full bg-emerald-500 mx-auto shadow-sm shadow-emerald-200"></div></td>
+                                            <td class="py-4 text-right font-bold text-slate-700">Rp 0</td>
+                                            <td class="py-4 text-right font-medium text-slate-600">0</td>
+                                            <td class="py-4 text-right text-xs text-slate-400">21 hours ago</td>
+                                        </tr>
+                                        <tr class="group hover:bg-slate-50/50 transition-colors">
+                                            <td class="py-4 pl-2"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">02</div><div><p class="font-bold text-slate-800 text-sm">Cabang Pituruh</p><p class="text-[10px] text-slate-400">Jl.Pituruh</p></div></div></td>
+                                            <td class="py-4 text-center"><div class="w-2.5 h-2.5 rounded-full bg-emerald-500 mx-auto shadow-sm shadow-emerald-200"></div></td>
+                                            <td class="py-4 text-right font-bold text-slate-700">Rp 132.000</td>
+                                            <td class="py-4 text-right font-medium text-slate-600">1</td>
+                                            <td class="py-4 text-right text-xs text-slate-400">5 minutes ago</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Chart Mock -->
+                        <div class="glass-card rounded-[2rem] p-6 h-80 flex flex-col">
+                            <h3 class="font-bold text-lg text-slate-800 mb-4">Tren Penjualan Mingguan</h3>
+                            <div class="flex-1 w-full flex items-end justify-between gap-4 px-2 pb-2">
+                                ${[0,0,0,0,0,85,15].map((h, i) => `
+                                    <div class="flex-1 flex flex-col items-center gap-2 group">
+                                        <div class="relative w-full bg-slate-50 rounded-t-xl overflow-hidden h-48 flex items-end">
+                                            <div class="w-full transition-all duration-500 rounded-t-lg ${h > 0 ? 'bg-orange-500 opacity-90 group-hover:opacity-100' : 'bg-transparent'}" style="height: ${h}%"></div>
+                                        </div>
+                                        <span class="text-[10px] font-bold text-slate-400 uppercase">${['Min','Sen','Sel','Rab','Kam','Jum','Sab'][i]}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Col -->
+                    <div class="space-y-6">
+                        <div class="glass-card rounded-[2rem] p-6">
+                            <h3 class="font-bold text-lg text-slate-800 mb-6">Menu Terlaris</h3>
+                            <div class="space-y-5">
+                                ${[{n:'Cappucino', s:4, p:100}, {n:'Chocomaltine', s:2, p:50}, {n:'Crunchy', s:2, p:50}].map(i => `
+                                    <div>
+                                        <div class="flex justify-between text-sm mb-1.5"><span class="font-medium text-slate-700">${i.n}</span><span class="font-bold text-orange-600 text-xs">${i.s} Sold</span></div>
+                                        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden"><div class="bg-orange-500 h-full rounded-full" style="width: ${i.p}%"></div></div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="glass-card rounded-[2rem] p-6 flex flex-col max-h-[500px]">
+                            <h3 class="font-bold text-lg text-slate-800 mb-6">Pesanan Masuk</h3>
+                            <div class="flex-1 overflow-y-auto space-y-6 pr-2 scrollbar-hide">
+                                <div class="flex gap-3 relative pb-6 border-l border-slate-100 pl-4">
+                                    <div class="absolute -left-[5px] top-0 w-2.5 h-2.5 rounded-full bg-white border-2 border-orange-500"></div>
+                                    <div class="flex-1 -mt-1"><p class="text-sm font-bold text-slate-800 leading-snug">4x Cappuchino</p><p class="text-[10px] text-slate-400 mt-1">Pituruh • 5m ago</p></div>
+                                </div>
+                                <div class="flex gap-3 relative border-l border-slate-100 pl-4">
+                                    <div class="absolute -left-[5px] top-0 w-2.5 h-2.5 rounded-full bg-white border-2 border-orange-500"></div>
+                                    <div class="flex-1 -mt-1"><p class="text-sm font-bold text-slate-800 leading-snug">12x Mangga Keju</p><p class="text-[10px] text-slate-400 mt-1">Pituruh • 19h ago</p></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function renderPOS() {
+            const total = state.cart.reduce((a, b) => a + (b.price * b.qty), 0);
+            const filtered = PRODUCTS.filter(p => 
+                (state.selectedCategory === 'Semua' || p.category === state.selectedCategory) &&
+                p.name.toLowerCase().includes(state.searchQuery.toLowerCase())
+            );
+
+            // Left Side: Product Grid
+            const gridHtml = `
+            <div class="flex flex-col lg:flex-row h-[calc(100vh-2rem)] gap-8 animate-fade-in-up">
+                <div class="flex-1 flex flex-col overflow-hidden">
+                    <div class="mb-8">
+                        <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
+                            <div><h1 class="text-3xl font-bold text-slate-900">Menu Order</h1><p class="text-slate-500 text-sm mt-1">Pilih kategori dan menu.</p></div>
+                            <div class="relative group">
+                                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-400"></i>
+                                <input type="text" placeholder="Cari sesuatu..." oninput="state.searchQuery = this.value; render()" value="${state.searchQuery}" class="pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 w-full md:w-72 shadow-sm">
+                            </div>
+                        </div>
+                        <div class="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
+                            ${CATEGORIES.map(cat => `
+                                <button onclick="state.selectedCategory = '${cat}'; render()" class="px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all ${state.selectedCategory === cat ? 'bg-slate-900 text-white shadow-lg scale-105' : 'bg-white text-slate-500 border border-slate-200'}">${cat}</button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 overflow-y-auto pr-2 pb-24 lg:pb-0">
+                        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
+                            ${filtered.map(p => `
+                                <div onclick="addToCart(${p.id})" class="group relative bg-white rounded-[2rem] p-5 cursor-pointer border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all">
+                                    <div class="aspect-square bg-slate-50 rounded-[1.5rem] flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform overflow-hidden relative">
+                                        <div class="absolute inset-0 bg-orange-500/0 group-hover:bg-orange-500/5 transition-colors"></div>
+                                        ${p.image}
+                                    </div>
+                                    <h3 class="font-bold text-slate-800 leading-tight mb-1 text-sm">${p.name}</h3>
+                                    <p class="text-xs text-slate-400 line-clamp-1 mb-3">${p.desc}</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-bold text-orange-600 text-sm">${formatRupiah(p.price)}</span>
+                                        <button class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all shadow-lg"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Side: Cart -->
+                <div class="${state.showMobileCart ? 'translate-y-0' : 'translate-y-full'} lg:translate-y-0 fixed inset-0 z-50 lg:relative lg:z-0 lg:w-[26rem] lg:flex lg:flex-col lg:h-full lg:bg-white lg:border-l lg:border-slate-100 lg:rounded-none lg:shadow-none transition-transform duration-500 bg-white/50 backdrop-blur-xl lg:backdrop-blur-none flex flex-col">
+                    <div class="lg:hidden p-4 flex justify-center bg-white/50 backdrop-blur-md border-b border-slate-100" onclick="state.showMobileCart = false; render()">
+                        <div class="w-12 h-1.5 bg-slate-200 rounded-full"></div>
+                    </div>
+                    <div class="p-6 border-b border-slate-100/50 bg-white/60 backdrop-blur-sm">
+                        <div class="flex justify-between items-center mb-1">
+                            <h2 class="text-xl font-bold text-slate-900">Current Order</h2>
+                            <div class="px-2 py-1 bg-orange-100 text-orange-600 text-xs font-bold rounded-lg">#0882</div>
+                        </div>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                        ${state.cart.length === 0 
+                            ? `<div class="h-full flex flex-col items-center justify-center text-slate-300 space-y-4"><i data-lucide="shopping-bag" class="w-10 h-10"></i><p class="text-sm font-medium">Keranjang Kosong</p></div>`
+                            : state.cart.map(i => `
+                                <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex gap-4 animate-scale-in">
+                                    <div class="w-16 h-16 bg-slate-50 rounded-xl flex items-center justify-center text-2xl shrink-0">${i.image}</div>
+                                    <div class="flex-1 min-w-0 flex flex-col justify-center">
+                                        <h4 class="font-bold text-slate-800 text-sm truncate">${i.name}</h4>
+                                        <p class="text-orange-600 text-xs font-bold">${formatRupiah(i.price)}</p>
+                                    </div>
+                                    <div class="flex flex-col items-center gap-1 bg-slate-50 rounded-lg p-1">
+                                        <button onclick="updateQty(${i.id}, 1)" class="w-6 h-6 bg-white rounded shadow-sm text-slate-800 flex items-center justify-center text-xs hover:bg-slate-200"><i data-lucide="plus" class="w-3 h-3"></i></button>
+                                        <span class="text-xs font-bold">${i.qty}</span>
+                                        <button onclick="updateQty(${i.id}, -1)" class="w-6 h-6 bg-white rounded shadow-sm text-slate-400 flex items-center justify-center text-xs hover:text-red-500"><i data-lucide="minus" class="w-3 h-3"></i></button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                    </div>
+                    <div class="p-6 bg-white border-t border-slate-100 z-10">
+                        <div class="space-y-3 mb-6">
+                            <div class="flex justify-between text-sm text-slate-500 font-medium"><span>Subtotal</span><span>${formatRupiah(total)}</span></div>
+                            <div class="flex justify-between text-sm text-slate-500 font-medium"><span>Pajak (10%)</span><span>${formatRupiah(total*0.1)}</span></div>
+                            <div class="flex justify-between items-end pt-4 border-t border-dashed border-slate-200"><span class="text-slate-900 font-bold">Total</span><span class="text-2xl font-bold text-slate-900">${formatRupiah(total*1.1)}</span></div>
+                        </div>
+                        <button class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-lg hover:bg-slate-800 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-slate-900/20 flex items-center justify-center gap-2">
+                            <span>Bayar</span> <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+            return gridHtml;
+        }
+
+        function renderTransactions() {
+            const rows = TRANSACTIONS.map(t => `
+                <tr class="hover:bg-slate-50/50 transition-colors">
+                    <td class="p-5 font-bold text-slate-900">${t.id}</td>
+                    <td class="p-5 text-sm text-slate-500">${t.date}</td>
+                    <td class="p-5 font-medium text-slate-800">${t.customer}</td>
+                    <td class="p-5 font-bold text-slate-900">${formatRupiah(t.total)}</td>
+                    <td class="p-5 text-sm text-slate-600">${t.method}</td>
+                    <td class="p-5"><span class="px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(t.status)}">${t.status}</span></td>
+                    <td class="p-5"><button class="text-sm font-bold text-orange-600 hover:underline">Detail</button></td>
+                </tr>
+            `).join('');
+            return `
+            <div class="space-y-6 animate-fade-in-up">
+                <div class="flex justify-between items-center">
+                    <div><h1 class="text-3xl font-bold text-slate-900">Riwayat Transaksi</h1><p class="text-slate-500 mt-1">Pantau transaksi masuk.</p></div>
+                    <div class="flex gap-2">
+                        <button class="px-5 py-3 bg-slate-900 text-white rounded-xl font-bold shadow-lg hover:bg-slate-800">Export Excel</button>
+                    </div>
+                </div>
+                ${Components.Table(['Order ID', 'Waktu', 'Pelanggan', 'Total', 'Metode', 'Status', 'Aksi'], rows)}
+            </div>`;
+        }
+
+        function renderPlaceholder(title) {
+            return `
+            <div class="h-full flex flex-col items-center justify-center text-center p-8 animate-fade-in-up">
+                <div class="relative mb-6">
+                    <div class="absolute inset-0 bg-orange-500 blur-2xl opacity-20 rounded-full animate-pulse"></div>
+                    <div class="relative w-24 h-24 bg-white rounded-[2rem] shadow-xl border border-white/50 flex items-center justify-center text-slate-900">
+                        <i data-lucide="package" class="w-12 h-12 stroke-[1.5]"></i>
+                    </div>
+                </div>
+                <h2 class="text-3xl font-bold text-slate-900 mb-2">${title}</h2>
+                <p class="text-slate-500 max-w-md mx-auto">Modul ini sedang disiapkan dengan desain presisi tinggi.</p>
+            </div>`;
+        }
+
+        // --- Main Render Loop ---
+        function render() {
+            const contentArea = document.getElementById('content-area');
+            const fab = document.getElementById('mobile-fab');
+            const fabCount = document.getElementById('fab-count');
+            const fabTotal = document.getElementById('fab-total');
+
+            // 1. Sidebar UI Update
+            updateSidebarUI();
+            renderSidebarMenu();
+
+            // 2. Main Content Update
+            let contentHtml = '';
+            switch(state.activeTab) {
+                case 'dashboard': contentHtml = renderDashboard(); break;
+                case 'pos': contentHtml = renderPOS(); break;
+                case 'transactions': contentHtml = renderTransactions(); break;
+                default: 
+                    // Find title
+                    let title = 'Page';
+                    MENU_GROUPS.forEach(g => g.items.forEach(i => { if(i.id === state.activeTab) title = i.label; }));
+                    contentHtml = renderPlaceholder(title);
+            }
+            contentArea.innerHTML = contentHtml;
+
+            // 3. Mobile FAB Update
+            const totalQty = state.cart.reduce((a,b) => a + b.qty, 0);
+            const totalVal = state.cart.reduce((a,b) => a + (b.price * b.qty), 0);
+            
+            if (state.activeTab === 'pos' && totalQty > 0) {
+                fab.classList.remove('hidden');
+                fabCount.innerText = totalQty;
+                fabTotal.innerText = formatRupiah(totalVal);
+            } else {
+                fab.classList.add('hidden');
+            }
+
+            // 4. Re-initialize Icons
+            lucide.createIcons();
+        }
+
+        // --- Init ---
+        // Setup toggle button event listener
+        document.getElementById('sidebar-toggle').addEventListener('click', toggleSidebar);
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => toggleMobileMenu(true));
+
+        // Keyboard Shortcut Ctrl+B
+        window.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+                e.preventDefault();
+                toggleSidebar();
+            }
+        });
+
+        // Initial Render
+        render();
+
+    </script>
+</body>
+</html>

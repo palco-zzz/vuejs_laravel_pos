@@ -377,14 +377,15 @@ const closeSuccess = () => {
 
   <AppLayout :breadcrumbs="breadcrumbs">
     <!-- Main Content Wrapper -->
-    <div class="h-full flex flex-col md:flex-row gap-6 fade-in pb-16 md:pb-0">
+    <div class="h-full flex flex-col md:flex-row gap-6 fade-in pb-16 md:pb-0 items-start">
       <!-- Product Grid Section -->
       <div class="flex-1 flex flex-col h-full overflow-hidden" :class="{ 'hidden md:flex': mobileTab === 'cart' }">
-        <!-- Search Bar -->
-        <div class="mb-4 relative">
-          <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-          <Input v-model="searchQuery" type="text" placeholder="Cari menu..."
-            class="pl-9 w-full bg-white dark:bg-zinc-900" />
+        <!-- Search Bar - Premium Styling -->
+        <div class="mb-6 relative group">
+          <Search
+            class="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-slate-400 dark:text-slate-500" />
+          <input v-model="searchQuery" type="text" placeholder="Cari sesuatu..."
+            class="pl-11 pr-4 py-3 w-full md:w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:focus:ring-orange-500/30 shadow-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all" />
         </div>
 
         <!-- Branch Selector (Admin Only) -->
@@ -421,20 +422,18 @@ const closeSuccess = () => {
           </div>
         </div>
 
-        <!-- Category Filters -->
-        <div class="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
+        <!-- Category Filters - Premium Pills -->
+        <div class="flex gap-3 mb-6 overflow-x-auto pb-4 no-scrollbar">
           <button @click="posCategory = 'all'" :class="posCategory === 'all'
-              ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
-              : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800'
-            "
-            class="px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap shadow-sm border border-zinc-200 dark:border-zinc-800 transition-colors">
+            ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg scale-105'
+            : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+            " class="px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all">
             Semua Menu
           </button>
           <button v-for="cat in categories" :key="cat.id" @click="posCategory = cat.id" :class="posCategory === cat.id
-              ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
-              : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800'
-            "
-            class="px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors shadow-sm border border-zinc-200 dark:border-zinc-800">
+            ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg scale-105'
+            : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+            " class="px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all">
             {{ cat.icon }} {{ cat.nama }}
           </button>
         </div>
@@ -455,28 +454,29 @@ const closeSuccess = () => {
             <span class="text-xs text-zinc-500 mt-1">Input item manual</span>
           </div>
 
-          <!-- Product Cards -->
+          <!-- Product Cards - Premium Design -->
           <div v-for="product in filteredPosProducts" :key="product.id" @click="addToCart(product)"
-            class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-4 rounded-xl hover:border-zinc-300 dark:hover:bg-zinc-800/40 cursor-pointer transition-all group shadow-sm dark:shadow-none flex flex-col h-full justify-between active:scale-95">
+            class="group relative bg-white dark:bg-slate-800/50 rounded-[2rem] p-5 cursor-pointer border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 ease-out transform-gpu will-change-transform flex flex-col h-full justify-between active:scale-[0.98]">
             <div>
               <div
-                class="h-32 bg-zinc-100 dark:bg-zinc-800 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
-                <div :class="`absolute inset-0 bg-gradient-to-tr ${getGradientColor(
-                  product.category_id
-                )} to-transparent`"></div>
-                <span class="text-4xl drop-shadow-sm relative z-10">{{
-                  product.icon || "🍞"
-                  }}</span>
+                class="aspect-square bg-slate-50 dark:bg-slate-800 rounded-[1.5rem] flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform overflow-hidden relative">
+                <div
+                  class="absolute inset-0 bg-orange-500/0 group-hover:bg-orange-500/5 dark:group-hover:bg-orange-500/10 transition-colors">
+                </div>
+                <span class="drop-shadow-sm relative z-10">{{ product.icon || "🍞" }}</span>
               </div>
-              <h4 class="text-sm font-medium text-zinc-900 dark:text-zinc-200 line-clamp-2">
+              <h4 class="font-bold text-slate-800 dark:text-white leading-tight mb-1 text-sm line-clamp-2">
                 {{ product.nama }}
               </h4>
-              <p class="text-xs text-zinc-500 mt-1">{{ product.category?.nama }}</p>
+              <p class="text-xs text-slate-400 dark:text-slate-500 line-clamp-1">{{ product.category?.nama }}</p>
             </div>
-            <div class="flex justify-end items-center mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
-              <span class="text-sm font-semibold text-orange-600 dark:text-orange-400">{{
-                formatRupiah(product.harga)
-                }}</span>
+            <div class="flex justify-between items-center mt-3">
+              <span class="font-bold text-orange-600 dark:text-orange-400 text-sm">{{ formatRupiah(product.harga)
+              }}</span>
+              <button
+                class="w-8 h-8 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all shadow-lg">
+                <Plus class="w-4 h-4" />
+              </button>
             </div>
           </div>
 
@@ -491,21 +491,23 @@ const closeSuccess = () => {
         </div>
       </div>
 
-      <!-- Cart Panel -->
-      <div
-        class="w-full md:w-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl flex flex-col h-[calc(100vh-10rem)] shadow-sm dark:shadow-none"
+      <!-- Cart Panel - Glassmorphism + Sticky -->
+      <div class="w-full md:w-[26rem] flex flex-col h-[calc(100vh-10rem)] overflow-hidden
+                sticky top-6 self-start
+                transform-gpu will-change-transform
+                bg-white/95 md:bg-white/60 dark:bg-slate-900/95 md:dark:bg-slate-900/70 md:backdrop-blur-xl
+                border border-white/40 dark:border-slate-700/50
+                rounded-[2rem]
+                shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)]"
         :class="{ 'hidden md:flex': mobileTab === 'menu' }">
         <!-- Cart Header -->
-        <div class="p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
-          <div class="flex items-center gap-3">
-            <button v-if="mobileTab === 'cart'" @click="mobileTab = 'menu'"
-              class="md:hidden h-8 w-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500">
-              <X class="h-4 w-4" />
-            </button>
-            <div>
-              <h3 class="font-medium text-zinc-900 dark:text-zinc-200">Pesanan Baru</h3>
-              <span class="text-xs text-zinc-500">Order #{{ orderNumber }}</span>
-            </div>
+        <div
+          class="p-6 border-b border-slate-100/50 dark:border-slate-700/50 bg-white/60 dark:bg-slate-900/50 backdrop-blur-sm">
+          <div class="flex justify-between items-center mb-1">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Current Order</h2>
+            <div
+              class="px-2 py-1 bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 text-xs font-bold rounded-lg">
+              #{{ orderNumber }}</div>
           </div>
           <button v-if="cart.length > 0" @click="resetCart" class="text-red-500 hover:text-red-700 text-xs font-medium">
             Reset
@@ -513,86 +515,69 @@ const closeSuccess = () => {
         </div>
 
         <!-- Cart Items -->
-        <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+        <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
           <!-- Empty State -->
-          <div v-if="cart.length === 0" class="h-full flex flex-col items-center justify-center text-zinc-400">
-            <ShoppingCart class="h-8 w-8 mb-2 opacity-50" />
-            <span class="text-xs">Keranjang kosong</span>
-            <span class="text-xs mt-1">Klik menu untuk menambahkan</span>
+          <div v-if="cart.length === 0"
+            class="h-full flex flex-col items-center justify-center text-slate-300 dark:text-slate-600 space-y-4">
+            <ShoppingCart class="h-10 w-10" />
+            <p class="text-sm font-medium">Keranjang Kosong</p>
           </div>
 
           <!-- Cart Item -->
           <div v-for="(item, index) in cart" :key="item.id"
-            class="flex justify-between items-start group bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg">
-            <div class="flex gap-3">
-              <div
-                class="h-10 w-10 bg-white dark:bg-zinc-800 rounded flex items-center justify-center text-lg border border-zinc-200 dark:border-zinc-700">
-                {{ item.icon }}
-              </div>
-              <div class="flex-1">
-                <p class="text-sm text-zinc-900 dark:text-zinc-200 font-medium line-clamp-1">
-                  {{ item.name }}
-                </p>
-                <p v-if="item.note" class="text-xs text-zinc-500 italic mt-0.5">
-                  Catatan: {{ item.note }}
-                </p>
-                <p class="text-xs text-zinc-500">{{ formatRupiah(item.price) }}</p>
-              </div>
+            class="bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex gap-4 animate-scale-in">
+            <div
+              class="w-16 h-16 bg-slate-50 dark:bg-slate-700 rounded-xl flex items-center justify-center text-2xl shrink-0">
+              {{ item.icon }}
             </div>
-            <div class="flex flex-col items-end gap-2">
-              <p class="text-sm font-medium text-zinc-900 dark:text-white">
-                {{ formatRupiah(item.price * item.qty) }}
-              </p>
-              <div class="flex items-center gap-1">
-                <button @click.stop="updateQty(index, -1)"
-                  class="h-8 w-8 md:h-6 md:w-6 rounded bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 flex items-center justify-center transition-colors">
-                  <Minus class="h-4 w-4 md:h-3 md:w-3" />
-                </button>
-                <span class="w-6 text-center text-sm font-medium">{{ item.qty }}</span>
-                <button @click.stop="updateQty(index, 1)"
-                  class="h-8 w-8 md:h-6 md:w-6 rounded bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 flex items-center justify-center transition-colors">
-                  <Plus class="h-4 w-4 md:h-3 md:w-3" />
-                </button>
-                <button @click.stop="removeFromCart(index)"
-                  class="h-8 w-8 md:h-6 md:w-6 rounded bg-red-100 dark:bg-red-500/20 hover:bg-red-200 dark:hover:bg-red-500/30 flex items-center justify-center ml-1 transition-colors">
-                  <Trash2 class="h-4 w-4 md:h-3 md:w-3 text-red-500" />
-                </button>
-              </div>
+            <div class="flex-1 min-w-0 flex flex-col justify-center">
+              <h4 class="font-bold text-slate-800 dark:text-white text-sm truncate">{{ item.name }}</h4>
+              <p v-if="item.note" class="text-xs text-slate-400 dark:text-slate-500 italic truncate">{{ item.note }}</p>
+              <p class="text-orange-600 dark:text-orange-400 text-xs font-bold">{{ formatRupiah(item.price) }}</p>
+            </div>
+            <div class="flex flex-col items-center gap-1 bg-slate-50 dark:bg-slate-700 rounded-lg p-1">
+              <button @click.stop="updateQty(index, 1)"
+                class="w-6 h-6 bg-white dark:bg-slate-600 rounded shadow-sm text-slate-800 dark:text-white flex items-center justify-center text-xs hover:bg-slate-200 dark:hover:bg-slate-500 transition-colors">
+                <Plus class="w-3 h-3" />
+              </button>
+              <span class="text-xs font-bold text-slate-800 dark:text-white">{{ item.qty }}</span>
+              <button @click.stop="updateQty(index, -1)"
+                class="w-6 h-6 bg-white dark:bg-slate-600 rounded shadow-sm text-slate-400 dark:text-slate-300 flex items-center justify-center text-xs hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                <Minus class="w-3 h-3" />
+              </button>
             </div>
           </div>
         </div>
 
         <!-- Cart Footer -->
-        <div class="p-4 bg-zinc-50 dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 rounded-b-xl">
-          <!-- Add Custom Order Button -->
-          <button @click="openCustomOrderModal"
-            class="w-full mb-4 bg-white dark:bg-zinc-800 border border-dashed border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-300 text-xs font-medium py-3 md:py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
-            <PlusCircle class="h-4 w-4 md:h-3 md:w-3" /> Tambah Custom Order
-          </button>
-
+        <div class="p-6 bg-white/50 dark:bg-slate-900/80 border-t border-slate-100/50 dark:border-slate-700/50 z-10">
           <!-- Totals -->
-          <div class="flex justify-between mb-2 text-sm text-zinc-500 dark:text-zinc-400">
-            <span>Subtotal</span>
-            <span>{{ formatRupiah(subtotal) }}</span>
-          </div>
-          <div class="flex justify-between mb-4 text-sm text-zinc-500 dark:text-zinc-400">
-            <span>Pajak (0%)</span>
-            <span>{{ formatRupiah(tax) }}</span>
-          </div>
-          <div class="flex justify-between mb-6 text-base font-semibold text-zinc-900 dark:text-white">
-            <span>Total</span>
-            <span class="text-orange-600 dark:text-orange-400">{{
-              formatRupiah(grandTotal)
-              }}</span>
+          <div class="space-y-3 mb-6">
+            <div class="flex justify-between text-sm text-slate-500 dark:text-slate-400 font-medium">
+              <span>Subtotal</span>
+              <span>{{ formatRupiah(subtotal) }}</span>
+            </div>
+            <div class="flex justify-between text-sm text-slate-500 dark:text-slate-400 font-medium">
+              <span>Pajak (0%)</span>
+              <span>{{ formatRupiah(tax) }}</span>
+            </div>
+            <div
+              class="flex justify-between items-end pt-4 border-t border-dashed border-slate-200 dark:border-slate-700">
+              <span class="text-slate-900 dark:text-white font-bold">Total</span>
+              <span class="text-2xl font-bold text-slate-900 dark:text-white">{{ formatRupiah(grandTotal) }}</span>
+            </div>
           </div>
 
           <!-- Process Button -->
           <button type="button" :disabled="cart.length === 0" @click="openPaymentScreen" :class="cart.length === 0
-              ? 'opacity-50 cursor-not-allowed'
-              : 'hover:bg-zinc-800 dark:hover:bg-zinc-200'
+            ? 'opacity-50 cursor-not-allowed'
+            : 'hover:bg-slate-800 dark:hover:bg-orange-500 hover:scale-[1.02] active:scale-[0.98]'
             "
-            class="w-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm">
-            <CreditCard class="h-4 w-4" /> Proses Pembayaran
+            class="w-full py-4 bg-slate-900 dark:bg-orange-600 text-white rounded-2xl font-bold text-lg transition-all shadow-xl shadow-slate-900/20 dark:shadow-orange-500/20 flex items-center justify-center gap-2">
+            <span>Bayar</span>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
           </button>
         </div>
       </div>
@@ -802,7 +787,91 @@ const closeSuccess = () => {
         </div>
       </div>
     </transition>
+    <!-- ===== PRINTABLE RECEIPT (Hidden, visible only on print) ===== -->
+    <div id="printable-receipt" class="hidden print:block font-mono text-black bg-white p-4">
+      <!-- Store Header -->
+      <div class="text-center mb-4">
+        <h1 class="text-lg font-bold uppercase tracking-wide">Epok POS</h1>
+        <p class="text-[10px] text-gray-600">Jl. Contoh Alamat No. 123</p>
+        <p class="text-[10px] text-gray-600">Telp: 0812-3456-7890</p>
+      </div>
+
+      <!-- Separator -->
+      <div class="border-b border-dashed border-black my-2"></div>
+
+      <!-- Transaction Info -->
+      <div class="text-[10px] space-y-1 mb-3">
+        <div class="flex justify-between">
+          <span>Tanggal:</span>
+          <span>{{ new Date().toLocaleDateString('id-ID', {
+            day: '2-digit', month: 'short', year: 'numeric', hour:
+              '2-digit', minute: '2-digit'
+          }) }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span>No. Order:</span>
+          <span>#{{ orderNumber }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span>Kasir:</span>
+          <span>{{ currentUser?.name || 'Kasir' }}</span>
+        </div>
+        <div v-if="selectedBranchName" class="flex justify-between">
+          <span>Cabang:</span>
+          <span>{{ selectedBranchName }}</span>
+        </div>
+      </div>
+
+      <!-- Separator -->
+      <div class="border-b border-dashed border-black my-2"></div>
+
+      <!-- Items List -->
+      <div class="text-[10px] space-y-1 mb-3">
+        <div v-for="(item, index) in cart" :key="index" class="flex justify-between">
+          <div class="flex-1">
+            <span class="block font-medium">{{ item.name }}</span>
+            <span class="text-gray-600">{{ item.qty }} x {{ formatRupiah(item.price) }}</span>
+          </div>
+          <span class="font-medium">{{ formatRupiah(item.price * item.qty) }}</span>
+        </div>
+      </div>
+
+      <!-- Separator -->
+      <div class="border-b border-dashed border-black my-2"></div>
+
+      <!-- Totals -->
+      <div class="text-[10px] space-y-1 mb-3">
+        <div class="flex justify-between">
+          <span>Subtotal:</span>
+          <span>{{ formatRupiah(subtotal) }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span>Pajak (0%):</span>
+          <span>{{ formatRupiah(tax) }}</span>
+        </div>
+        <div class="flex justify-between font-bold text-xs pt-1 border-t border-black">
+          <span>TOTAL:</span>
+          <span>{{ formatRupiah(grandTotal) }}</span>
+        </div>
+      </div>
+
+      <!-- Separator -->
+      <div class="border-b border-dashed border-black my-2"></div>
+
+      <!-- Payment Method -->
+      <div class="text-[10px] text-center mb-3">
+        <p>Pembayaran: <span class="font-medium uppercase">{{ selectedPaymentMethod }}</span></p>
+      </div>
+
+      <!-- Footer -->
+      <div class="text-center text-[10px] mt-4">
+        <p class="font-bold">✨ Terima Kasih ✨</p>
+        <p class="text-gray-600 mt-1">Selamat menikmati!</p>
+        <p class="text-gray-500 mt-2 text-[8px]">WiFi: EpokPOS | Pass: Welcome123</p>
+      </div>
+    </div>
   </AppLayout>
+
 </template>
 
 <style scoped>

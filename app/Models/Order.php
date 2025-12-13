@@ -42,7 +42,7 @@ class Order extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     public function branch(): BelongsTo
@@ -57,12 +57,12 @@ class Order extends Model
 
     public function editor(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'edited_by');
+        return $this->belongsTo(User::class, 'edited_by')->withTrashed();
     }
 
     public function deleter(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'deleted_by');
+        return $this->belongsTo(User::class, 'deleted_by')->withTrashed();
     }
 
     public static function generateOrderNumber(): string

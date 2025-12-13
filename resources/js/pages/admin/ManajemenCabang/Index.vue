@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
+import GlassCard from '@/components/ui/GlassCard.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
@@ -160,24 +161,29 @@ const deleteBranch = () => {
     <Head title="Manajemen Cabang" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <main class="h-full flex flex-col bg-zinc-50 dark:bg-black transition-colors duration-300">
+        <main class="h-full flex flex-col">
             <!-- Header -->
-            <div
-                class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 class="text-xl font-semibold text-zinc-900 dark:text-white">Manajemen Cabang</h1>
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400">Kelola data cabang toko</p>
-                </div>
-                <div class="flex gap-3 w-full sm:w-auto">
-                    <div class="relative flex-1 sm:flex-initial">
-                        <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                        <Input v-model="searchQuery" type="text" placeholder="Cari cabang..."
-                            class="pl-9 w-full sm:w-64" />
+            <div class="px-6 py-6">
+                <div class="flex flex-col md:flex-row justify-between md:items-end gap-4 mb-6">
+                    <div>
+                        <h1 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Manajemen Cabang
+                        </h1>
+                        <p class="text-slate-500 dark:text-slate-400 mt-1">Kelola data cabang toko</p>
                     </div>
-                    <Button class="gap-2" @click="openCreateModal">
-                        <Plus class="h-4 w-4" />
-                        <span class="hidden sm:inline">Tambah Cabang</span>
-                    </Button>
+                    <div class="flex gap-3 w-full sm:w-auto">
+                        <div class="relative flex-1 sm:flex-initial">
+                            <Search
+                                class="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-slate-400 dark:text-slate-500" />
+                            <input v-model="searchQuery" type="text" placeholder="Cari cabang..."
+                                class="pl-11 pr-4 py-3 w-full sm:w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 shadow-sm text-slate-900 dark:text-white placeholder:text-slate-400" />
+                        </div>
+                        <button
+                            class="gap-2 px-5 py-3 bg-slate-900 dark:bg-orange-600 text-white rounded-xl shadow-lg hover:bg-slate-800 dark:hover:bg-orange-500 transition-all flex items-center justify-center font-medium"
+                            @click="openCreateModal">
+                            <Plus class="h-4 w-4" />
+                            <span class="hidden sm:inline">Tambah Cabang</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -185,77 +191,86 @@ const deleteBranch = () => {
             <div class="flex-1 overflow-y-auto p-6">
                 <!-- Branch Grid Cards -->
                 <div v-if="filteredBranches.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <Card v-for="branch in filteredBranches" :key="branch.id"
-                        class="hover:border-zinc-300 dark:hover:border-zinc-700 transition-all group">
-                        <CardHeader class="pb-3">
-                            <div class="flex justify-between items-start">
+                    <div v-for="branch in filteredBranches" :key="branch.id" class="group relative overflow-hidden rounded-[2rem] p-6
+                               bg-white/60 dark:bg-slate-900/70 backdrop-blur-xl
+                               border border-white/40 dark:border-slate-700/50
+                               shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)]
+                               hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)]
+                               hover:-translate-y-1 transition-all duration-300">
+                        <!-- Inner Gradient -->
+                        <div
+                            class="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent dark:from-slate-800/20 dark:to-slate-900/10 pointer-events-none" />
+
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start mb-4">
                                 <div class="flex items-start gap-3">
                                     <div
-                                        class="h-10 w-10 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                                        <Store class="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                                        class="h-12 w-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                                        <Store class="h-6 w-6 text-white" />
                                     </div>
                                     <div>
-                                        <CardTitle class="text-lg">{{ branch.nama }}</CardTitle>
-                                        <div class="flex items-center gap-2 mt-1">
-                                            <span
-                                                class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-500 border border-green-200 dark:border-green-500/20">
-                                                <span
-                                                    class="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                                                Aktif
-                                            </span>
-                                        </div>
+                                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ branch.nama }}
+                                        </h3>
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-medium bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 mt-1">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                            Aktif
+                                        </span>
                                     </div>
                                 </div>
                                 <div class="flex gap-1">
-                                    <Button variant="ghost" size="sm" class="h-8 w-8 p-0"
+                                    <button
+                                        class="h-9 w-9 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
                                         @click="openEditModal(branch)">
-                                        <Pencil class="h-4 w-4 text-zinc-500" />
-                                    </Button>
-                                    <Button variant="ghost" size="sm" class="h-8 w-8 p-0"
+                                        <Pencil class="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                                    </button>
+                                    <button
+                                        class="h-9 w-9 rounded-lg bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 flex items-center justify-center transition-colors"
                                         @click="openDeleteDialog(branch)">
                                         <Trash2 class="h-4 w-4 text-red-500" />
-                                    </Button>
+                                    </button>
                                 </div>
                             </div>
-                        </CardHeader>
-                        <CardContent class="space-y-4">
+
                             <!-- Stats -->
                             <div
-                                class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+                                class="flex items-center justify-between p-4 bg-slate-50/80 dark:bg-slate-800/50 rounded-xl mb-4">
                                 <div class="flex items-center gap-2">
-                                    <Users class="h-4 w-4 text-zinc-400" />
-                                    <span class="text-sm text-zinc-600 dark:text-zinc-400">Total Karyawan</span>
+                                    <Users class="h-4 w-4 text-slate-400" />
+                                    <span class="text-sm text-slate-600 dark:text-slate-400">Total Karyawan</span>
                                 </div>
-                                <span class="text-sm font-semibold text-zinc-900 dark:text-white">{{ branch.users_count
-                                    }} orang</span>
+                                <span class="text-sm font-bold text-slate-900 dark:text-white">{{ branch.users_count }}
+                                    orang</span>
                             </div>
 
                             <!-- Address -->
-                            <div class="flex items-start gap-3 pt-2">
-                                <MapPin class="h-4 w-4 text-zinc-400 mt-0.5 flex-shrink-0" />
-                                <p class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2">{{ branch.address }}
+                            <div class="flex items-start gap-3">
+                                <MapPin class="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                                <p class="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{{ branch.address }}
                                 </p>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Empty State -->
                 <div v-else class="flex flex-col items-center justify-center py-16">
                     <div
-                        class="h-16 w-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
-                        <Store class="h-8 w-8 text-zinc-400" />
+                        class="h-16 w-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                        <Store class="h-8 w-8 text-slate-400" />
                     </div>
-                    <h3 class="text-lg font-medium text-zinc-900 dark:text-white mb-1">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">
                         {{ searchQuery ? 'Cabang tidak ditemukan' : 'Belum ada cabang' }}
                     </h3>
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">
                         {{ searchQuery ? 'Coba kata kunci lain' : 'Tambahkan cabang pertama Anda' }}
                     </p>
-                    <Button v-if="!searchQuery" class="gap-2" @click="openCreateModal">
+                    <button v-if="!searchQuery"
+                        class="gap-2 px-5 py-3 bg-slate-900 dark:bg-orange-600 text-white rounded-xl shadow-lg hover:bg-slate-800 dark:hover:bg-orange-500 transition-all flex items-center justify-center font-medium"
+                        @click="openCreateModal">
                         <Plus class="h-4 w-4" />
                         Tambah Cabang
-                    </Button>
+                    </button>
                 </div>
             </div>
 

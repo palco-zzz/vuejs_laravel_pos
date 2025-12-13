@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
+import GlassCard from '@/components/ui/GlassCard.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { type BreadcrumbItem } from '@/types';
@@ -259,7 +260,7 @@ const confirmVoid = async () => {
 const exportToExcel = () => {
     // Build the export URL with current filter parameters
     const params = new URLSearchParams();
-    
+
     if (startDate.value) {
         params.append('start_date', startDate.value);
     }
@@ -272,7 +273,7 @@ const exportToExcel = () => {
     if (selectedPaymentMethod.value) {
         params.append('payment_method', selectedPaymentMethod.value);
     }
-    
+
     // Navigate to the export URL to trigger download
     const exportUrl = `/reports/transactions/export?${params.toString()}`;
     window.location.href = exportUrl;
@@ -286,172 +287,177 @@ const exportToExcel = () => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="p-6 space-y-6">
             <!-- Header -->
-            <div class="flex justify-between items-center">
+            <div class="flex flex-col md:flex-row justify-between md:items-end gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Laporan Transaksi</h1>
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Riwayat dan detail semua transaksi</p>
+                    <h1 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Laporan Transaksi</h1>
+                    <p class="text-slate-500 dark:text-slate-400 mt-1">Riwayat dan detail semua transaksi</p>
                 </div>
-                <Button @click="exportToExcel" variant="outline" class="gap-2">
+                <button @click="exportToExcel"
+                    class="gap-2 px-5 py-3 bg-slate-900 dark:bg-orange-600 text-white rounded-xl shadow-lg hover:bg-slate-800 dark:hover:bg-orange-500 transition-all flex items-center justify-center font-medium">
                     <Download class="h-4 w-4" />
                     Export Excel
-                </Button>
+                </button>
             </div>
 
             <!-- Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-6 rounded-xl">
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400 mb-1">Total Pendapatan</p>
-                    <h3 class="text-3xl font-bold text-zinc-900 dark:text-white">{{ formatRupiah(summary.total_revenue)
-                    }}</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="relative overflow-hidden rounded-[2rem] p-6
+                            bg-white/60 dark:bg-slate-900/70 backdrop-blur-xl
+                            border border-white/40 dark:border-slate-700/50
+                            shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)]">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent dark:from-slate-800/20 dark:to-slate-900/10 pointer-events-none" />
+                    <div class="relative z-10">
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-2">Total Pendapatan</p>
+                        <h3 class="text-3xl font-bold text-slate-900 dark:text-white">{{
+                            formatRupiah(summary.total_revenue) }}</h3>
+                    </div>
                 </div>
-                <div class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 p-6 rounded-xl">
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400 mb-1">Total Transaksi</p>
-                    <h3 class="text-3xl font-bold text-zinc-900 dark:text-white">{{ summary.total_count }} <span
-                            class="text-base font-normal text-zinc-500">Transaksi</span></h3>
+                <div class="relative overflow-hidden rounded-[2rem] p-6
+                            bg-white/60 dark:bg-slate-900/70 backdrop-blur-xl
+                            border border-white/40 dark:border-slate-700/50
+                            shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)]">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent dark:from-slate-800/20 dark:to-slate-900/10 pointer-events-none" />
+                    <div class="relative z-10">
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-2">Total Transaksi</p>
+                        <h3 class="text-3xl font-bold text-slate-900 dark:text-white">{{ summary.total_count }} <span
+                                class="text-base font-normal text-slate-500">Transaksi</span></h3>
+                    </div>
                 </div>
             </div>
 
             <!-- Filters -->
-            <div class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 rounded-xl p-6">
-                <div class="flex items-center gap-2 mb-4">
-                    <Filter class="h-4 w-4 text-zinc-500" />
-                    <h3 class="font-medium text-zinc-900 dark:text-white">Filter</h3>
+            <GlassCard class="space-y-4">
+                <div class="flex items-center gap-2">
+                    <Filter class="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                    <h3 class="font-bold text-slate-900 dark:text-white">Filter</h3>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Tanggal
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tanggal
                             Mulai</label>
-                        <Input v-model="startDate" type="date" />
+                        <input v-model="startDate" type="date"
+                            class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 text-slate-900 dark:text-white" />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Tanggal
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tanggal
                             Akhir</label>
-                        <Input v-model="endDate" type="date" />
+                        <input v-model="endDate" type="date"
+                            class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 text-slate-900 dark:text-white" />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Cabang</label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Cabang</label>
                         <select v-model="selectedBranch"
-                            class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm">
+                            class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 text-slate-900 dark:text-white">
                             <option :value="null">Semua Cabang</option>
                             <option v-for="branch in branches" :key="branch.id" :value="branch.id">{{ branch.nama }}
                             </option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Metode
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Metode
                             Pembayaran</label>
                         <select v-model="selectedPaymentMethod"
-                            class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm">
+                            class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 text-slate-900 dark:text-white">
                             <option :value="null">Semua Metode</option>
                             <option v-for="method in paymentMethods" :key="method.value" :value="method.value">{{
                                 method.label }}</option>
                         </select>
                     </div>
                 </div>
-                <div class="flex gap-2 mt-4">
-                    <Button @click="applyFilters" class="gap-2">
+                <div class="flex gap-3">
+                    <button @click="applyFilters"
+                        class="gap-2 px-5 py-3 bg-slate-900 dark:bg-orange-600 text-white rounded-xl shadow-lg hover:bg-slate-800 dark:hover:bg-orange-500 transition-all flex items-center justify-center font-medium">
                         <Filter class="h-4 w-4" />
                         Terapkan Filter
-                    </Button>
-                    <Button @click="resetFilters" variant="outline" class="gap-2">
+                    </button>
+                    <button @click="resetFilters"
+                        class="gap-2 px-5 py-3 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all flex items-center justify-center font-medium">
                         <X class="h-4 w-4" />
                         Reset
-                    </Button>
+                    </button>
                 </div>
-            </div>
+            </GlassCard>
 
             <!-- Transactions Table -->
-            <div
-                class="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/60 rounded-xl overflow-hidden">
+            <GlassCard noPadding class="overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-zinc-50 dark:bg-zinc-900/60 border-b border-zinc-200 dark:border-zinc-800">
-                            <tr>
-                                <th
-                                    class="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                                    No. Transaksi</th>
-                                <th
-                                    class="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                                    Tanggal & Waktu</th>
-                                <th
-                                    class="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                                    Cabang</th>
-                                <th
-                                    class="px-6 py-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                                    Kasir</th>
-                                <th
-                                    class="px-6 py-4 text-right text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                                    Total</th>
-                                <th
-                                    class="px-6 py-4 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                                    Pembayaran</th>
-                                <th
-                                    class="px-6 py-4 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                                    Status</th>
-                                <th
-                                    class="px-6 py-4 text-center text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                                    Aksi</th>
+                    <table class="w-full text-left">
+                        <thead
+                            class="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700">
+                            <tr class="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider font-bold">
+                                <th class="p-5">No. Transaksi</th>
+                                <th class="p-5">Tanggal & Waktu</th>
+                                <th class="p-5">Cabang</th>
+                                <th class="p-5">Kasir</th>
+                                <th class="p-5 text-right">Total</th>
+                                <th class="p-5 text-center">Pembayaran</th>
+                                <th class="p-5 text-center">Status</th>
+                                <th class="p-5 text-center">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
                             <tr v-for="transaction in transactions.data" :key="transaction.id" :class="[
                                 'transition-colors',
                                 transaction.deleted_at
-                                    ? 'opacity-50 bg-red-50 dark:bg-red-500/5'
-                                    : 'hover:bg-zinc-50 dark:hover:bg-zinc-900/40'
+                                    ? 'opacity-50 bg-red-50/50 dark:bg-red-500/5'
+                                    : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/30'
                             ]">
-                                <td class="px-6 py-4">
+                                <td class="p-5">
                                     <div class="flex items-center gap-2">
                                         <span :class="[
-                                            'text-sm font-medium text-zinc-900 dark:text-white',
+                                            'font-bold text-slate-900 dark:text-white',
                                             transaction.deleted_at ? 'line-through' : ''
                                         ]">{{ transaction.order_number }}</span>
-                                        <!-- VOID Badge -->
                                         <span v-if="transaction.deleted_at"
-                                            class="text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 font-medium">
+                                            class="text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 font-bold">
                                             VOID
                                         </span>
-                                        <!-- Admin Created Badge -->
                                         <span v-if="transaction.creator_role === 'admin' && !transaction.deleted_at"
-                                            class="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 font-medium">
+                                            class="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 font-bold">
                                             PUSAT
                                         </span>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">{{ transaction.date_time
-                                }}</td>
-                                <td class="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">{{
-                                    transaction.branch_name }}</td>
-                                <td class="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">{{
-                                    transaction.cashier_name }}</td>
-                                <td class="px-6 py-4 text-sm text-right font-semibold text-zinc-900 dark:text-white">{{
+                                <td class="p-5 text-sm text-slate-600 dark:text-slate-400">{{ transaction.date_time }}
+                                </td>
+                                <td class="p-5 text-sm text-slate-600 dark:text-slate-400">{{ transaction.branch_name }}
+                                </td>
+                                <td class="p-5 text-sm text-slate-600 dark:text-slate-400">{{ transaction.cashier_name
+                                    }}</td>
+                                <td class="p-5 text-right font-bold text-slate-900 dark:text-white">{{
                                     formatRupiah(transaction.total) }}</td>
-                                <td class="px-6 py-4 text-center">
+                                <td class="p-5 text-center">
                                     <span
-                                        class="text-xs px-2 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                                        class="text-xs px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium">
                                         {{ getPaymentMethodLabel(transaction.payment_method) }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-center">
+                                <td class="p-5 text-center">
                                     <span :class="getStatusBadgeClass(transaction.status)"
-                                        class="text-xs px-2 py-1 rounded-full border capitalize">
+                                        class="text-xs px-3 py-1.5 rounded-lg border capitalize font-bold">
                                         {{ transaction.status }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-center">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <Button variant="ghost" size="sm"
-                                            class="gap-1.5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                                            @click="openDetailModal(transaction)">
-                                            <Eye class="h-4 w-4" />
-                                            <span class="hidden sm:inline">Detail</span>
-                                        </Button>
-                                    </div>
+                                <td class="p-5 text-center">
+                                    <button
+                                        class="h-9 w-9 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center mx-auto transition-colors"
+                                        @click="openDetailModal(transaction)">
+                                        <Eye class="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                                    </button>
                                 </td>
                             </tr>
                             <tr v-if="transactions.data.length === 0">
-                                <td colspan="8" class="px-6 py-12 text-center text-zinc-500">
-                                    Tidak ada transaksi ditemukan
+                                <td colspan="8" class="p-12 text-center">
+                                    <div class="flex flex-col items-center">
+                                        <div
+                                            class="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                                            <Calendar class="h-7 w-7 text-slate-400" />
+                                        </div>
+                                        <p class="text-slate-500 dark:text-slate-400 font-medium">Tidak ada transaksi
+                                            ditemukan</p>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -460,8 +466,8 @@ const exportToExcel = () => {
 
                 <!-- Pagination -->
                 <div v-if="transactions.last_page > 1"
-                    class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
-                    <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                    class="p-5 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                    <p class="text-sm text-slate-600 dark:text-slate-400">
                         Menampilkan {{ (transactions.current_page - 1) * transactions.per_page + 1 }} - {{
                             Math.min(transactions.current_page * transactions.per_page, transactions.total) }} dari {{
                             transactions.total }} transaksi
@@ -469,15 +475,17 @@ const exportToExcel = () => {
                     <div class="flex gap-2">
                         <Link :href="`/reports/transactions?page=${transactions.current_page - 1}`"
                             v-if="transactions.current_page > 1" preserve-state preserve-scroll>
-                            <Button variant="outline" size="sm">Previous</Button>
+                            <button
+                                class="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Previous</button>
                         </Link>
                         <Link :href="`/reports/transactions?page=${transactions.current_page + 1}`"
                             v-if="transactions.current_page < transactions.last_page" preserve-state preserve-scroll>
-                            <Button variant="outline" size="sm">Next</Button>
+                            <button
+                                class="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Next</button>
                         </Link>
                     </div>
                 </div>
-            </div>
+            </GlassCard>
         </div>
 
         <!-- Detail Modal -->
@@ -508,13 +516,16 @@ const exportToExcel = () => {
                             <div class="flex items-start gap-3">
                                 <AlertCircle class="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
                                 <div class="flex-1">
-                                    <h4 class="font-bold text-red-900 dark:text-red-200 mb-1">⛔ Transaksi Dibatalkan</h4>
+                                    <h4 class="font-bold text-red-900 dark:text-red-200 mb-1">⛔ Transaksi Dibatalkan
+                                    </h4>
                                     <p class="text-sm text-red-800 dark:text-red-300 mb-1">
-                                        Dibatalkan oleh <span class="font-semibold">{{ selectedTransaction?.deleter_name || 'Admin' }}</span>
+                                        Dibatalkan oleh <span class="font-semibold">{{ selectedTransaction?.deleter_name
+                                            || 'Admin' }}</span>
                                         pada {{ selectedTransaction?.deleted_at }}.
                                     </p>
                                     <p class="text-sm text-red-800 dark:text-red-300">
-                                        <span class="font-bold">Alasan:</span> {{ selectedTransaction?.delete_reason || '-' }}
+                                        <span class="font-bold">Alasan:</span> {{ selectedTransaction?.delete_reason ||
+                                        '-' }}
                                     </p>
                                 </div>
                             </div>
@@ -524,15 +535,19 @@ const exportToExcel = () => {
                         <div v-if="selectedTransaction?.edited_at && !selectedTransaction?.deleted_at"
                             class="mb-6 bg-yellow-50 dark:bg-yellow-500/10 border-l-4 border-yellow-400 dark:border-yellow-500 p-4 rounded-r-lg">
                             <div class="flex items-start gap-3">
-                                <AlertCircle class="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                                <AlertCircle
+                                    class="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
                                 <div class="flex-1">
-                                    <h4 class="font-bold text-yellow-900 dark:text-yellow-200 mb-1">⚠️ Transaksi Telah Diedit</h4>
+                                    <h4 class="font-bold text-yellow-900 dark:text-yellow-200 mb-1">⚠️ Transaksi Telah
+                                        Diedit</h4>
                                     <p class="text-sm text-yellow-800 dark:text-yellow-300 mb-1">
-                                        Diedit oleh <span class="font-semibold">{{ selectedTransaction?.edited_by_name || 'Admin' }}</span>
+                                        Diedit oleh <span class="font-semibold">{{ selectedTransaction?.edited_by_name
+                                            || 'Admin' }}</span>
                                         pada {{ selectedTransaction?.edited_at }}.
                                     </p>
                                     <p class="text-sm text-yellow-800 dark:text-yellow-300">
-                                        <span class="font-bold">Alasan:</span> {{ selectedTransaction?.edit_reason || '-' }}
+                                        <span class="font-bold">Alasan:</span> {{ selectedTransaction?.edit_reason ||
+                                        '-' }}
                                     </p>
                                 </div>
                             </div>

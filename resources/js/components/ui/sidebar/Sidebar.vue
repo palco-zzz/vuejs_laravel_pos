@@ -87,7 +87,18 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
     >
       <div
         data-sidebar="sidebar"
-        class="bg-sidebar group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow-sm"
+        :class="cn(
+          'flex h-full w-full flex-col',
+          // Default sidebar styles
+          'bg-sidebar',
+          // Floating variant: glassmorphism styling with dark mode
+          'group-data-[variant=floating]:bg-white/80 group-data-[variant=floating]:dark:bg-slate-900/80',
+          'group-data-[variant=floating]:backdrop-blur-xl',
+          'group-data-[variant=floating]:border group-data-[variant=floating]:border-white/40 group-data-[variant=floating]:dark:border-slate-700/40',
+          'group-data-[variant=floating]:rounded-[2.5rem]',
+          'group-data-[variant=floating]:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.05)] group-data-[variant=floating]:dark:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)]',
+          'group-data-[variant=floating]:overflow-hidden',
+        )"
       >
         <slot />
       </div>

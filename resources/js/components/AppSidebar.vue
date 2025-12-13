@@ -7,20 +7,9 @@ import {
     SidebarFooter,
     SidebarHeader,
     SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    SidebarGroup,
-    SidebarGroupLabel,
-    SidebarGroupContent,
-    SidebarMenuSub,
-    SidebarMenuSubButton,
-    SidebarMenuSubItem,
+    useSidebar,
 } from '@/components/ui/sidebar';
-import {
-    Collapsible,
-    CollapsibleContent,
-    CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+import SidebarLink from '@/components/ui/SidebarLink.vue';
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
@@ -47,25 +36,44 @@ const page = usePage();
 const permissions = computed(() => page.props.auth.permissions || {});
 const { info } = useToast();
 
+// Safely get sidebar context - may not be available during initial render
+let sidebarState: { state: { value: 'expanded' | 'collapsed' } } | null = null;
+try {
+    sidebarState = useSidebar();
+} catch (e) {
+    // Context not available yet, will use fallback
+    console.warn('Sidebar context not available, using fallback');
+}
+
+// Declare Ziggy's route helper for TypeScript
+declare function route(name?: string, params?: any, absolute?: boolean): string & { current: (name?: string, params?: any) => boolean };
+
+const isExpanded = computed(() => sidebarState?.state?.value === 'expanded' || false);
+
 // Main Navigation Items (Top Level)
 const mainNavItems = computed(() => {
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+
     const items: NavItem[] = [
         {
             title: 'Dashboard',
             href: dashboard(),
             icon: LayoutGrid,
+            active: currentPath === '/dashboard' || currentPath === '/',
             permission: null, // Everyone can access
         },
         {
             title: 'Kasir / POS',
             href: '/pos',
             icon: ShoppingCart,
+            active: currentPath === '/pos',
             permission: 'manage_pos',
         },
         {
             title: 'Riwayat Transaksi',
             href: '/pos/history',
             icon: Clock,
+            active: currentPath === '/pos/history',
             permission: 'manage_pos', // Both admin & cashier
         },
     ];
@@ -76,29 +84,34 @@ const mainNavItems = computed(() => {
     });
 });
 
-// Manajemen Group (Collapsible - Admin Only)
+// Manajemen Group (Admin Only)
 const manajemenGroup = computed(() => {
     if (!permissions.value.manage_branches && !permissions.value.manage_menu && !permissions.value.manage_employees) {
         return null; // Don't show group if user has no permissions
     }
+
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
 
     const items: NavItem[] = [
         {
             title: 'Manajemen Cabang',
             href: '/branch',
             icon: Store,
+            active: currentPath.startsWith('/branch'),
             permission: 'manage_branches',
         },
         {
             title: 'Manajemen Menu',
             href: '/menu',
             icon: Utensils,
+            active: currentPath.startsWith('/menu'),
             permission: 'manage_menu',
         },
         {
             title: 'Karyawan',
             href: '/karyawan',
             icon: Users,
+            active: currentPath.startsWith('/karyawan'),
             permission: 'manage_employees',
         },
     ];
@@ -111,23 +124,27 @@ const manajemenGroup = computed(() => {
     return filtered.length > 0 ? { title: 'Manajemen', items: filtered } : null;
 });
 
-// Laporan Group (Collapsible - Admin Only)
+// Laporan Group (Admin Only)
 const laporanGroup = computed(() => {
     if (!permissions.value.view_reports) {
         return null;
     }
+
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
 
     const items: NavItem[] = [
         {
             title: 'Laporan Keuangan',
             href: '/reports/transactions',
             icon: FileText,
+            active: currentPath === '/reports/transactions',
             permission: 'view_reports',
         },
         {
             title: 'Analisa Menu',
             href: '/reports/menu-analysis',
             icon: PieChart,
+            active: currentPath === '/reports/menu-analysis',
             permission: 'view_reports',
         },
     ];
@@ -161,124 +178,124 @@ const handleComingSoon = (featureName: string) => {
     );
 };
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Github Repo',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
-    },
-];
+// const footerNavItems: NavItem[] = [
+//     {
+//         title: 'Github Repo',
+//         href: 'https://github.com/laravel/vue-starter-kit',
+//         icon: Folder,
+//     },
+//     {
+//         title: 'Documentation',
+//         href: 'https://laravel.com/docs/starter-kits#vue',
+//         icon: BookOpen,
+//     },
+// ];
 </script>
 
 <template>
-    <Sidebar collapsible="icon" variant="inset">
+    <Sidebar collapsible="icon" variant="floating">
+        <!-- Logo Header -->
         <SidebarHeader>
             <SidebarMenu>
-                <SidebarMenuItem>
-                    <SidebarMenuButton size="lg" as-child>
-                        <Link :href="dashboard()">
-                        <AppLogo />
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
+                <div class="flex items-center gap-2 p-2 transition-all duration-200 ease-out transform-gpu will-change-[width]"
+                    :class="isExpanded ? 'px-4' : 'justify-center px-2'">
+                    <!-- Logo centered if collapsed -->
+                    <div class="relative flex items-center justify-center">
+                        <div class="bg-orange-600 text-white font-bold rounded-xl flex items-center justify-center shadow-lg transform-gpu transition-all duration-200 ease-out"
+                            :class="isExpanded ? 'h-10 w-10 text-xl' : 'h-8 w-8 text-lg'">
+                            E
+                        </div>
+                    </div>
+
+                    <!-- Text hidden if collapsed -->
+                    <div class="flex flex-col overflow-hidden transition-all duration-200 ease-out transform-gpu"
+                        :class="isExpanded ? 'w-auto opacity-100 ml-3' : 'w-0 opacity-0 ml-0'">
+                        <span class="font-bold text-lg text-slate-900 dark:text-white leading-none">Epok POS</span>
+                        <span class="text-[10px] text-slate-500 font-medium tracking-wider uppercase mt-0.5">Management
+                            System</span>
+                    </div>
+                </div>
             </SidebarMenu>
         </SidebarHeader>
 
-        <SidebarContent>
+        <SidebarContent class="px-3 py-2 space-y-6 scrollbar-hide">
             <!-- Main Navigation Items -->
-            <SidebarGroup>
-                <SidebarGroupLabel>Navigasi Utama</SidebarGroupLabel>
-                <SidebarGroupContent>
-                    <SidebarMenu>
-                        <SidebarMenuItem v-for="item in mainNavItems" :key="item.title">
-                            <SidebarMenuButton as-child :tooltip="item.title">
-                                <Link :href="item.href">
-                                <component :is="item.icon" />
-                                <span>{{ item.title }}</span>
-                                </Link>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    </SidebarMenu>
-                </SidebarGroupContent>
-            </SidebarGroup>
+            <div class="space-y-1">
+                <div v-if="isExpanded"
+                    class="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider transition-opacity duration-300">
+                    Navigasi Utama
+                </div>
+                <!-- Collapsed Helper Label -->
+                <div v-else class="h-6 mb-2 flex items-center justify-center">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700"></span>
+                </div>
 
-            <!-- Manajemen Group (Collapsible) -->
-            <Collapsible v-if="manajemenGroup" default-open class="group/collapsible">
-                <SidebarGroup>
-                    <SidebarGroupLabel as-child>
-                        <CollapsibleTrigger class="w-full">
-                            {{ manajemenGroup.title }}
-                            <ChevronRight
-                                class="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                        </CollapsibleTrigger>
-                    </SidebarGroupLabel>
-                    <CollapsibleContent>
-                        <SidebarGroupContent>
-                            <SidebarMenuSub>
-                                <SidebarMenuSubItem v-for="item in manajemenGroup.items" :key="item.title">
-                                    <SidebarMenuSubButton as-child>
-                                        <Link :href="item.href">
-                                        <component :is="item.icon" class="h-4 w-4" />
-                                        <span>{{ item.title }}</span>
-                                        </Link>
-                                    </SidebarMenuSubButton>
-                                </SidebarMenuSubItem>
-                            </SidebarMenuSub>
-                        </SidebarGroupContent>
-                    </CollapsibleContent>
-                </SidebarGroup>
-            </Collapsible>
+                <SidebarLink v-for="item in mainNavItems" :key="item.title" :href="item.href || '#'"
+                    :active="item.active" :icon="item.icon || Folder" :label="item.title" :isExpanded="isExpanded" />
+            </div>
 
-            <!-- Laporan Group (Collapsible) -->
-            <Collapsible v-if="laporanGroup" default-open class="group/collapsible">
-                <SidebarGroup>
-                    <SidebarGroupLabel as-child>
-                        <CollapsibleTrigger class="w-full">
-                            {{ laporanGroup.title }}
-                            <ChevronRight
-                                class="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                        </CollapsibleTrigger>
-                    </SidebarGroupLabel>
-                    <CollapsibleContent>
-                        <SidebarGroupContent>
-                            <SidebarMenuSub>
-                                <SidebarMenuSubItem v-for="item in laporanGroup.items" :key="item.title">
-                                    <SidebarMenuSubButton as-child>
-                                        <Link :href="item.href">
-                                        <component :is="item.icon" class="h-4 w-4" />
-                                        <span>{{ item.title }}</span>
-                                        </Link>
-                                    </SidebarMenuSubButton>
-                                </SidebarMenuSubItem>
-                            </SidebarMenuSub>
-                        </SidebarGroupContent>
-                    </CollapsibleContent>
-                </SidebarGroup>
-            </Collapsible>
+            <!-- Manajemen Group -->
+            <div v-if="manajemenGroup" class="space-y-1">
+                <div v-if="isExpanded"
+                    class="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider transition-opacity duration-300">
+                    {{ manajemenGroup.title }}
+                </div>
+                <div v-else class="h-6 mb-2 flex items-center justify-center">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700"></span>
+                </div>
 
-            <!-- Gudang Section (Admin Only - Coming Soon Features) -->
-            <SidebarGroup v-if="gudangItems.length > 0">
-                <SidebarGroupLabel>Gudang</SidebarGroupLabel>
-                <SidebarGroupContent>
-                    <SidebarMenu>
-                        <SidebarMenuItem v-for="item in gudangItems" :key="item.title">
-                            <SidebarMenuButton @click="handleComingSoon(item.title)" class="cursor-pointer">
-                                <component :is="item.icon" />
-                                <span>{{ item.title }}</span>
-                                <span
-                                    class="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400">
-                                    Soon
-                                </span>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    </SidebarMenu>
-                </SidebarGroupContent>
-            </SidebarGroup>
+                <SidebarLink v-for="item in manajemenGroup.items" :key="item.title" :href="item.href || '#'"
+                    :active="item.active" :icon="item.icon || Folder" :label="item.title" :isExpanded="isExpanded" />
+            </div>
+
+            <!-- Laporan Group -->
+            <div v-if="laporanGroup" class="space-y-1">
+                <div v-if="isExpanded"
+                    class="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider transition-opacity duration-300">
+                    {{ laporanGroup.title }}
+                </div>
+                <div v-else class="h-6 mb-2 flex items-center justify-center">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700"></span>
+                </div>
+
+                <SidebarLink v-for="item in laporanGroup.items" :key="item.title" :href="item.href || '#'"
+                    :active="item.active" :icon="item.icon || Folder" :label="item.title" :isExpanded="isExpanded" />
+            </div>
+
+            <!-- Gudang Section (Coming Soon) -->
+            <div v-if="gudangItems.length > 0" class="space-y-1">
+                <div v-if="isExpanded"
+                    class="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider transition-opacity duration-300">
+                    Gudang
+                </div>
+                <div v-else class="h-6 mb-2 flex items-center justify-center">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700"></span>
+                </div>
+
+                <div v-for="item in gudangItems" :key="item.title" @click="handleComingSoon(item.title)"
+                    class="cursor-pointer">
+                    <!-- Usage of SidebarLink style manually for non-link item -->
+                    <div :class="[
+                        'flex items-center gap-4 p-3 rounded-2xl transition-all duration-200 ease-out group relative transform-gpu',
+                        'text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200',
+                        !isExpanded ? 'justify-center' : ''
+                    ]">
+                        <component :is="item.icon || Package"
+                            class="w-[22px] h-[22px] transition-transform duration-300 group-hover:scale-110 shrink-0" />
+
+                        <span :class="[
+                            'whitespace-nowrap overflow-hidden transition-all duration-300 flex items-center gap-2',
+                            isExpanded ? 'w-auto opacity-100' : 'w-0 opacity-0'
+                        ]">
+                            {{ item.title }}
+                            <span
+                                class="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 font-bold">
+                                Soon
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
         </SidebarContent>
 
         <SidebarFooter>

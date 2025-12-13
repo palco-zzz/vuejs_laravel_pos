@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
+import GlassCard from '@/components/ui/GlassCard.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
@@ -307,32 +308,32 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
     <Head title="Manajemen Menu" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <main class="h-full flex flex-col bg-zinc-50 dark:bg-black transition-colors duration-300">
+        <main class="h-full flex flex-col">
             <!-- Header -->
-            <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="px-6 py-6">
+                <div class="flex flex-col md:flex-row justify-between md:items-end gap-4 mb-6">
                     <div>
-                        <h1 class="text-xl font-semibold text-zinc-900 dark:text-white">
+                        <h1 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
                             Manajemen Menu
                         </h1>
-                        <p class="text-sm text-zinc-500 dark:text-zinc-400">
+                        <p class="text-slate-500 dark:text-slate-400 mt-1">
                             Kelola menu dan kategori produk
                         </p>
                     </div>
                 </div>
 
                 <!-- Tabs -->
-                <div class="flex gap-4 border-b border-zinc-200 dark:border-zinc-800 mt-4 -mb-4">
+                <div class="flex gap-4 border-b border-slate-100 dark:border-slate-800">
                     <button @click="activeTab = 'items'" :class="activeTab === 'items'
-                            ? 'text-orange-600 dark:text-orange-500 border-orange-500'
-                            : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 border-transparent'
+                        ? 'text-orange-600 dark:text-orange-500 border-orange-500'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border-transparent'
                         " class="pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2">
                         <UtensilsCrossed class="h-4 w-4" />
                         Daftar Menu
                     </button>
                     <button @click="activeTab = 'categories'" :class="activeTab === 'categories'
-                            ? 'text-orange-600 dark:text-orange-500 border-orange-500'
-                            : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 border-transparent'
+                        ? 'text-orange-600 dark:text-orange-500 border-orange-500'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border-transparent'
                         " class="pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2">
                         <Tag class="h-4 w-4" />
                         Kategori Menu
@@ -346,97 +347,106 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                 <div v-if="activeTab === 'items'" class="space-y-6">
                     <!-- Search & Actions -->
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                             <div class="relative w-full sm:w-auto">
-                                <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                                <Input v-model="searchQuery" type="text" placeholder="Cari menu..."
-                                    class="pl-9 w-full sm:w-64" />
+                                <Search
+                                    class="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-slate-400 dark:text-slate-500" />
+                                <input v-model="searchQuery" type="text" placeholder="Cari menu..."
+                                    class="pl-11 pr-4 py-3 w-full sm:w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 shadow-sm text-slate-900 dark:text-white placeholder:text-slate-400" />
                             </div>
                             <select v-model="filterCategory"
-                                class="w-full sm:w-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-400 dark:focus:ring-zinc-600">
+                                class="w-full sm:w-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 shadow-sm">
                                 <option value="">Semua Kategori</option>
                                 <option v-for="cat in categories" :key="cat.id" :value="cat.id">
                                     {{ cat.icon }} {{ cat.nama }}
                                 </option>
                             </select>
                         </div>
-                        <Button class="w-full sm:w-auto gap-2" @click="openMenuCreateModal">
+                        <button
+                            class="w-full sm:w-auto gap-2 px-5 py-3 bg-slate-900 dark:bg-orange-600 text-white rounded-xl shadow-lg hover:bg-slate-800 dark:hover:bg-orange-500 transition-all flex items-center justify-center font-medium"
+                            @click="openMenuCreateModal">
                             <Plus class="h-4 w-4" />
                             <span>Tambah Menu</span>
-                        </Button>
+                        </button>
                     </div>
 
                     <!-- Menu Table (Desktop) -->
-                    <div
-                        class="hidden md:block bg-white dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/60 rounded-xl overflow-hidden shadow-sm">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
-                                <tr class="text-xs text-zinc-500 uppercase tracking-wider">
-                                    <th class="py-3 px-6 font-medium">Gambar</th>
-                                    <th class="py-3 px-6 font-medium">Nama Menu</th>
-                                    <th class="py-3 px-6 font-medium">Kategori</th>
-                                    <th class="py-3 px-6 font-medium text-right">Harga</th>
-                                    <th class="py-3 px-6 font-medium text-right">Aksi</th>
+                    <GlassCard noPadding class="hidden md:block overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead
+                                class="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700">
+                                <tr
+                                    class="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider font-bold">
+                                    <th class="p-5">Gambar</th>
+                                    <th class="p-5">Nama Menu</th>
+                                    <th class="p-5">Kategori</th>
+                                    <th class="p-5 text-right">Harga</th>
+                                    <th class="p-5 text-right">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800/50">
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
                                 <tr v-for="menu in filteredMenus" :key="menu.id"
-                                    class="hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors">
-                                    <td class="py-3 px-6">
+                                    class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                    <td class="p-5">
                                         <div
-                                            class="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center text-lg shadow-sm border border-zinc-200 dark:border-zinc-700">
+                                            class="h-12 w-12 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-2xl shadow-sm">
                                             {{ menu.icon || "🍞" }}
                                         </div>
                                     </td>
-                                    <td class="py-3 px-6">
+                                    <td class="p-5">
                                         <div class="flex flex-col">
-                                            <span class="text-zinc-900 dark:text-zinc-200 font-medium">{{
+                                            <span class="text-slate-900 dark:text-white font-medium">{{
                                                 menu.nama
-                                                }}</span>
-                                            <span class="text-xs text-zinc-500">ID: #MENU-{{ menu.id }}</span>
+                                            }}</span>
+                                            <span class="text-xs text-slate-400 dark:text-slate-500">ID: #MENU-{{
+                                                menu.id }}</span>
                                         </div>
                                     </td>
-                                    <td class="py-3 px-6">
+                                    <td class="p-5">
                                         <span
-                                            class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded text-xs border border-zinc-200 dark:border-zinc-700">
+                                            class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-medium">
                                             {{ menu.category?.icon }} {{ menu.category?.nama }}
                                         </span>
                                     </td>
-                                    <td class="py-3 px-6 text-right font-medium text-zinc-900 dark:text-zinc-200">
+                                    <td class="p-5 text-right font-bold text-slate-900 dark:text-white">
                                         {{ formatRupiah(menu.harga) }}
                                     </td>
-                                    <td class="py-3 px-6 text-right">
+                                    <td class="p-5 text-right">
                                         <div class="flex justify-end gap-2">
-                                            <Button variant="ghost" size="sm" class="h-8 w-8 p-0"
+                                            <button
+                                                class="h-9 w-9 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
                                                 @click="openMenuEditModal(menu)">
-                                                <Pencil class="h-4 w-4 text-zinc-500" />
-                                            </Button>
-                                            <Button variant="ghost" size="sm" class="h-8 w-8 p-0"
+                                                <Pencil class="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                                            </button>
+                                            <button
+                                                class="h-9 w-9 rounded-lg bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 flex items-center justify-center transition-colors"
                                                 @click="openMenuDeleteDialog(menu)">
                                                 <Trash2 class="h-4 w-4 text-red-500" />
-                                            </Button>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
                                 <tr v-if="filteredMenus.length === 0">
-                                    <td colspan="5" class="py-12 text-center">
+                                    <td colspan="5" class="p-12 text-center">
                                         <div class="flex flex-col items-center">
                                             <div
-                                                class="h-12 w-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-3">
-                                                <Package class="h-6 w-6 text-zinc-400" />
+                                                class="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                                                <Package class="h-7 w-7 text-slate-400" />
                                             </div>
-                                            <p class="text-zinc-500">Tidak ada menu yang ditemukan.</p>
-                                            <Button v-if="!searchQuery && !filterCategory" variant="outline" size="sm"
-                                                class="mt-3" @click="openMenuCreateModal">
+                                            <p class="text-slate-500 dark:text-slate-400 font-medium">Tidak ada menu
+                                                yang ditemukan.</p>
+                                            <button v-if="!searchQuery && !filterCategory"
+                                                class="mt-4 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center"
+                                                @click="openMenuCreateModal">
                                                 <Plus class="h-4 w-4 mr-2" />
                                                 Tambah Menu Pertama
-                                            </Button>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
-                    </div>
+                    </GlassCard>
 
                     <!-- Menu Cards (Mobile) -->
                     <div class="md:hidden space-y-4">
@@ -467,7 +477,7 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                                     <span class="text-xs text-zinc-500">Harga</span>
                                     <span class="font-medium text-zinc-900 dark:text-zinc-200">{{
                                         formatRupiah(menu.harga)
-                                        }}</span>
+                                    }}</span>
                                 </div>
                             </div>
 
@@ -507,81 +517,88 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                     <!-- Header & Actions -->
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                            <h3 class="text-lg font-medium text-zinc-900 dark:text-zinc-100">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">
                                 Kategori Menu
                             </h3>
-                            <p class="text-sm text-zinc-500">
+                            <p class="text-sm text-slate-500 dark:text-slate-400">
                                 Kelola kategori untuk pengelompokan produk.
                             </p>
                         </div>
-                        <Button class="w-full sm:w-auto gap-2" @click="openCategoryCreateModal">
+                        <button
+                            class="w-full sm:w-auto gap-2 px-5 py-3 bg-slate-900 dark:bg-orange-600 text-white rounded-xl shadow-lg hover:bg-slate-800 dark:hover:bg-orange-500 transition-all flex items-center justify-center font-medium"
+                            @click="openCategoryCreateModal">
                             <Plus class="h-4 w-4" />
                             <span>Tambah Kategori</span>
-                        </Button>
+                        </button>
                     </div>
 
                     <!-- Category Table (Desktop) -->
-                    <div
-                        class="hidden md:block bg-white dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/60 rounded-xl overflow-hidden shadow-sm">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
-                                <tr class="text-xs text-zinc-500 uppercase tracking-wider">
-                                    <th class="py-3 px-6 font-medium w-16">Ikon</th>
-                                    <th class="py-3 px-6 font-medium">Nama Kategori</th>
-                                    <th class="py-3 px-6 font-medium text-center">Jumlah Menu</th>
-                                    <th class="py-3 px-6 font-medium text-right">Aksi</th>
+                    <GlassCard noPadding class="hidden md:block overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead
+                                class="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700">
+                                <tr
+                                    class="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider font-bold">
+                                    <th class="p-5 w-16">Ikon</th>
+                                    <th class="p-5">Nama Kategori</th>
+                                    <th class="p-5 text-center">Jumlah Menu</th>
+                                    <th class="p-5 text-right">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800/50">
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
                                 <tr v-for="category in categories" :key="category.id"
-                                    class="hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors">
-                                    <td class="py-3 px-6">
+                                    class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                    <td class="p-5">
                                         <div
-                                            class="h-10 w-10 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center text-lg">
+                                            class="h-12 w-12 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-2xl">
                                             {{ category.icon || "🍞" }}
                                         </div>
                                     </td>
-                                    <td class="py-3 px-6 font-medium text-zinc-900 dark:text-zinc-200">
+                                    <td class="p-5 font-bold text-slate-900 dark:text-white">
                                         {{ category.nama }}
                                     </td>
-                                    <td class="py-3 px-6 text-center">
+                                    <td class="p-5 text-center">
                                         <span
-                                            class="px-2 py-1 bg-orange-100 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 rounded text-xs font-medium">
+                                            class="px-3 py-1.5 bg-orange-100 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 rounded-lg text-xs font-bold">
                                             {{ category.menus_count }} menu
                                         </span>
                                     </td>
-                                    <td class="py-3 px-6 text-right">
+                                    <td class="p-5 text-right">
                                         <div class="flex justify-end gap-2">
-                                            <Button variant="ghost" size="sm" class="h-8 w-8 p-0"
+                                            <button
+                                                class="h-9 w-9 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
                                                 @click="openCategoryEditModal(category)">
-                                                <Pencil class="h-4 w-4 text-zinc-500" />
-                                            </Button>
-                                            <Button variant="ghost" size="sm" class="h-8 w-8 p-0"
+                                                <Pencil class="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                                            </button>
+                                            <button
+                                                class="h-9 w-9 rounded-lg bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 flex items-center justify-center transition-colors"
                                                 @click="openCategoryDeleteDialog(category)">
                                                 <Trash2 class="h-4 w-4 text-red-500" />
-                                            </Button>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
                                 <tr v-if="categories.length === 0">
-                                    <td colspan="4" class="py-12 text-center">
+                                    <td colspan="4" class="p-12 text-center">
                                         <div class="flex flex-col items-center">
                                             <div
-                                                class="h-12 w-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-3">
-                                                <Tag class="h-6 w-6 text-zinc-400" />
+                                                class="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                                                <Tag class="h-7 w-7 text-slate-400" />
                                             </div>
-                                            <p class="text-zinc-500">Belum ada kategori.</p>
-                                            <Button variant="outline" size="sm" class="mt-3"
+                                            <p class="text-slate-500 dark:text-slate-400 font-medium">Belum ada
+                                                kategori.</p>
+                                            <button
+                                                class="mt-4 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center"
                                                 @click="openCategoryCreateModal">
                                                 <Plus class="h-4 w-4 mr-2" />
                                                 Tambah Kategori Pertama
-                                            </Button>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
-                    </div>
+                    </GlassCard>
 
                     <!-- Category Cards (Mobile) -->
                     <div class="md:hidden space-y-4">
@@ -680,9 +697,10 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                             <div class="flex flex-wrap gap-2">
                                 <button v-for="emoji in foodEmojis" :key="emoji" type="button"
                                     @click="menuCreateForm.icon = emoji" :class="menuCreateForm.icon === emoji
-                                            ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10'
-                                            : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                        " class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
+                                        ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10'
+                                        : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                        "
+                                    class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
                                     {{ emoji }}
                                 </button>
                             </div>
@@ -740,9 +758,10 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                             <div class="flex flex-wrap gap-2">
                                 <button v-for="emoji in foodEmojis" :key="emoji" type="button"
                                     @click="menuEditForm.icon = emoji" :class="menuEditForm.icon === emoji
-                                            ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10'
-                                            : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                        " class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
+                                        ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10'
+                                        : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                        "
+                                    class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
                                     {{ emoji }}
                                 </button>
                             </div>
@@ -753,9 +772,10 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                             <div class="flex flex-wrap gap-2">
                                 <button v-for="emoji in foodEmojis" :key="emoji" type="button"
                                     @click="menuEditForm.icon = emoji" :class="menuEditForm.icon === emoji
-                                            ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10'
-                                            : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                        " class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
+                                        ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10'
+                                        : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                        "
+                                    class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
                                     {{ emoji }}
                                 </button>
                             </div>
@@ -813,9 +833,10 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                             <div class="flex flex-wrap gap-2">
                                 <button v-for="emoji in foodEmojis" :key="emoji" type="button"
                                     @click="categoryCreateForm.icon = emoji" :class="categoryCreateForm.icon === emoji
-                                            ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10'
-                                            : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                        " class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
+                                        ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10'
+                                        : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                        "
+                                    class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
                                     {{ emoji }}
                                 </button>
                             </div>
@@ -854,9 +875,10 @@ const foodEmojis = ['🍞', '🥐', '🧀', '🍫', '🥜', '🍓', '🥭', '�
                             <div class="flex flex-wrap gap-2">
                                 <button v-for="emoji in foodEmojis" :key="emoji" type="button"
                                     @click="categoryEditForm.icon = emoji" :class="categoryEditForm.icon === emoji
-                                            ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10'
-                                            : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                        " class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
+                                        ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-500/10'
+                                        : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                        "
+                                    class="h-10 w-10 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-lg transition-all">
                                     {{ emoji }}
                                 </button>
                             </div>

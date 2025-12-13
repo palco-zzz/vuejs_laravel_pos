@@ -70,6 +70,7 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
+
     *,
     ::after,
     ::before,
@@ -80,6 +81,7 @@
 }
 
 @layer utilities {
+
     body,
     html {
         --font-sans:
@@ -166,7 +168,55 @@
     * {
         @apply border-border outline-ring/50;
     }
+
     body {
-        @apply bg-background text-foreground;
+        /* Light mode: #F6F8FA background (from design reference) with slate-900 text */
+        /* Dark mode: slate-950 background with slate-100 text */
+        @apply bg-[#F6F8FA] text-slate-900;
+        @apply dark:bg-slate-950 dark:text-slate-100;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+/* ===== Print Styles for Thermal Receipt ===== */
+@media print {
+
+    /* Hide everything by default */
+    body * {
+        visibility: hidden;
+    }
+
+    /* Show only the printable receipt */
+    #printable-receipt,
+    #printable-receipt * {
+        visibility: visible;
+    }
+
+    /* Position the receipt at the top-left */
+    #printable-receipt {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        max-width: 80mm;
+        /* Standard thermal paper width */
+        margin: 0 auto;
+        padding: 0;
+        background: white;
+        color: black;
+    }
+
+    /* Hide browser headers/footers and set page margins */
+    @page {
+        size: auto;
+        margin: 0mm;
+    }
+
+    /* Ensure proper text rendering */
+    body {
+        background: white !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 }

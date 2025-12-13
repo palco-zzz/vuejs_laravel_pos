@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
+import GlassCard from '@/components/ui/GlassCard.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
@@ -177,108 +178,108 @@ const formatDate = (dateString: string) => {
     <Head title="Karyawan" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <main class="h-full flex flex-col bg-zinc-50 dark:bg-black transition-colors duration-300">
+        <main class="h-full flex flex-col">
             <!-- Header -->
-            <div
-                class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 class="text-xl font-semibold text-zinc-900 dark:text-white">Manajemen Karyawan</h1>
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400">Kelola data karyawan dan akun pengguna</p>
+            <div class="px-6 py-6">
+                <div class="flex flex-col md:flex-row justify-between md:items-end gap-4">
+                    <div>
+                        <h1 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Manajemen Karyawan
+                        </h1>
+                        <p class="text-slate-500 dark:text-slate-400 mt-1">Kelola data karyawan dan akun pengguna</p>
+                    </div>
+                    <button
+                        class="w-full sm:w-auto gap-2 px-5 py-3 bg-slate-900 dark:bg-orange-600 text-white rounded-xl shadow-lg hover:bg-slate-800 dark:hover:bg-orange-500 transition-all flex items-center justify-center font-medium"
+                        @click="openCreateModal">
+                        <Plus class="h-4 w-4" />
+                        Tambah Karyawan
+                    </button>
                 </div>
-                <Button class="w-full sm:w-auto gap-2" @click="openCreateModal">
-                    <Plus class="h-4 w-4" />
-                    Tambah Karyawan
-                </Button>
             </div>
 
             <!-- Content -->
             <div class="flex-1 overflow-y-auto p-6">
                 <!-- Desktop View -->
-                <Card class="hidden md:block">
-                    <CardHeader>
-                        <CardTitle class="text-lg">Daftar Karyawan</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead>
-                                    <tr class="border-b border-zinc-200 dark:border-zinc-800">
-                                        <th
-                                            class="text-left py-3 px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                                            Nama</th>
-                                        <th
-                                            class="text-left py-3 px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                                            Email</th>
-                                        <th
-                                            class="text-left py-3 px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                                            Role</th>
-                                        <th
-                                            class="text-left py-3 px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                                            Cabang</th>
-                                        <th
-                                            class="text-left py-3 px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                                            Tanggal Dibuat</th>
-                                        <th
-                                            class="text-right py-3 px-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                                            Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="user in users" :key="user.id"
-                                        class="border-b border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
-                                        <td class="py-3 px-4">
-                                            <div class="flex items-center gap-3">
-                                                <div
-                                                    class="h-9 w-9 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                                                    <User class="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
-                                                </div>
-                                                <span class="text-sm font-medium text-zinc-900 dark:text-white">{{
-                                                    user.name }}</span>
+                <GlassCard noPadding class="hidden md:block overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 dark:border-slate-700">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Daftar Karyawan</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead
+                                class="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700">
+                                <tr
+                                    class="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider font-bold">
+                                    <th class="p-5">Nama</th>
+                                    <th class="p-5">Email</th>
+                                    <th class="p-5">Role</th>
+                                    <th class="p-5">Cabang</th>
+                                    <th class="p-5">Tanggal Dibuat</th>
+                                    <th class="p-5 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                <tr v-for="user in users" :key="user.id"
+                                    class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                    <td class="p-5">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                                                <User class="h-5 w-5 text-white" />
                                             </div>
-                                        </td>
-                                        <td class="py-3 px-4 text-sm text-zinc-600 dark:text-zinc-300">{{ user.email }}
-                                        </td>
-                                        <td class="py-3 px-4">
-                                            <Badge :variant="user.role === 'admin' ? 'default' : 'secondary'">
-                                                {{ user.role === 'admin' ? 'Admin' : 'Cashier' }}
-                                            </Badge>
-                                        </td>
-                                        <td class="py-3 px-4">
-                                            <div v-if="user.branch"
-                                                class="flex items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-300">
-                                                <MapPin class="h-3.5 w-3.5 text-zinc-400" />
-                                                {{ user.branch.nama }}
+                                            <span class="font-bold text-slate-900 dark:text-white">{{ user.name
+                                                }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="p-5 text-sm text-slate-600 dark:text-slate-400">{{ user.email }}</td>
+                                    <td class="p-5">
+                                        <span :class="user.role === 'admin'
+                                            ? 'bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400'
+                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'"
+                                            class="px-3 py-1.5 rounded-lg text-xs font-bold">
+                                            {{ user.role === 'admin' ? 'Admin' : 'Cashier' }}
+                                        </span>
+                                    </td>
+                                    <td class="p-5">
+                                        <div v-if="user.branch"
+                                            class="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
+                                            <MapPin class="h-3.5 w-3.5 text-slate-400" />
+                                            {{ user.branch.nama }}
+                                        </div>
+                                        <span v-else class="text-sm text-slate-400 dark:text-slate-500">-</span>
+                                    </td>
+                                    <td class="p-5 text-sm text-slate-500 dark:text-slate-400">{{
+                                        formatDate(user.created_at) }}</td>
+                                    <td class="p-5">
+                                        <div class="flex justify-end gap-2">
+                                            <button
+                                                class="h-9 w-9 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
+                                                @click="openEditModal(user)">
+                                                <Pencil class="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                                            </button>
+                                            <button
+                                                class="h-9 w-9 rounded-lg bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 flex items-center justify-center transition-colors"
+                                                @click="openDeleteDialog(user)">
+                                                <Trash2 class="h-4 w-4 text-red-500" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr v-if="users.length === 0">
+                                    <td colspan="6" class="p-12 text-center">
+                                        <div class="flex flex-col items-center">
+                                            <div
+                                                class="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                                                <User class="h-7 w-7 text-slate-400" />
                                             </div>
-                                            <span v-else class="text-sm text-zinc-400 dark:text-zinc-500">-</span>
-                                        </td>
-                                        <td class="py-3 px-4 text-sm text-zinc-600 dark:text-zinc-300">{{
-                                            formatDate(user.created_at) }}</td>
-                                        <td class="py-3 px-4">
-                                            <div class="flex justify-end gap-2">
-                                                <Button variant="outline" size="sm" class="gap-1.5"
-                                                    @click="openEditModal(user)">
-                                                    <Pencil class="h-3.5 w-3.5" />
-                                                    Edit
-                                                </Button>
-                                                <Button variant="destructive" size="sm" class="gap-1.5"
-                                                    @click="openDeleteDialog(user)">
-                                                    <Trash2 class="h-3.5 w-3.5" />
-                                                    Hapus
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr v-if="users.length === 0">
-                                        <td colspan="6"
-                                            class="py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
-                                            Belum ada data karyawan
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </CardContent>
-                </Card>
+                                            <p class="text-slate-500 dark:text-slate-400 font-medium">Belum ada data
+                                                karyawan</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </GlassCard>
 
                 <!-- Mobile View -->
                 <div class="md:hidden space-y-4">
