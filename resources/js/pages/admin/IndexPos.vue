@@ -67,6 +67,7 @@ const mobileTab = ref<'menu' | 'cart'>('menu');
 const orderNumber = ref(Math.floor(Math.random() * 9000) + 1000);
 const isPaymentScreenOpen = ref(false);
 const isCustomOrderModalOpen = ref(false);
+const showMobileCart = ref(false);
 const customOrderForm = ref({
   itemName: '',
   itemPrice: 0,
@@ -379,103 +380,123 @@ const closeSuccess = () => {
     <!-- Main Content Wrapper -->
     <div class="h-full flex flex-col md:flex-row gap-6 fade-in pb-16 md:pb-0 items-start">
       <!-- Product Grid Section -->
-      <div class="flex-1 flex flex-col h-full overflow-hidden" :class="{ 'hidden md:flex': mobileTab === 'cart' }">
-        <!-- Search Bar - Premium Styling -->
-        <div class="mb-6 relative group">
-          <Search
-            class="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-slate-400 dark:text-slate-500" />
-          <input v-model="searchQuery" type="text" placeholder="Cari sesuatu..."
-            class="pl-11 pr-4 py-3 w-full md:w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:focus:ring-orange-500/30 shadow-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all" />
-        </div>
-
-        <!-- Branch Selector (Admin Only) -->
-        <div v-if="currentUser.role === 'admin'" class="mb-4">
-          <div
-            class="bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-xl p-4">
-            <div class="flex items-start gap-3 mb-3">
-              <div
-                class="h-10 w-10 bg-orange-100 dark:bg-orange-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Building2 class="h-5 w-5 text-orange-600 dark:text-orange-400" />
+      <div class="flex-1 flex flex-col w-full" :class="{ 'hidden md:flex': mobileTab === 'cart' }">
+        <!-- ===== MOBILE-FIRST RESPONSIVE HEADER ===== -->
+        <div class="flex flex-col gap-4 mb-6 w-full">
+          
+          <!-- Row 1: Search + Branch (Stacked Mobile, Row Desktop) -->
+          <div class="flex flex-col md:flex-row gap-3 w-full items-stretch">
+            
+            <!-- Search Bar - Full Width Mobile, Flex-1 Desktop -->
+            <div class="w-full md:flex-1 relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search class="h-5 w-5 text-slate-400" />
               </div>
-              <div class="flex-1 min-w-0">
-                <label for="branchSelect" class="block text-sm font-medium text-orange-900 dark:text-orange-200 mb-1">
-                  Pilih Cabang
-                </label>
-                <select id="branchSelect" v-model="selectedBranchId"
-                  class="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-orange-300 dark:border-orange-500/30 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-zinc-900 dark:text-white"
-                  :class="!selectedBranchId ? 'text-zinc-400' : ''">
-                  <option :value="null" disabled>-- Pilih Cabang --</option>
+              <input 
+                type="text" 
+                v-model="searchQuery"
+                placeholder="Cari menu..." 
+                class="pl-10 pr-4 py-3 w-full h-12 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm transition-all"
+              />
+            </div>
+
+            <!-- Branch Selector - Full Width Mobile, Fixed Width Desktop -->
+            <div v-if="currentUser.role === 'admin'" class="w-full md:w-72 shrink-0">
+              <div class="w-full h-12 flex items-center gap-2 px-3 bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-2xl">
+                <div class="h-8 w-8 bg-orange-100 dark:bg-orange-500/20 rounded-lg flex items-center justify-center shrink-0">
+                  <Building2 class="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                </div>
+                <select 
+                  v-model="selectedBranchId"
+                  class="flex-1 min-w-0 h-8 px-2 bg-transparent border-0 text-sm font-medium focus:ring-0 focus:outline-none text-slate-900 dark:text-white cursor-pointer appearance-none"
+                  :class="!selectedBranchId ? 'text-slate-400' : ''"
+                >
+                  <option :value="null" disabled>Pilih Cabang...</option>
                   <option v-for="branch in branches" :key="branch.id" :value="branch.id">
                     {{ branch.nama }}
                   </option>
                 </select>
+                <svg class="h-4 w-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
               </div>
+              <p v-if="!selectedBranchId" class="text-xs text-orange-600 dark:text-orange-400 mt-1.5 pl-1">
+                ⚠️ Wajib pilih cabang sebelum checkout
+              </p>
             </div>
-            <div v-if="selectedBranchName" class="flex items-center gap-2 pl-13">
-              <Badge class="bg-orange-600 text-white hover:bg-orange-700">
-                Mode: {{ selectedBranchName }}
-              </Badge>
-            </div>
-            <p v-else class="text-xs text-orange-700 dark:text-orange-300 pl-13">
-              ⚠️ Wajib pilih cabang sebelum checkout
-            </p>
           </div>
-        </div>
 
-        <!-- Category Filters - Premium Pills -->
-        <div class="flex gap-3 mb-6 overflow-x-auto pb-4 no-scrollbar">
-          <button @click="posCategory = 'all'" :class="posCategory === 'all'
-            ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg scale-105'
-            : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
-            " class="px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all">
-            Semua Menu
-          </button>
-          <button v-for="cat in categories" :key="cat.id" @click="posCategory = cat.id" :class="posCategory === cat.id
-            ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg scale-105'
-            : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
-            " class="px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all">
-            {{ cat.icon }} {{ cat.nama }}
-          </button>
+          <!-- Row 2: Category Pills - Edge-to-Edge Scroll on Mobile -->
+          <div class="w-full overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+            <div class="flex gap-3 min-w-max">
+              <!-- All Categories -->
+              <button 
+                @click="posCategory = 'all'" 
+                :class="[
+                  'px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all active:scale-95',
+                  posCategory === 'all' 
+                    ? 'bg-slate-900 dark:bg-orange-500 text-white shadow-lg' 
+                    : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                ]"
+              >
+                Semua Menu
+              </button>
+              
+              <!-- Category Loop -->
+              <button 
+                v-for="cat in categories" 
+                :key="cat.id"
+                @click="posCategory = cat.id"
+                :class="[
+                  'px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5',
+                  posCategory === cat.id 
+                    ? 'bg-slate-900 dark:bg-orange-500 text-white shadow-lg' 
+                    : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                ]"
+              >
+                <span>{{ cat.icon }}</span>
+                <span>{{ cat.nama }}</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Products Grid -->
-        <div
-          class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 overflow-y-auto pb-20 md:pb-0 pr-2 custom-scrollbar">
+        <div class="flex-1 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4 overflow-y-auto pb-32 md:pb-4 custom-scrollbar">
           <!-- Custom Order Card -->
           <div @click="openCustomOrderModal"
-            class="bg-white dark:bg-zinc-900/20 border-2 border-dashed border-zinc-300 dark:border-zinc-800 p-4 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800/40 hover:border-orange-500/50 cursor-pointer transition-all group flex flex-col items-center justify-center text-center h-full min-h-[14rem]">
+            class="bg-white dark:bg-zinc-900/20 border-2 border-dashed border-zinc-300 dark:border-zinc-800 p-3 md:p-4 rounded-xl md:rounded-2xl hover:bg-zinc-50 dark:hover:bg-zinc-800/40 hover:border-orange-500/50 cursor-pointer transition-all group flex flex-col items-center justify-center text-center min-h-[10rem] md:min-h-[14rem]">
             <div
-              class="h-16 w-16 bg-zinc-100 dark:bg-zinc-800 rounded-full mb-3 flex items-center justify-center text-zinc-400 group-hover:text-orange-500 group-hover:scale-110 transition-all">
-              <Edit3 class="h-6 w-6" />
+              class="h-12 w-12 md:h-16 md:w-16 bg-zinc-100 dark:bg-zinc-800 rounded-full mb-2 md:mb-3 flex items-center justify-center text-zinc-400 group-hover:text-orange-500 group-hover:scale-110 transition-all">
+              <Edit3 class="h-5 w-5 md:h-6 md:w-6" />
             </div>
-            <h4 class="text-sm font-medium text-zinc-900 dark:text-zinc-200">
+            <h4 class="text-xs md:text-sm font-medium text-zinc-900 dark:text-zinc-200">
               Custom Order
             </h4>
-            <span class="text-xs text-zinc-500 mt-1">Input item manual</span>
+            <span class="text-[10px] md:text-xs text-zinc-500 mt-1">Input item manual</span>
           </div>
 
-          <!-- Product Cards - Premium Design -->
+          <!-- Product Cards - Mobile Optimized -->
           <div v-for="product in filteredPosProducts" :key="product.id" @click="addToCart(product)"
-            class="group relative bg-white dark:bg-slate-800/50 rounded-[2rem] p-5 cursor-pointer border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 ease-out transform-gpu will-change-transform flex flex-col h-full justify-between active:scale-[0.98]">
+            class="group relative bg-white dark:bg-slate-800/50 rounded-xl md:rounded-[1.5rem] p-3 md:p-4 cursor-pointer border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-lg transition-all duration-200 ease-out flex flex-col justify-between active:scale-[0.98] min-h-[10rem] md:min-h-[14rem]">
             <div>
               <div
-                class="aspect-square bg-slate-50 dark:bg-slate-800 rounded-[1.5rem] flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform overflow-hidden relative">
+                class="aspect-square bg-slate-50 dark:bg-slate-800 rounded-xl md:rounded-2xl flex items-center justify-center text-4xl md:text-5xl mb-2 md:mb-3 group-hover:scale-105 transition-transform overflow-hidden relative">
                 <div
                   class="absolute inset-0 bg-orange-500/0 group-hover:bg-orange-500/5 dark:group-hover:bg-orange-500/10 transition-colors">
                 </div>
                 <span class="drop-shadow-sm relative z-10">{{ product.icon || "🍞" }}</span>
               </div>
-              <h4 class="font-bold text-slate-800 dark:text-white leading-tight mb-1 text-sm line-clamp-2">
+              <h4 class="font-bold text-slate-800 dark:text-white leading-tight mb-0.5 md:mb-1 text-xs md:text-sm line-clamp-2">
                 {{ product.nama }}
               </h4>
-              <p class="text-xs text-slate-400 dark:text-slate-500 line-clamp-1">{{ product.category?.nama }}</p>
+              <p class="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 line-clamp-1">{{ product.category?.nama }}</p>
             </div>
-            <div class="flex justify-between items-center mt-3">
-              <span class="font-bold text-orange-600 dark:text-orange-400 text-sm">{{ formatRupiah(product.harga)
-              }}</span>
+            <div class="flex justify-between items-center mt-2 md:mt-3">
+              <span class="font-bold text-orange-600 dark:text-orange-400 text-xs md:text-sm">{{ formatRupiah(product.harga) }}</span>
               <button
-                class="w-8 h-8 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all shadow-lg">
-                <Plus class="w-4 h-4" />
+                class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-900 dark:bg-orange-500 text-white flex items-center justify-center shadow-lg md:opacity-0 md:group-hover:opacity-100 md:translate-y-2 md:group-hover:translate-y-0 transition-all">
+                <Plus class="w-3.5 h-3.5 md:w-4 md:h-4" />
               </button>
             </div>
           </div>
@@ -491,15 +512,14 @@ const closeSuccess = () => {
         </div>
       </div>
 
-      <!-- Cart Panel - Glassmorphism + Sticky -->
-      <div class="w-full md:w-[26rem] flex flex-col h-[calc(100vh-10rem)] overflow-hidden
+      <!-- Cart Panel - Glassmorphism + Sticky (Desktop Only) -->
+      <div class="hidden lg:flex w-full lg:w-[26rem] flex-col h-[calc(100vh-10rem)] overflow-hidden
                 sticky top-6 self-start
                 transform-gpu will-change-transform
-                bg-white/95 md:bg-white/60 dark:bg-slate-900/95 md:dark:bg-slate-900/70 md:backdrop-blur-xl
+                bg-white/60 dark:bg-slate-900/70 backdrop-blur-xl
                 border border-white/40 dark:border-slate-700/50
                 rounded-[2rem]
-                shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)]"
-        :class="{ 'hidden md:flex': mobileTab === 'menu' }">
+                shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)]">
         <!-- Cart Header -->
         <div
           class="p-6 border-b border-slate-100/50 dark:border-slate-700/50 bg-white/60 dark:bg-slate-900/50 backdrop-blur-sm">
@@ -583,34 +603,171 @@ const closeSuccess = () => {
       </div>
     </div>
 
-    <!-- Mobile Sticky Footer -->
-    <div v-if="mobileTab === 'menu'"
-      class="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 p-4 z-50 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-      <div @click="mobileTab = 'cart'" class="flex items-center gap-4 cursor-pointer">
-        <!-- Cart Summary Trigger -->
-        <div class="flex-1 flex items-center gap-3">
-          <div
-            class="h-12 w-12 flex flex-col items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 text-orange-600 dark:text-orange-400">
-            <ShoppingCart class="h-6 w-6" />
+    <!-- ===== MOBILE CART SUMMARY BAR (Floating Trigger) ===== -->
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="translate-y-full opacity-0"
+      enter-to-class="translate-y-0 opacity-100"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="translate-y-0 opacity-100"
+      leave-to-class="translate-y-full opacity-0"
+    >
+      <div 
+        v-if="cart.length > 0 && !showMobileCart"
+        @click="showMobileCart = true"
+        class="lg:hidden fixed bottom-[5.5rem] left-4 right-4 z-40 bg-slate-900 dark:bg-slate-800 text-white p-4 rounded-2xl shadow-xl cursor-pointer active:scale-[0.98] transition-transform"
+      >
+        <div class="flex justify-between items-center">
+          <!-- Left: Badge + Item Count -->
+          <div class="flex items-center gap-3">
+            <div class="relative">
+              <ShoppingCart class="h-6 w-6" />
+              <span class="absolute -top-2 -right-2 h-5 w-5 bg-orange-500 rounded-full text-xs font-bold flex items-center justify-center">
+                {{ totalItems }}
+              </span>
+            </div>
+            <span class="text-sm text-slate-300">{{ totalItems }} Item</span>
           </div>
-          <div class="flex flex-col">
-            <p class="text-xs text-zinc-500 dark:text-zinc-400">
-              {{ totalItems }} Item
-            </p>
-            <p class="text-lg font-bold text-zinc-900 dark:text-white leading-tight">
-              {{ formatRupiah(grandTotal) }}
-            </p>
+          
+          <!-- Right: Total Price -->
+          <span class="text-lg font-bold">{{ formatRupiah(grandTotal) }}</span>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- ===== MOBILE CART DRAWER (Full Screen Slide-Up Sheet) ===== -->
+    <Teleport to="body">
+      <!-- Overlay -->
+      <Transition
+        enter-active-class="transition-opacity duration-300 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-opacity duration-200 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div 
+          v-if="showMobileCart"
+          class="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]"
+          @click="showMobileCart = false"
+        />
+      </Transition>
+
+      <!-- Drawer Panel -->
+      <Transition
+        enter-active-class="transition-transform duration-300 ease-out"
+        enter-from-class="translate-y-full"
+        enter-to-class="translate-y-0"
+        leave-active-class="transition-transform duration-200 ease-in"
+        leave-from-class="translate-y-0"
+        leave-to-class="translate-y-full"
+      >
+        <div 
+          v-if="showMobileCart"
+          class="lg:hidden fixed inset-0 z-[70] bg-[#F6F8FA] dark:bg-slate-900 flex flex-col"
+        >
+          <!-- Header -->
+          <div class="flex items-center justify-between px-5 py-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
+            <div class="flex items-center gap-3">
+              <h2 class="text-xl font-bold text-slate-900 dark:text-white">Current Order</h2>
+              <div class="px-2 py-1 bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 text-xs font-bold rounded-lg">
+                #{{ orderNumber }}
+              </div>
+            </div>
+            <button 
+              @click="showMobileCart = false"
+              class="h-10 w-10 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+            >
+              <X class="h-5 w-5 text-slate-600 dark:text-slate-300" />
+            </button>
+          </div>
+
+          <!-- Cart Items Body -->
+          <div class="flex-1 overflow-y-auto p-4 space-y-3">
+            <!-- Empty State -->
+            <div v-if="cart.length === 0" class="h-full flex flex-col items-center justify-center text-slate-300 dark:text-slate-600 space-y-4">
+              <ShoppingCart class="h-16 w-16" />
+              <p class="text-lg font-medium">Keranjang Kosong</p>
+              <button @click="showMobileCart = false" class="text-orange-500 text-sm font-medium">
+                Mulai Belanja
+              </button>
+            </div>
+
+            <!-- Cart Item Cards -->
+            <div 
+              v-for="(item, index) in cart" 
+              :key="item.id"
+              class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex gap-4"
+            >
+              <div class="w-16 h-16 bg-slate-50 dark:bg-slate-700 rounded-xl flex items-center justify-center text-3xl shrink-0">
+                {{ item.icon }}
+              </div>
+              <div class="flex-1 min-w-0 flex flex-col justify-center">
+                <h4 class="font-bold text-slate-800 dark:text-white text-base truncate">{{ item.name }}</h4>
+                <p v-if="item.note" class="text-xs text-slate-400 dark:text-slate-500 italic truncate">{{ item.note }}</p>
+                <p class="text-orange-600 dark:text-orange-400 text-sm font-bold">{{ formatRupiah(item.price) }}</p>
+              </div>
+              <!-- Quantity Controls -->
+              <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-700 rounded-xl p-1.5">
+                <button 
+                  @click.stop="updateQty(index, -1)"
+                  class="w-8 h-8 bg-white dark:bg-slate-600 rounded-lg shadow-sm text-slate-400 dark:text-slate-300 flex items-center justify-center hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                >
+                  <Minus class="w-4 h-4" />
+                </button>
+                <span class="w-8 text-center text-sm font-bold text-slate-800 dark:text-white">{{ item.qty }}</span>
+                <button 
+                  @click.stop="updateQty(index, 1)"
+                  class="w-8 h-8 bg-white dark:bg-slate-600 rounded-lg shadow-sm text-slate-800 dark:text-white flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-500 transition-colors"
+                >
+                  <Plus class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer with Totals + Checkout Button -->
+          <div class="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-5 pb-safe space-y-4">
+            <!-- Totals -->
+            <div class="space-y-2">
+              <div class="flex justify-between text-sm text-slate-500 dark:text-slate-400">
+                <span>Subtotal</span>
+                <span>{{ formatRupiah(subtotal) }}</span>
+              </div>
+              <div class="flex justify-between text-sm text-slate-500 dark:text-slate-400">
+                <span>Pajak (0%)</span>
+                <span>{{ formatRupiah(tax) }}</span>
+              </div>
+              <div class="flex justify-between items-end pt-3 border-t border-dashed border-slate-200 dark:border-slate-600">
+                <span class="text-slate-900 dark:text-white font-bold">Total</span>
+                <span class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ formatRupiah(grandTotal) }}</span>
+              </div>
+            </div>
+
+            <!-- Checkout Button -->
+            <button 
+              type="button" 
+              :disabled="cart.length === 0" 
+              @click="showMobileCart = false; openPaymentScreen();" 
+              :class="cart.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-600 active:scale-[0.98]'"
+              class="w-full py-4 bg-orange-500 text-white rounded-2xl font-bold text-lg transition-all shadow-xl shadow-orange-500/30 flex items-center justify-center gap-2"
+            >
+              <CreditCard class="h-5 w-5" />
+              <span>Bayar Sekarang</span>
+            </button>
+
+            <!-- Reset Button -->
+            <button 
+              v-if="cart.length > 0"
+              @click="resetCart(); showMobileCart = false;"
+              class="w-full py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl font-medium text-sm transition-colors"
+            >
+              Hapus Semua Item
+            </button>
           </div>
         </div>
-
-        <!-- Checkout Button (Visual) -->
-        <button
-          class="h-12 px-6 rounded-xl font-bold text-base shadow-lg shadow-orange-500/20 bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2">
-          <span>Lihat</span>
-          <CreditCard class="h-4 w-4" />
-        </button>
-      </div>
-    </div>
+      </Transition>
+    </Teleport>
 
     <!-- Payment Screen -->
     <transition name="slide-up">
@@ -880,6 +1037,15 @@ const closeSuccess = () => {
 }
 
 .no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
