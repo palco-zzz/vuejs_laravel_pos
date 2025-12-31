@@ -383,34 +383,30 @@ const closeSuccess = () => {
       <div class="flex-1 flex flex-col w-full" :class="{ 'hidden md:flex': mobileTab === 'cart' }">
         <!-- ===== MOBILE-FIRST RESPONSIVE HEADER ===== -->
         <div class="flex flex-col gap-4 mb-6 w-full">
-          
+
           <!-- Row 1: Search + Branch (Stacked Mobile, Row Desktop) -->
           <div class="flex flex-col md:flex-row gap-3 w-full items-stretch">
-            
+
             <!-- Search Bar - Full Width Mobile, Flex-1 Desktop -->
             <div class="w-full md:flex-1 relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search class="h-5 w-5 text-slate-400" />
               </div>
-              <input 
-                type="text" 
-                v-model="searchQuery"
-                placeholder="Cari menu..." 
-                class="pl-10 pr-4 py-3 w-full h-12 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm transition-all"
-              />
+              <input type="text" v-model="searchQuery" placeholder="Cari menu..."
+                class="pl-10 pr-4 py-3 w-full h-12 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm transition-all" />
             </div>
 
             <!-- Branch Selector - Full Width Mobile, Fixed Width Desktop -->
             <div v-if="currentUser.role === 'admin'" class="w-full md:w-72 shrink-0">
-              <div class="w-full h-12 flex items-center gap-2 px-3 bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-2xl">
-                <div class="h-8 w-8 bg-orange-100 dark:bg-orange-500/20 rounded-lg flex items-center justify-center shrink-0">
+              <div
+                class="w-full h-12 flex items-center gap-2 px-3 bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-2xl">
+                <div
+                  class="h-8 w-8 bg-orange-100 dark:bg-orange-500/20 rounded-lg flex items-center justify-center shrink-0">
                   <Building2 class="h-4 w-4 text-orange-600 dark:text-orange-400" />
                 </div>
-                <select 
-                  v-model="selectedBranchId"
+                <select v-model="selectedBranchId"
                   class="flex-1 min-w-0 h-8 px-2 bg-transparent border-0 text-sm font-medium focus:ring-0 focus:outline-none text-slate-900 dark:text-white cursor-pointer appearance-none"
-                  :class="!selectedBranchId ? 'text-slate-400' : ''"
-                >
+                  :class="!selectedBranchId ? 'text-slate-400' : ''">
                   <option :value="null" disabled>Pilih Cabang...</option>
                   <option v-for="branch in branches" :key="branch.id" :value="branch.id">
                     {{ branch.nama }}
@@ -430,30 +426,22 @@ const closeSuccess = () => {
           <div class="w-full overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
             <div class="flex gap-3 min-w-max">
               <!-- All Categories -->
-              <button 
-                @click="posCategory = 'all'" 
-                :class="[
-                  'px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all active:scale-95',
-                  posCategory === 'all' 
-                    ? 'bg-slate-900 dark:bg-orange-500 text-white shadow-lg' 
-                    : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
-                ]"
-              >
+              <button @click="posCategory = 'all'" :class="[
+                'px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all active:scale-95',
+                posCategory === 'all'
+                  ? 'bg-slate-900 dark:bg-orange-500 text-white shadow-lg'
+                  : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+              ]">
                 Semua Menu
               </button>
-              
+
               <!-- Category Loop -->
-              <button 
-                v-for="cat in categories" 
-                :key="cat.id"
-                @click="posCategory = cat.id"
-                :class="[
-                  'px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5',
-                  posCategory === cat.id 
-                    ? 'bg-slate-900 dark:bg-orange-500 text-white shadow-lg' 
-                    : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
-                ]"
-              >
+              <button v-for="cat in categories" :key="cat.id" @click="posCategory = cat.id" :class="[
+                'px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5',
+                posCategory === cat.id
+                  ? 'bg-slate-900 dark:bg-orange-500 text-white shadow-lg'
+                  : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+              ]">
                 <span>{{ cat.icon }}</span>
                 <span>{{ cat.nama }}</span>
               </button>
@@ -462,7 +450,8 @@ const closeSuccess = () => {
         </div>
 
         <!-- Products Grid -->
-        <div class="flex-1 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4 overflow-y-auto pb-32 md:pb-4 custom-scrollbar">
+        <div
+          class="flex-1 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4 overflow-y-auto pb-32 custom-scrollbar">
           <!-- Custom Order Card -->
           <div @click="openCustomOrderModal"
             class="bg-white dark:bg-zinc-900/20 border-2 border-dashed border-zinc-300 dark:border-zinc-800 p-3 md:p-4 rounded-xl md:rounded-2xl hover:bg-zinc-50 dark:hover:bg-zinc-800/40 hover:border-orange-500/50 cursor-pointer transition-all group flex flex-col items-center justify-center text-center min-h-[10rem] md:min-h-[14rem]">
@@ -487,13 +476,16 @@ const closeSuccess = () => {
                 </div>
                 <span class="drop-shadow-sm relative z-10">{{ product.icon || "🍞" }}</span>
               </div>
-              <h4 class="font-bold text-slate-800 dark:text-white leading-tight mb-0.5 md:mb-1 text-xs md:text-sm line-clamp-2">
+              <h4
+                class="font-bold text-slate-800 dark:text-white leading-tight mb-0.5 md:mb-1 text-xs md:text-sm line-clamp-2">
                 {{ product.nama }}
               </h4>
-              <p class="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 line-clamp-1">{{ product.category?.nama }}</p>
+              <p class="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 line-clamp-1">{{
+                product.category?.nama }}</p>
             </div>
             <div class="flex justify-between items-center mt-2 md:mt-3">
-              <span class="font-bold text-orange-600 dark:text-orange-400 text-xs md:text-sm">{{ formatRupiah(product.harga) }}</span>
+              <span class="font-bold text-orange-600 dark:text-orange-400 text-xs md:text-sm">{{
+                formatRupiah(product.harga) }}</span>
               <button
                 class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-900 dark:bg-orange-500 text-white flex items-center justify-center shadow-lg md:opacity-0 md:group-hover:opacity-100 md:translate-y-2 md:group-hover:translate-y-0 transition-all">
                 <Plus class="w-3.5 h-3.5 md:w-4 md:h-4" />
@@ -512,8 +504,8 @@ const closeSuccess = () => {
         </div>
       </div>
 
-      <!-- Cart Panel - Glassmorphism + Sticky (Desktop Only) -->
-      <div class="hidden lg:flex w-full lg:w-[26rem] flex-col h-[calc(100vh-10rem)] overflow-hidden
+      <!-- Cart Panel - Glassmorphism + Sticky (Desktop Only) - Hidden in favor of floating cart button -->
+      <div class="hidden w-full lg:w-[26rem] flex-col h-[calc(100vh-10rem)] overflow-hidden
                 sticky top-6 self-start
                 transform-gpu will-change-transform
                 bg-white/60 dark:bg-slate-900/70 backdrop-blur-xl
@@ -604,31 +596,24 @@ const closeSuccess = () => {
     </div>
 
     <!-- ===== MOBILE CART SUMMARY BAR (Floating Trigger) ===== -->
-    <Transition
-      enter-active-class="transition-all duration-300 ease-out"
-      enter-from-class="translate-y-full opacity-0"
-      enter-to-class="translate-y-0 opacity-100"
-      leave-active-class="transition-all duration-200 ease-in"
-      leave-from-class="translate-y-0 opacity-100"
-      leave-to-class="translate-y-full opacity-0"
-    >
-      <div 
-        v-if="cart.length > 0 && !showMobileCart"
-        @click="showMobileCart = true"
-        class="lg:hidden fixed bottom-[5.5rem] left-4 right-4 z-40 bg-slate-900 dark:bg-slate-800 text-white p-4 rounded-2xl shadow-xl cursor-pointer active:scale-[0.98] transition-transform"
-      >
+    <Transition enter-active-class="transition-all duration-300 ease-out" enter-from-class="translate-y-full opacity-0"
+      enter-to-class="translate-y-0 opacity-100" leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="translate-y-0 opacity-100" leave-to-class="translate-y-full opacity-0">
+      <div v-if="cart.length > 0 && !showMobileCart" @click="showMobileCart = true"
+        class="fixed bottom-[5.5rem] md:bottom-8 left-4 right-4 md:left-auto md:right-8 md:w-80 z-40 bg-slate-900 dark:bg-slate-800 text-white p-4 rounded-2xl shadow-xl cursor-pointer active:scale-[0.98] transition-transform">
         <div class="flex justify-between items-center">
           <!-- Left: Badge + Item Count -->
           <div class="flex items-center gap-3">
             <div class="relative">
               <ShoppingCart class="h-6 w-6" />
-              <span class="absolute -top-2 -right-2 h-5 w-5 bg-orange-500 rounded-full text-xs font-bold flex items-center justify-center">
+              <span
+                class="absolute -top-2 -right-2 h-5 w-5 bg-orange-500 rounded-full text-xs font-bold flex items-center justify-center">
                 {{ totalItems }}
               </span>
             </div>
             <span class="text-sm text-slate-300">{{ totalItems }} Item</span>
           </div>
-          
+
           <!-- Right: Total Price -->
           <span class="text-lg font-bold">{{ formatRupiah(grandTotal) }}</span>
         </div>
@@ -638,46 +623,31 @@ const closeSuccess = () => {
     <!-- ===== MOBILE CART DRAWER (Full Screen Slide-Up Sheet) ===== -->
     <Teleport to="body">
       <!-- Overlay -->
-      <Transition
-        enter-active-class="transition-opacity duration-300 ease-out"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="transition-opacity duration-200 ease-in"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div 
-          v-if="showMobileCart"
-          class="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]"
-          @click="showMobileCart = false"
-        />
+      <Transition enter-active-class="transition-opacity duration-300 ease-out" enter-from-class="opacity-0"
+        enter-to-class="opacity-100" leave-active-class="transition-opacity duration-200 ease-in"
+        leave-from-class="opacity-100" leave-to-class="opacity-0">
+        <div v-if="showMobileCart" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]"
+          @click="showMobileCart = false" />
       </Transition>
 
       <!-- Drawer Panel -->
-      <Transition
-        enter-active-class="transition-transform duration-300 ease-out"
-        enter-from-class="translate-y-full"
-        enter-to-class="translate-y-0"
-        leave-active-class="transition-transform duration-200 ease-in"
-        leave-from-class="translate-y-0"
-        leave-to-class="translate-y-full"
-      >
-        <div 
-          v-if="showMobileCart"
-          class="lg:hidden fixed inset-0 z-[70] bg-[#F6F8FA] dark:bg-slate-900 flex flex-col"
-        >
+      <Transition enter-active-class="transition-transform duration-300 ease-out" enter-from-class="translate-y-full"
+        enter-to-class="translate-y-0" leave-active-class="transition-transform duration-200 ease-in"
+        leave-from-class="translate-y-0" leave-to-class="translate-y-full">
+        <div v-if="showMobileCart"
+          class="fixed inset-0 md:inset-y-0 md:right-0 md:left-auto md:w-[28rem] z-[70] bg-[#F6F8FA] dark:bg-slate-900 flex flex-col shadow-2xl">
           <!-- Header -->
-          <div class="flex items-center justify-between px-5 py-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
+          <div
+            class="flex items-center justify-between px-5 py-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
             <div class="flex items-center gap-3">
               <h2 class="text-xl font-bold text-slate-900 dark:text-white">Current Order</h2>
-              <div class="px-2 py-1 bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 text-xs font-bold rounded-lg">
+              <div
+                class="px-2 py-1 bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 text-xs font-bold rounded-lg">
                 #{{ orderNumber }}
               </div>
             </div>
-            <button 
-              @click="showMobileCart = false"
-              class="h-10 w-10 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-            >
+            <button @click="showMobileCart = false"
+              class="h-10 w-10 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
               <X class="h-5 w-5 text-slate-600 dark:text-slate-300" />
             </button>
           </div>
@@ -685,7 +655,8 @@ const closeSuccess = () => {
           <!-- Cart Items Body -->
           <div class="flex-1 overflow-y-auto p-4 space-y-3">
             <!-- Empty State -->
-            <div v-if="cart.length === 0" class="h-full flex flex-col items-center justify-center text-slate-300 dark:text-slate-600 space-y-4">
+            <div v-if="cart.length === 0"
+              class="h-full flex flex-col items-center justify-center text-slate-300 dark:text-slate-600 space-y-4">
               <ShoppingCart class="h-16 w-16" />
               <p class="text-lg font-medium">Keranjang Kosong</p>
               <button @click="showMobileCart = false" class="text-orange-500 text-sm font-medium">
@@ -694,32 +665,27 @@ const closeSuccess = () => {
             </div>
 
             <!-- Cart Item Cards -->
-            <div 
-              v-for="(item, index) in cart" 
-              :key="item.id"
-              class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex gap-4"
-            >
-              <div class="w-16 h-16 bg-slate-50 dark:bg-slate-700 rounded-xl flex items-center justify-center text-3xl shrink-0">
+            <div v-for="(item, index) in cart" :key="item.id"
+              class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex gap-4">
+              <div
+                class="w-16 h-16 bg-slate-50 dark:bg-slate-700 rounded-xl flex items-center justify-center text-3xl shrink-0">
                 {{ item.icon }}
               </div>
               <div class="flex-1 min-w-0 flex flex-col justify-center">
                 <h4 class="font-bold text-slate-800 dark:text-white text-base truncate">{{ item.name }}</h4>
-                <p v-if="item.note" class="text-xs text-slate-400 dark:text-slate-500 italic truncate">{{ item.note }}</p>
+                <p v-if="item.note" class="text-xs text-slate-400 dark:text-slate-500 italic truncate">{{ item.note }}
+                </p>
                 <p class="text-orange-600 dark:text-orange-400 text-sm font-bold">{{ formatRupiah(item.price) }}</p>
               </div>
               <!-- Quantity Controls -->
               <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-700 rounded-xl p-1.5">
-                <button 
-                  @click.stop="updateQty(index, -1)"
-                  class="w-8 h-8 bg-white dark:bg-slate-600 rounded-lg shadow-sm text-slate-400 dark:text-slate-300 flex items-center justify-center hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                >
+                <button @click.stop="updateQty(index, -1)"
+                  class="w-8 h-8 bg-white dark:bg-slate-600 rounded-lg shadow-sm text-slate-400 dark:text-slate-300 flex items-center justify-center hover:text-red-500 dark:hover:text-red-400 transition-colors">
                   <Minus class="w-4 h-4" />
                 </button>
                 <span class="w-8 text-center text-sm font-bold text-slate-800 dark:text-white">{{ item.qty }}</span>
-                <button 
-                  @click.stop="updateQty(index, 1)"
-                  class="w-8 h-8 bg-white dark:bg-slate-600 rounded-lg shadow-sm text-slate-800 dark:text-white flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-500 transition-colors"
-                >
+                <button @click.stop="updateQty(index, 1)"
+                  class="w-8 h-8 bg-white dark:bg-slate-600 rounded-lg shadow-sm text-slate-800 dark:text-white flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-500 transition-colors">
                   <Plus class="w-4 h-4" />
                 </button>
               </div>
@@ -738,30 +704,25 @@ const closeSuccess = () => {
                 <span>Pajak (0%)</span>
                 <span>{{ formatRupiah(tax) }}</span>
               </div>
-              <div class="flex justify-between items-end pt-3 border-t border-dashed border-slate-200 dark:border-slate-600">
+              <div
+                class="flex justify-between items-end pt-3 border-t border-dashed border-slate-200 dark:border-slate-600">
                 <span class="text-slate-900 dark:text-white font-bold">Total</span>
-                <span class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ formatRupiah(grandTotal) }}</span>
+                <span class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ formatRupiah(grandTotal)
+                  }}</span>
               </div>
             </div>
 
             <!-- Checkout Button -->
-            <button 
-              type="button" 
-              :disabled="cart.length === 0" 
-              @click="showMobileCart = false; openPaymentScreen();" 
+            <button type="button" :disabled="cart.length === 0" @click="showMobileCart = false; openPaymentScreen();"
               :class="cart.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-600 active:scale-[0.98]'"
-              class="w-full py-4 bg-orange-500 text-white rounded-2xl font-bold text-lg transition-all shadow-xl shadow-orange-500/30 flex items-center justify-center gap-2"
-            >
+              class="w-full py-4 bg-orange-500 text-white rounded-2xl font-bold text-lg transition-all shadow-xl shadow-orange-500/30 flex items-center justify-center gap-2">
               <CreditCard class="h-5 w-5" />
               <span>Bayar Sekarang</span>
             </button>
 
             <!-- Reset Button -->
-            <button 
-              v-if="cart.length > 0"
-              @click="resetCart(); showMobileCart = false;"
-              class="w-full py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl font-medium text-sm transition-colors"
-            >
+            <button v-if="cart.length > 0" @click="resetCart(); showMobileCart = false;"
+              class="w-full py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl font-medium text-sm transition-colors">
               Hapus Semua Item
             </button>
           </div>
