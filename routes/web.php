@@ -11,9 +11,7 @@ use App\Http\Controllers\TransactionController;
 
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canRegister' => Features::enabled(Features::registration()),
-    ]);
+    return redirect()->route('login');
 })->name('home');
 
 Route::get('dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
